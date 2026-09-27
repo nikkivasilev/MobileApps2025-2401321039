@@ -13,6 +13,7 @@ import com.macrosnap.app.data.FoodAnalyzer
 import com.macrosnap.app.data.FoodRepository
 import com.macrosnap.app.data.PhotoStore
 import com.macrosnap.app.data.ProductRepository
+import com.macrosnap.app.data.ScannedProduct
 import com.macrosnap.app.data.RecipeRepository
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.DataError
@@ -27,6 +28,7 @@ import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
 import com.macrosnap.app.ui.components.SERVINGS_STEP
 import com.macrosnap.app.ui.trySave
+import com.macrosnap.app.ui.userMessage
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -69,6 +72,7 @@ class ReviewViewModel(
     private val route = savedStateHandle.toRoute<ReviewRoute>()
     private var nextDraftId = 0L
     private var lookupJob: Job? = null
+    private var microsJob: Job? = null
     private var photoKept = false
 
     private val restored = restoreReview(savedStateHandle[SAVED_REVIEW_KEY], route.photoPath)
@@ -132,10 +136,48 @@ class ReviewViewModel(
         _uiState.update { it.copy(status = ReviewStatus.Loading("Looking up barcode $barcode…")) }
         lookupJob = viewModelScope.launch {
             when (val outcome = productRepository.lookup(barcode)) {
-                is Outcome.Success -> _uiState.update { state ->
-                    state.copy(status = ReviewStatus.Ready, items = listOf(DraftItem(nextDraftId++, outcome.value)))
+                is Outcome.Success -> {
+                    val product = outcome.value
+                    val draft = DraftItem(nextDraftId++, product.item)
+                    _uiState.update { state ->
+                        state.copy(status = ReviewStatus.Ready, items = listOf(draft), labelWarnings = product.warnings)
+                    }
+                    if (product.missingMicros.isNotEmpty()) fillMissingMicros(product, draft.id)
                 }
                 is Outcome.Failure -> _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
+            }
+        }
+    }
+
+    /** Label values show straight away; the vitamins and minerals the listing lacks follow when estimated. */
+    private fun fillMissingMicros(product: ScannedProduct, draftId: Long) {
+        val fromLabel = product.item.micros100g.isNotEmpty()
+        _uiState.update { it.copy(isEstimatingMicros = true, microsNote = "Estimating the vitamins and minerals the listing leaves out…") }
+        microsJob = viewModelScope.launch {
+            val outcome = productRepository.estimateMissingMicros(product)
+            _uiState.update { state ->
+                when (outcome) {
+                    is Outcome.Success -> state.copy(
+                        isEstimatingMicros = false,
+                        // Merged into whatever the item holds now, so edits made while waiting survive.
+                        items = state.items.map { draft ->
+                            if (draft.id != draftId) return@map draft
+                            draft.copy(item = draft.item.copy(micros100g = outcome.value + draft.item.micros100g))
+                        },
+                        microsNote = if (fromLabel) {
+                            "Vitamins and minerals: from the label where listed, the rest estimated by Gemini."
+                        } else {
+                            "Vitamins and minerals estimated by Gemini; the listing doesn't include them."
+                        },
+                    )
+                    is Outcome.Failure -> state.copy(
+                        isEstimatingMicros = false,
+                        microsNote = when (outcome.error) {
+                            DataError.NoApiKey -> "Add your Gemini key in Settings to estimate the vitamins and minerals this listing leaves out."
+                            else -> "Couldn't estimate the vitamins and minerals this listing leaves out: ${outcome.error.userMessage()}"
+                        },
+                    )
+                }
             }
         }
     }
@@ -239,9 +281,12 @@ class ReviewViewModel(
         if (!state.canSave) return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
+            // Give a vitamin estimate that's nearly done the chance to land; a slow one isn't worth the wait.
+            microsJob?.let { job -> withTimeoutOrNull(MICROS_WAIT_MILLIS) { job.join() } }
+            val items = _uiState.value.items
             val saved = trySave {
                 foodRepository.addAll(
-                    items = state.items.map { it.item },
+                    items = items.map { it.item },
                     date = LocalDate.ofEpochDay(route.epochDay),
                     mealType = state.mealType,
                     source = when {
@@ -271,6 +316,7 @@ class ReviewViewModel(
     companion object {
         private const val MIN_GRAMS = 5.0
         private const val SAVED_REVIEW_KEY = "review"
+        private const val MICROS_WAIT_MILLIS = 15_000L
 
         val Factory = viewModelFactory {
             initializer {

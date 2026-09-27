@@ -20,8 +20,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         RoutineExerciseEntity::class,
         WorkoutEntity::class,
         WorkoutSetEntity::class,
+        ProductMicrosEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -31,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun supplementDao(): SupplementDao
     abstract fun wellnessDao(): WellnessDao
     abstract fun workoutDao(): WorkoutDao
+    abstract fun productMicrosDao(): ProductMicrosDao
 
     companion object {
         val MIGRATIONS: Array<Migration> = arrayOf(
@@ -140,6 +142,14 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL("ALTER TABLE `exercises` ADD COLUMN `defaultReps` INTEGER NOT NULL DEFAULT 8")
                     // A cardio exercise is usually one continuous effort, not three.
                     db.execSQL("UPDATE `exercises` SET `defaultSets` = 1 WHERE `type` = 'CARDIO'")
+                }
+            },
+            object : Migration(6, 7) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `product_micros` (" +
+                            "`barcode` TEXT NOT NULL, `micros` TEXT, `estimatedAt` INTEGER NOT NULL, PRIMARY KEY(`barcode`))",
+                    )
                 }
             },
         )

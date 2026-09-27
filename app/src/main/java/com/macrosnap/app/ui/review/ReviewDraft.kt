@@ -20,6 +20,8 @@ private data class SavedReview(
     val describeInput: String,
     val mealType: String,
     val notes: String?,
+    val labelWarnings: List<String> = emptyList(),
+    val microsNote: String? = null,
     val hasAnalyzed: Boolean,
     val items: List<SavedDraftItem>,
 )
@@ -47,6 +49,9 @@ internal fun ReviewUiState.toSavedJson(): String = json.encodeToString(
         describeInput = describeInput,
         mealType = mealType.name,
         notes = notes,
+        labelWarnings = labelWarnings,
+        // An estimate still running won't be after a restore, so don't claim it is.
+        microsNote = microsNote.takeUnless { isEstimatingMicros },
         hasAnalyzed = hasAnalyzed,
         items = items.map { draft ->
             SavedDraftItem(
@@ -82,6 +87,8 @@ internal fun restoreReview(text: String?, photoPath: String?): ReviewUiState? {
         mealType = MealType.entries.firstOrNull { it.name == saved.mealType } ?: MealType.SNACK,
         photoPath = photoPath,
         notes = saved.notes,
+        labelWarnings = saved.labelWarnings,
+        microsNote = saved.microsNote,
         hasAnalyzed = saved.hasAnalyzed,
         items = saved.items.map { item ->
             DraftItem(

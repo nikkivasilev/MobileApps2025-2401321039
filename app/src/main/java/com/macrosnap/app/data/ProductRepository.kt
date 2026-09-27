@@ -1,5 +1,7 @@
 package com.macrosnap.app.data
 
+import com.macrosnap.app.data.local.ProductMicrosDao
+import com.macrosnap.app.data.local.ProductMicrosEntity
 import com.macrosnap.app.data.remote.OffProduct
 import com.macrosnap.app.data.remote.OpenFoodFactsApi
 import com.macrosnap.app.data.remote.toDataError
@@ -9,14 +11,32 @@ import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.math.abs
 
-class ProductRepository(private val api: OpenFoodFactsApi) {
+/** A barcode's label values, plus what about them looked off and which nutrients the listing lacks. */
+data class ScannedProduct(
+    val barcode: String,
+    val item: FoodItem,
+    val productName: String?,
+    val brand: String?,
+    val quantity: String?,
+    /** Plain-language problems with the listing, for the user to check against the label. */
+    val warnings: List<String>,
+    val missingMicros: Set<Nutrient>,
+)
 
-    suspend fun lookup(barcode: String): Outcome<FoodItem> {
+class ProductRepository(
+    private val api: OpenFoodFactsApi,
+    private val microsCache: ProductMicrosDao,
+    private val foodAnalyzer: FoodAnalyzer,
+) {
+
+    suspend fun lookup(barcode: String): Outcome<ScannedProduct> {
         val response = try {
             api.product(barcode)
         } catch (e: CancellationException) {
@@ -26,32 +46,116 @@ class ProductRepository(private val api: OpenFoodFactsApi) {
             // Here a 404 means "no such barcode", not a missing model.
             return Outcome.Failure(if (error is DataError.ModelUnavailable) DataError.ProductNotFound else error)
         }
-        val item = response.product?.takeIf { response.status == 1 }?.toFoodItem()
+        val product = response.product?.takeIf { response.status == 1 }?.toScannedProduct(barcode)
             ?: return Outcome.Failure(DataError.ProductNotFound)
-        return Outcome.Success(item)
+        return Outcome.Success(product)
     }
 
-    private fun OffProduct.toFoodItem(): FoodItem? {
-        val nutriments = nutriments ?: return null
-        val kcal = nutriments["energy-kcal_100g"].asDouble()
-            ?: nutriments["energy_100g"].asDouble()?.let { it / KJ_PER_KCAL }
-            ?: return null
-        val name = listOfNotNull(
-            productName?.takeIf { it.isNotBlank() },
-            brands?.substringBefore(',')?.trim()?.takeIf { it.isNotBlank() },
-        ).joinToString(" - ").ifEmpty { "Scanned product" }
+    /**
+     * Estimates the nutrients [ScannedProduct.missingMicros] from the product's name, remembering the
+     * answer per barcode. Returns only the missing ones, so label values always win.
+     */
+    suspend fun estimateMissingMicros(product: ScannedProduct): Outcome<Micros> {
+        val name = product.productName ?: return Outcome.Failure(DataError.Unexpected("The listing has no product name to go on."))
+        val cached = microsCache.get(product.barcode)
+        val estimate = if (cached != null) {
+            MicrosJson.decode(cached.micros)
+        } else {
+            when (val outcome = foodAnalyzer.estimateProductMicros(name, product.brand, product.quantity)) {
+                is Outcome.Failure -> return outcome
+                is Outcome.Success -> outcome.value.also { micros ->
+                    microsCache.upsert(ProductMicrosEntity(product.barcode, MicrosJson.encode(micros), System.currentTimeMillis()))
+                }
+            }
+        }
+        return Outcome.Success(estimate.filterKeys { it in product.missingMicros })
+    }
 
-        return FoodItem(
-            name = name,
-            grams = servingQuantity.asDouble()?.takeIf { it > 0 } ?: 100.0,
-            per100g = Macros(
-                kcal = kcal,
-                protein = nutriments["proteins_100g"].asDouble() ?: 0.0,
-                carbs = nutriments["carbohydrates_100g"].asDouble() ?: 0.0,
-                fat = nutriments["fat_100g"].asDouble() ?: 0.0,
+    private fun OffProduct.toScannedProduct(barcode: String): ScannedProduct? {
+        val nutriments = nutriments ?: return null
+        val warnings = mutableListOf<String>()
+
+        val protein = nutriments["proteins_100g"].asDouble()
+        val carbs = nutriments["carbohydrates_100g"].asDouble()
+        val fat = nutriments["fat_100g"].asDouble()
+        val kcal = checkedKcal(nutriments, protein, carbs, fat, warnings) ?: return null
+
+        val grams = servingQuantity.asDouble()?.takeIf { it > 0 }.let { serving ->
+            when {
+                serving == null -> 100.0
+                serving > MAX_PLAUSIBLE_SERVING -> {
+                    warnings += "The listed serving of ${serving.whole()} g looks wrong, so 100 g is used instead. Set the amount you had."
+                    100.0
+                }
+                else -> serving
+            }
+        }
+        // A listing whose per-serving energy disagrees with per-100 g × serving has one of them wrong.
+        val kcalPerServing = nutriments["energy-kcal_serving"].asDouble()
+        if (kcalPerServing != null && grams != 100.0) {
+            val implied = kcal * grams / 100
+            if (abs(implied - kcalPerServing) > maxOf(20.0, kcalPerServing * 0.5)) {
+                warnings += "The listing says ${kcalPerServing.whole()} kcal per serving, but its per-100 g values give ${implied.whole()} kcal. Check the label."
+            }
+        }
+
+        val trimmedName = productName?.trim()?.takeIf { it.isNotEmpty() }
+        val brand = brands?.substringBefore(',')?.trim()?.takeIf { it.isNotEmpty() }
+        val micros = nutriments.toMicros()
+        return ScannedProduct(
+            barcode = barcode,
+            item = FoodItem(
+                name = listOfNotNull(trimmedName, brand).joinToString(" - ").ifEmpty { "Scanned product" },
+                grams = grams,
+                per100g = Macros(kcal = kcal, protein = protein ?: 0.0, carbs = carbs ?: 0.0, fat = fat ?: 0.0),
+                micros100g = micros,
             ),
-            micros100g = nutriments.toMicros(),
+            productName = trimmedName,
+            brand = brand,
+            quantity = quantity?.trim()?.takeIf { it.isNotEmpty() },
+            warnings = warnings,
+            missingMicros = Nutrient.entries.toSet() - micros.keys,
         )
+    }
+
+    /**
+     * Picks kcal per 100 g from a crowd-sourced listing, repairing the common kJ-typed-as-kcal slip
+     * and flagging values the macros can't account for. Null when there's no energy at all.
+     */
+    private fun checkedKcal(nutriments: JsonObject, protein: Double?, carbs: Double?, fat: Double?, warnings: MutableList<String>): Double? {
+        // Open Food Facts normalises the generic energy field to kJ.
+        val kj = (nutriments["energy-kj_100g"] ?: nutriments["energy_100g"]).asDouble()?.takeIf { it > 0 }
+        val listed = nutriments["energy-kcal_100g"].asDouble()
+        // Protein and carbs give ~4 kcal/g and fat ~9; fibre, sweeteners and alcohol explain small gaps, not big ones.
+        val fromMacros = if (protein != null && carbs != null && fat != null) protein * 4 + carbs * 4 + fat * 9 else null
+        val warningsBefore = warnings.size
+
+        var kcal = when {
+            listed != null && kj != null && kj > 20 && abs(listed - kj) <= kj * 0.1 -> {
+                warnings += "The listing's calories were entered in kJ; converted ${kj.whole()} kJ to ${(kj / KJ_PER_KCAL).whole()} kcal per 100 g."
+                kj / KJ_PER_KCAL
+            }
+            listed != null && kj != null && abs(listed - kj / KJ_PER_KCAL) > maxOf(20.0, kj / KJ_PER_KCAL * 0.5) -> {
+                // Two energy values that can't both be right: trust the one the macros back up.
+                val fromKj = kj / KJ_PER_KCAL
+                val pick = if (fromMacros != null && abs(fromKj - fromMacros) < abs(listed - fromMacros)) fromKj else listed
+                warnings += "The listing's ${listed.whole()} kcal and ${kj.whole()} kJ (${fromKj.whole()} kcal) per 100 g disagree; " +
+                    "used ${pick.whole()} kcal" + (if (fromMacros != null) ", which fits its macros better" else "") + ". Check the label."
+                pick
+            }
+            listed != null -> listed
+            kj != null -> kj / KJ_PER_KCAL
+            else -> return null
+        }
+        if (kcal > MAX_KCAL_PER_100G) {
+            warnings += "The listing's ${kcal.whole()} kcal per 100 g is impossible. Check the label and edit the item."
+            kcal = fromMacros?.takeIf { it <= MAX_KCAL_PER_100G } ?: MAX_KCAL_PER_100G
+        }
+        if (fromMacros != null && warnings.size == warningsBefore && abs(kcal - fromMacros) > maxOf(MACRO_TOLERANCE_KCAL, fromMacros * 0.5)) {
+            warnings += "The listing says ${kcal.whole()} kcal per 100 g, but its protein, carbs and fat add up to about " +
+                "${fromMacros.whole()} kcal. Check the label."
+        }
+        return kcal
     }
 
     // Open Food Facts stores every `_100g` nutrient in grams; scale into the unit the app uses.
@@ -60,9 +164,14 @@ class ProductRepository(private val api: OpenFoodFactsApi) {
         this["${key}_100g"].asDouble()?.takeIf { it >= 0 }?.let { nutrient to it * nutrient.offScale }
     }.toMap()
 
-    private fun JsonElement?.asDouble(): Double? = (this as? JsonPrimitive)?.content?.toDoubleOrNull()
+    private fun JsonElement?.asDouble(): Double? = (this as? JsonPrimitive)?.content?.toDoubleOrNull()?.takeIf { it.isFinite() }
 
     private companion object {
         const val KJ_PER_KCAL = 4.184
+        /** Pure fat; nothing edible is denser. */
+        const val MAX_KCAL_PER_100G = 900.0
+        const val MACRO_TOLERANCE_KCAL = 40.0
+        /** Grams; a listed serving above this is almost always a unit or typing slip. */
+        const val MAX_PLAUSIBLE_SERVING = 1500.0
     }
 }

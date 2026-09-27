@@ -71,6 +71,16 @@ class GeminiFoodAnalyzer(
         return generate(listOf(GeminiPart(text = prompt)), SUPPLEMENT_SCHEMA).flatMap(::parseSupplement)
     }
 
+    override suspend fun estimateProductMicros(productName: String, brand: String?, quantity: String?): Outcome<Micros> {
+        val product = buildString {
+            append("Product name: \"").append(productName.trim()).append('"')
+            if (!brand.isNullOrBlank()) append("\nBrand: ").append(brand.trim())
+            if (!quantity.isNullOrBlank()) append("\nPackage size: ").append(quantity.trim())
+        }
+        val prompt = PRODUCT_MICROS_PROMPT + "\n\n" + product
+        return generate(listOf(GeminiPart(text = prompt)), PRODUCT_MICROS_SCHEMA).flatMap(::parseProductMicros)
+    }
+
     /** Runs one structured-output request, falling through the configured models on quota errors. */
     private suspend fun generate(parts: List<GeminiPart>, schema: JsonObject): Outcome<String> {
         val settings = settingsStore.settings.first()
@@ -151,6 +161,15 @@ class GeminiFoodAnalyzer(
         )
     }
 
+    private fun parseProductMicros(text: String): Outcome<Micros> {
+        val dto = try {
+            json.decodeFromString<ProductMicrosDto>(text)
+        } catch (e: SerializationException) {
+            return Outcome.Failure(DataError.Unexpected("The model's answer could not be read"))
+        }
+        return Outcome.Success(dto.nutrients.toMicros())
+    }
+
     private inline fun <T, R> Outcome<T>.flatMap(transform: (T) -> Outcome<R>): Outcome<R> = when (this) {
         is Outcome.Success -> transform(value)
         is Outcome.Failure -> this
@@ -205,7 +224,8 @@ class GeminiFoodAnalyzer(
 
         val MICROS_PROMPT = """
             Also fill nutrients_per_100g for each item with typical values per 100 g from food
-            composition tables: vitamin D (µg), vitamin B12 (µg), vitamin B6 (mg), vitamin C (mg), vitamin A (µg RAE),
+            composition tables: vitamin D (µg), vitamin B12 (µg), vitamin B6 (mg), vitamin B3 / niacin (mg),
+            vitamin B5 / pantothenic acid (mg), vitamin C (mg), vitamin A (µg RAE),
             iron (mg), magnesium (mg), zinc (mg), calcium (mg), potassium (mg), omega-3 fatty acids
             (g, EPA+DHA+ALA), creatine (g; only meat and fish contain it, roughly 0.3-0.5 g per 100 g
             raw) and caffeine (mg). Use 0 for nutrients the food essentially lacks. Round sensibly.
@@ -222,13 +242,28 @@ class GeminiFoodAnalyzer(
             - name: a short product-style name (e.g. "Vitamin D3", "Creatine monohydrate", "Fish oil").
             - dose_label: how one dose is described, e.g. "2000 IU", "5 g", "1 softgel", "1 tablet".
             - nutrients_per_dose: the nutrient content of ONE dose, in these units: vitamin D µg
-              (1 µg = 40 IU), vitamin B12 µg, vitamin B6 mg, vitamin C mg, vitamin A µg RAE (1 IU = 0.3 µg retinol),
+              (1 µg = 40 IU), vitamin B12 µg, vitamin B6 mg, vitamin B3 (niacin) mg, vitamin B5 (pantothenic acid) mg,
+              vitamin C mg, vitamin A µg RAE (1 IU = 0.3 µg retinol),
               iron mg, magnesium mg (elemental magnesium, not the compound weight), zinc mg (elemental),
               calcium mg (elemental), potassium mg, omega-3 g (EPA + DHA), creatine g, caffeine mg.
               Fill only what the supplement actually contains; use 0 otherwise. For a generic
               multivitamin with no brand, use typical one-a-day amounts.
             - is_supplement: false if the text does not describe a supplement.
             - notes: one short sentence about any assumption (e.g. brand-typical dose you assumed).
+        """.trimIndent()
+
+        val PRODUCT_MICROS_PROMPT = """
+            You are a sports nutritionist. A packaged food or drink was scanned by barcode, but its
+            database entry does not list vitamins and minerals. Estimate them per 100 g of the product
+            as sold (per 100 ml for drinks), in these units: vitamin D µg, vitamin B12 µg, vitamin B6 mg,
+            vitamin B3 (niacin) mg, vitamin B5 (pantothenic acid) mg, vitamin C mg, vitamin A µg RAE,
+            iron mg, magnesium mg, zinc mg, calcium mg, potassium mg, omega-3 g (EPA + DHA + ALA),
+            creatine g and caffeine mg.
+
+            If you know this specific product or brand, use its label and fortification (energy
+            drinks, cereals and plant milks are often fortified). Otherwise use typical values for
+            that kind of product. Use 0 for nutrients it essentially lacks. The name may be in any
+            language, often English or Bulgarian.
         """.trimIndent()
 
         val NUTRIENTS_SCHEMA: JsonObject = buildJsonObject {
@@ -268,6 +303,14 @@ class GeminiFoodAnalyzer(
                 }
             }
             putJsonArray("required") { add("is_food"); add("items") }
+        }
+
+        val PRODUCT_MICROS_SCHEMA: JsonObject = buildJsonObject {
+            put("type", "OBJECT")
+            putJsonObject("properties") {
+                put("nutrients_per_100g", NUTRIENTS_SCHEMA)
+            }
+            putJsonArray("required") { add("nutrients_per_100g") }
         }
 
         val SUPPLEMENT_SCHEMA: JsonObject = buildJsonObject {
@@ -329,6 +372,11 @@ private data class AnalysisItemDto(
         },
     )
 }
+
+@Serializable
+private data class ProductMicrosDto(
+    @SerialName("nutrients_per_100g") val nutrients: Map<String, Double>? = null,
+)
 
 @Serializable
 private data class SupplementDto(
