@@ -4,6 +4,7 @@ import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.Goals
 import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.MealType
+import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SleepLog
@@ -30,6 +31,7 @@ data class TodayUiState(
     val showSleepSheet: Boolean = false,
     val workoutBurnKcal: Int = 0,
     val addWorkoutBurn: Boolean = false,
+    val pastFoods: List<PastFood> = emptyList(),
 ) {
     /** The goal the ring and "left" number use; workouts extend it only when the user opted in. */
     val effectiveKcalGoal: Int get() = goals.kcal + if (addWorkoutBurn) workoutBurnKcal else 0

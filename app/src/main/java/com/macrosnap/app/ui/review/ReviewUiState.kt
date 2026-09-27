@@ -3,6 +3,8 @@ package com.macrosnap.app.ui.review
 import com.macrosnap.app.model.DataError
 import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.MealType
+import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.suggestionsFor
 import com.macrosnap.app.model.sum
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
@@ -20,6 +22,7 @@ data class ReviewUiState(
     /** Where a scanned product's vitamins and minerals came from, or why they're missing. */
     val microsNote: String? = null,
     val isEstimatingMicros: Boolean = false,
+    val pastFoods: List<PastFood> = emptyList(),
     val status: ReviewStatus = ReviewStatus.Ready,
     val describeStatus: DescribeStatus = DescribeStatus.Idle,
     val editor: EditorTarget? = null,
@@ -31,6 +34,9 @@ data class ReviewUiState(
     val totals: Macros get() = items.map { it.item.total }.sum()
     val canSave: Boolean get() = items.isNotEmpty() && status !is ReviewStatus.Loading && !isSaving
     val canReanalyze: Boolean get() = photoPath != null && status !is ReviewStatus.Loading
+
+    /** Foods logged before that match what's being typed in the describe box: added without the AI. */
+    val describeSuggestions: List<PastFood> get() = pastFoods.suggestionsFor(describeInput)
 }
 
 sealed interface ReviewStatus {

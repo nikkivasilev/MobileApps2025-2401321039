@@ -1,6 +1,8 @@
 package com.macrosnap.app.ui.recipes
 
+import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Recipe
+import com.macrosnap.app.model.suggestionsFor
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
@@ -13,7 +15,7 @@ data class RecipeEditorUiState(
     val cookedWeightInput: String = "",
     val ingredients: List<DraftItem> = emptyList(),
     val describeInput: String = "",
-
+    val pastFoods: List<PastFood> = emptyList(),
     val describeStatus: DescribeStatus = DescribeStatus.Idle,
     val editor: EditorTarget? = null,
     val isLoaded: Boolean = false,
@@ -37,6 +39,8 @@ data class RecipeEditorUiState(
     val preview: Recipe get() = Recipe(id, name, ingredients.map { it.item }, cookedWeight, servings ?: 1)
 
     val canSave: Boolean get() = recipe != null && !isSaving && describeStatus !is DescribeStatus.Loading
+
+    val describeSuggestions: List<PastFood> get() = pastFoods.suggestionsFor(describeInput)
 }
 
 sealed interface RecipeEditorEffect {

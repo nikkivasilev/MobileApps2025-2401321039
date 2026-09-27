@@ -36,8 +36,9 @@ data object ExercisesRoute
 data class RoutineEditorRoute(val routineId: Long = 0)
 
 /**
- * With none of photo / barcode / recipe set, the review screen opens as a manual entry:
- * a blank item editor, or just the describe-in-words field when [describe] is true.
+ * With none of photo / barcode / recipe / past food set, the review screen opens as a manual entry:
+ * a blank item editor, or just the describe-in-words field when [describe] is true, pre-filled
+ * with [describeText] if given.
  */
 @Serializable
 data class ReviewRoute(
@@ -46,4 +47,7 @@ data class ReviewRoute(
     val barcode: String? = null,
     val recipeId: Long? = null,
     val describe: Boolean = false,
+    /** A food from "Your foods", by [com.macrosnap.app.model.foodKey]. */
+    val pastFoodKey: String? = null,
+    val describeText: String? = null,
 )

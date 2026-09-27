@@ -19,6 +19,8 @@ import com.macrosnap.app.model.Sex
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import java.io.IOException
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
@@ -70,6 +72,13 @@ class SettingsStore(private val context: Context) {
         context.settingsDataStore.edit { it[Keys.ADD_WORKOUT_BURN] = enabled }
     }
 
+    suspend fun hideFood(key: String) {
+        context.settingsDataStore.edit {
+            val hidden = decodeHidden(it[Keys.HIDDEN_FOODS]) + (key to System.currentTimeMillis())
+            it[Keys.HIDDEN_FOODS] = hiddenJson.encodeToString(hidden)
+        }
+    }
+
     suspend fun setNutrientOverrides(overrides: Micros) {
         context.settingsDataStore.edit {
             val encoded = MicrosJson.encode(overrides)
@@ -94,7 +103,19 @@ class SettingsStore(private val context: Context) {
             sleepGoalHours = this[Keys.SLEEP_GOAL_HOURS] ?: AppSettings.DEFAULT_SLEEP_GOAL_HOURS,
             restSeconds = this[Keys.REST_SECONDS] ?: AppSettings.DEFAULT_REST_SECONDS,
             addWorkoutBurn = this[Keys.ADD_WORKOUT_BURN] ?: false,
+            hiddenFoods = decodeHidden(this[Keys.HIDDEN_FOODS]),
         )
+    }
+
+    private fun decodeHidden(text: String?): Map<String, Long> {
+        if (text.isNullOrBlank()) return emptyMap()
+        return try {
+            hiddenJson.decodeFromString<Map<String, Long>>(text)
+        } catch (e: SerializationException) {
+            emptyMap()
+        } catch (e: IllegalArgumentException) {
+            emptyMap()
+        }
     }
 
     private fun Preferences.toProfile(): Profile? {
@@ -126,5 +147,10 @@ class SettingsStore(private val context: Context) {
         val SLEEP_GOAL_HOURS = doublePreferencesKey("sleep_goal_hours")
         val REST_SECONDS = intPreferencesKey("rest_seconds")
         val ADD_WORKOUT_BURN = booleanPreferencesKey("add_workout_burn")
+        val HIDDEN_FOODS = stringPreferencesKey("hidden_foods")
+    }
+
+    private companion object {
+        val hiddenJson = Json { ignoreUnknownKeys = true }
     }
 }

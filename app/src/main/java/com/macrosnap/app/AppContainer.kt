@@ -55,7 +55,7 @@ class AppContainer(context: Context) {
 
     val settingsStore = SettingsStore(context)
     val photoStore = PhotoStore(context, io)
-    val foodRepository = FoodRepository(database.foodDao(), photoStore)
+    val foodRepository = FoodRepository(database.foodDao(), photoStore, settingsStore)
     val weightRepository = WeightRepository(database.weightDao())
     val recipeRepository = RecipeRepository(database.recipeDao())
     val supplementRepository = SupplementRepository(database.supplementDao())

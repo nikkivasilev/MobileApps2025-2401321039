@@ -66,6 +66,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.MealType
+import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.sum
@@ -86,7 +87,7 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private enum class AddMethod(val emoji: String, val title: String, val subtitle: String) {
+internal enum class AddMethod(val emoji: String, val title: String, val subtitle: String) {
     CAMERA("📷", "Take a photo", "AI estimates the items and macros"),
     GALLERY("🖼️", "Choose from gallery", "Analyze a photo you already took"),
     DESCRIBE("💬", "Describe in words", "\"2 eggs, 50 g oats, a banana\" - AI fills in the rest"),
@@ -161,6 +162,8 @@ fun TodayScreen(
         actions = viewModel,
         snackbarHostState = snackbarHostState,
         onAdd = ::onAdd,
+        onPastFood = { onOpenReview(ReviewRoute(epochDay, pastFoodKey = it.key)) },
+        onDescribe = { onOpenReview(ReviewRoute(epochDay, describe = true, describeText = it)) },
     )
 
     if (showRecipePicker) {
@@ -182,6 +185,8 @@ private fun TodayContent(
     actions: TodayActions,
     snackbarHostState: SnackbarHostState,
     onAdd: (AddMethod) -> Unit,
+    onPastFood: (PastFood) -> Unit,
+    onDescribe: (String) -> Unit,
 ) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
 
@@ -267,22 +272,23 @@ private fun TodayContent(
     }
 
     if (showAddSheet) {
-        ModalBottomSheet(onDismissRequest = { showAddSheet = false }) {
-            Column(Modifier.padding(bottom = 24.dp)) {
-                AddMethod.entries.forEach { method ->
-                    ListItem(
-                        headlineContent = { Text(method.title) },
-                        supportingContent = { Text(method.subtitle) },
-                        leadingContent = { Text(method.emoji, style = MaterialTheme.typography.headlineSmall) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable {
-                            showAddSheet = false
-                            onAdd(method)
-                        },
-                    )
-                }
-            }
-        }
+        AddFoodSheet(
+            pastFoods = uiState.pastFoods,
+            onMethod = {
+                showAddSheet = false
+                onAdd(it)
+            },
+            onPastFood = {
+                showAddSheet = false
+                onPastFood(it)
+            },
+            onDescribe = {
+                showAddSheet = false
+                onDescribe(it)
+            },
+            onHide = actions::onHidePastFood,
+            onDismiss = { showAddSheet = false },
+        )
     }
 
     if (uiState.showSleepSheet) {
@@ -300,6 +306,8 @@ private fun TodayContent(
             entry = entry,
             onEdit = actions::onEditClick,
             onDelete = actions::onEntryDeleted,
+            onLogAgain = actions::onLogAgain,
+            logsToToday = !uiState.isToday,
             onDismiss = actions::onDetailDismiss,
         )
     }

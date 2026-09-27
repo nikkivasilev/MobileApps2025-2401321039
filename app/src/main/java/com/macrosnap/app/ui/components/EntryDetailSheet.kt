@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +47,9 @@ fun EntryDetailSheet(
     entry: FoodEntry,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onLogAgain: () -> Unit,
+    /** The entry is from an earlier day, so logging it again lands on today, not beside it. */
+    logsToToday: Boolean = false,
     onDismiss: () -> Unit,
 ) {
     val item = entry.item
@@ -145,7 +149,8 @@ fun EntryDetailSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
-                Button(onClick = onEdit, modifier = Modifier.weight(1f)) { Text("Edit") }
+                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text("Edit") }
+                Button(onClick = onLogAgain, modifier = Modifier.weight(1f)) { Text(if (logsToToday) "Log today" else "Log again") }
             }
         }
     }
@@ -166,4 +171,5 @@ private val EntrySource.label: String
         EntrySource.MANUAL -> "entered manually"
         EntrySource.TEXT -> "from description"
         EntrySource.RECIPE -> "from recipe"
+        EntrySource.HISTORY -> "from your foods"
     }

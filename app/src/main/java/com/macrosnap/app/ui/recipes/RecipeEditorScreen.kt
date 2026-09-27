@@ -164,6 +164,8 @@ private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState:
                     onSubmit = actions::onDescribeSubmit,
                     status = uiState.describeStatus,
                     label = "Describe ingredients to add",
+                    suggestions = uiState.describeSuggestions,
+                    onSuggestionClick = actions::onSuggestionClick,
                 )
             }
             items(uiState.ingredients, key = { it.id }) { draft ->
