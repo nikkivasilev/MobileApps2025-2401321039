@@ -33,11 +33,27 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     fun observeExercises(): Flow<List<Exercise>> = workoutDao.observeExercises().map { rows -> rows.map { it.toModel() } }
 
-    suspend fun addCustomExercise(name: String, muscleGroup: MuscleGroup, type: ExerciseType): Exercise {
-        val entity = ExerciseEntity(name = name.trim(), muscleGroup = muscleGroup.name, type = type.name, isCustom = true)
-        val id = workoutDao.insertExercise(entity)
-        return entity.copy(id = id).toModel()
+    /** Inserts a new exercise when [Exercise.id] is 0, otherwise updates it. Returns the saved exercise. */
+    suspend fun saveExercise(exercise: Exercise): Exercise {
+        val entity = ExerciseEntity(
+            id = exercise.id,
+            name = exercise.name.trim(),
+            muscleGroup = exercise.muscleGroup.name,
+            type = exercise.type.name,
+            isCustom = exercise.isCustom,
+            defaultSets = exercise.defaultSets,
+            defaultReps = exercise.defaultReps,
+        )
+        if (exercise.id == 0L) return entity.copy(id = workoutDao.insertExercise(entity)).toModel()
+        workoutDao.updateExercise(entity)
+        return entity.toModel()
     }
+
+    /** Deleting cascades to the sets and routine entries that use the exercise. */
+    suspend fun deleteExercise(id: Long) = workoutDao.deleteExercise(id)
+
+    suspend fun exerciseUsage(id: Long): ExerciseUsage =
+        ExerciseUsage(workouts = workoutDao.countWorkoutsUsing(id), routines = workoutDao.countRoutinesUsing(id))
 
     fun observeRoutines(): Flow<List<Routine>> =
         combine(workoutDao.observeRoutines(), workoutDao.observeExercises()) { routines, exercises ->
@@ -123,14 +139,14 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun deleteWorkout(id: Long) = workoutDao.deleteWorkout(id)
 
-    suspend fun addSet(workoutId: Long, exercise: Exercise, exerciseOrder: Int, setIndex: Int, template: WorkoutSet?): WorkoutSet {
+    suspend fun addSet(workoutId: Long, exercise: Exercise, exerciseOrder: Int, setIndex: Int, template: WorkoutSet?, reps: Int = 0): WorkoutSet {
         val entity = WorkoutSetEntity(
             workoutId = workoutId,
             exerciseId = exercise.id,
             exerciseOrder = exerciseOrder,
             setIndex = setIndex,
             weightKg = template?.weightKg ?: 0.0,
-            reps = template?.reps ?: 0,
+            reps = template?.reps ?: reps,
             durationSec = template?.durationSec ?: 0,
             distanceM = template?.distanceM ?: 0.0,
             isDone = false,
@@ -186,12 +202,18 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 }
 
+data class ExerciseUsage(val workouts: Int, val routines: Int) {
+    val isUsed: Boolean get() = workouts > 0 || routines > 0
+}
+
 private fun ExerciseEntity.toModel() = Exercise(
     id = id,
     name = name,
     muscleGroup = MuscleGroup.entries.firstOrNull { it.name == muscleGroup } ?: MuscleGroup.OTHER,
     type = ExerciseType.entries.firstOrNull { it.name == type } ?: ExerciseType.STRENGTH,
     isCustom = isCustom,
+    defaultSets = defaultSets,
+    defaultReps = defaultReps,
 )
 
 private fun WorkoutSetEntity.toModel() = WorkoutSet(id, exerciseId, exerciseOrder, setIndex, weightKg, reps, durationSec, distanceM, isDone)

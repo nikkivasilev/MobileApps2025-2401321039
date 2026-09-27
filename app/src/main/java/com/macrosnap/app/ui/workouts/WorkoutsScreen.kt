@@ -50,6 +50,7 @@ private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d
 fun WorkoutsScreen(
     onOpenWorkout: (WorkoutRoute) -> Unit,
     onOpenRoutine: (RoutineEditorRoute) -> Unit,
+    onOpenExercises: () -> Unit,
     viewModel: WorkoutsViewModel = viewModel(factory = WorkoutsViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,7 +67,12 @@ fun WorkoutsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Gym") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Gym") },
+                actions = { TextButton(onClick = onOpenExercises) { Text("Exercises") } },
+            )
+        },
         floatingActionButton = {
             if (uiState.active == null) {
                 ExtendedFloatingActionButton(

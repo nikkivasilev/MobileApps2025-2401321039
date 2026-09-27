@@ -23,7 +23,17 @@ data class Exercise(
     val muscleGroup: MuscleGroup,
     val type: ExerciseType,
     val isCustom: Boolean,
-)
+    val defaultSets: Int = DEFAULT_SETS,
+    /** Unused for cardio, which is logged as time and distance. */
+    val defaultReps: Int = DEFAULT_REPS,
+) {
+    companion object {
+        const val DEFAULT_SETS = 3
+        const val DEFAULT_REPS = 8
+        val SETS_RANGE = 1..20
+        val REPS_RANGE = 1..200
+    }
+}
 
 data class WorkoutSet(
     val id: Long,

@@ -1,5 +1,6 @@
 package com.macrosnap.app.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -14,6 +15,9 @@ data class ExerciseEntity(
     val muscleGroup: String,
     val type: String,
     val isCustom: Boolean,
+    /** How many sets, and reps per set, a routine or workout starts this exercise with. */
+    @ColumnInfo(defaultValue = "3") val defaultSets: Int = 3,
+    @ColumnInfo(defaultValue = "8") val defaultReps: Int = 8,
 )
 
 @Entity(tableName = "routines")

@@ -28,6 +28,9 @@ data class SupplementEditorRoute(val supplementId: Long = 0)
 @Serializable
 data class WorkoutRoute(val workoutId: Long)
 
+@Serializable
+data object ExercisesRoute
+
 /** routineId 0 creates a new routine. */
 @Serializable
 data class RoutineEditorRoute(val routineId: Long = 0)

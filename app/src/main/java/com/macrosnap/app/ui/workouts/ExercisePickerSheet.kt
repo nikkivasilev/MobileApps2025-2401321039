@@ -18,10 +18,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,13 +39,16 @@ import com.macrosnap.app.model.MuscleGroup
 fun ExercisePickerSheet(
     exercises: List<Exercise>,
     onSelect: (Exercise) -> Unit,
-    onCreate: (name: String, group: MuscleGroup, type: ExerciseType) -> Unit,
+    onCreate: (Exercise) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var group by rememberSaveable { mutableStateOf<MuscleGroup?>(null) }
     var newGroup by rememberSaveable { mutableStateOf(MuscleGroup.OTHER) }
     var newType by rememberSaveable { mutableStateOf(ExerciseType.STRENGTH) }
+    var newSets by rememberSaveable { mutableStateOf(Exercise.DEFAULT_SETS.toString()) }
+    var newReps by rememberSaveable { mutableStateOf(Exercise.DEFAULT_REPS.toString()) }
+    var showCreate by rememberSaveable { mutableStateOf(false) }
 
     val trimmed = query.trim()
     val filtered = exercises.filter { exercise ->
@@ -83,16 +84,6 @@ fun ExercisePickerSheet(
                     FilterChip(selected = group == option, onClick = { group = if (group == option) null else option }, label = { Text(option.label) })
                 }
             }
-            if (trimmed.isNotEmpty() && !exactMatch) {
-                CreateExerciseRow(
-                    name = trimmed,
-                    group = newGroup,
-                    onGroupChange = { newGroup = it },
-                    type = newType,
-                    onTypeChange = { newType = it },
-                    onCreate = { onCreate(trimmed, newGroup, newType) },
-                )
-            }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(filtered, key = { it.id }) { exercise ->
                     ListItem(
@@ -101,6 +92,50 @@ fun ExercisePickerSheet(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         modifier = Modifier.clickable { onSelect(exercise) },
                     )
+                }
+                // After the matches, and folded until asked for, so it never hides an existing exercise.
+                if (trimmed.isNotEmpty() && !exactMatch) {
+                    item(key = "create") {
+                        if (!showCreate) {
+                            OutlinedButton(onClick = { showCreate = true }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                                Text("Add \"$trimmed\" as a new exercise")
+                            }
+                        } else {
+                            val sets = parseDefaultSets(newSets)
+                            val reps = if (newType == ExerciseType.CARDIO) Exercise.DEFAULT_REPS else parseDefaultReps(newReps)
+                            CreateExerciseRow(
+                                name = trimmed,
+                                group = newGroup,
+                                onGroupChange = { newGroup = it },
+                                type = newType,
+                                onTypeChange = {
+                                    // Follow the type's usual set count unless the user already typed their own.
+                                    if (parseDefaultSets(newSets) == defaultSetsFor(newType)) newSets = defaultSetsFor(it).toString()
+                                    newType = it
+                                },
+                                setsInput = newSets,
+                                onSetsChange = { newSets = it },
+                                repsInput = newReps,
+                                onRepsChange = { newReps = it },
+                                canCreate = sets != null && reps != null,
+                                onCreate = {
+                                    if (sets != null && reps != null) {
+                                        onCreate(
+                                            Exercise(
+                                                id = 0,
+                                                name = trimmed,
+                                                muscleGroup = newGroup,
+                                                type = newType,
+                                                isCustom = true,
+                                                defaultSets = sets,
+                                                defaultReps = reps,
+                                            ),
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -114,32 +149,30 @@ private fun CreateExerciseRow(
     onGroupChange: (MuscleGroup) -> Unit,
     type: ExerciseType,
     onTypeChange: (ExerciseType) -> Unit,
+    setsInput: String,
+    onSetsChange: (String) -> Unit,
+    repsInput: String,
+    onRepsChange: (String) -> Unit,
+    canCreate: Boolean,
     onCreate: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Not in the list? Add \"$name\"", style = MaterialTheme.typography.titleSmall)
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            MuscleGroup.entries.forEach { option ->
-                FilterChip(selected = group == option, onClick = { onGroupChange(option) }, label = { Text(option.label) })
-            }
-        }
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            ExerciseType.entries.forEachIndexed { index, option ->
-                SegmentedButton(
-                    selected = type == option,
-                    onClick = { onTypeChange(option) },
-                    shape = SegmentedButtonDefaults.itemShape(index, ExerciseType.entries.size),
-                ) { Text(if (option == ExerciseType.STRENGTH) "Weight × reps" else "Time / distance") }
-            }
-        }
-        Button(onClick = onCreate, modifier = Modifier.fillMaxWidth()) { Text("Create and add") }
+        Text("New exercise: $name", style = MaterialTheme.typography.titleSmall)
+        ExerciseDetailsFields(
+            group = group,
+            onGroupChange = onGroupChange,
+            type = type,
+            onTypeChange = onTypeChange,
+            setsInput = setsInput,
+            onSetsChange = onSetsChange,
+            repsInput = repsInput,
+            onRepsChange = onRepsChange,
+        )
+        Button(onClick = onCreate, enabled = canCreate, modifier = Modifier.fillMaxWidth()) { Text("Create and add") }
     }
 }

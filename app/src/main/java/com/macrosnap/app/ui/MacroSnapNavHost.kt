@@ -31,6 +31,7 @@ import com.macrosnap.app.ui.settings.SettingsScreen
 import com.macrosnap.app.ui.supplements.SupplementEditorScreen
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.today.TodayScreen
+import com.macrosnap.app.ui.workouts.ExercisesScreen
 import com.macrosnap.app.ui.workouts.RoutineEditorScreen
 import com.macrosnap.app.ui.workouts.WorkoutScreen
 import com.macrosnap.app.ui.workouts.WorkoutsScreen
@@ -96,7 +97,11 @@ fun MacroSnapNavHost() {
                 WorkoutsScreen(
                     onOpenWorkout = { navController.navigate(it) },
                     onOpenRoutine = { navController.navigate(it) },
+                    onOpenExercises = { navController.navigate(ExercisesRoute) },
                 )
+            }
+            composable<ExercisesRoute> {
+                ExercisesScreen(onClose = { navController.popBackStack() })
             }
             composable<WorkoutRoute> {
                 WorkoutScreen(onClose = { navController.popBackStack() })

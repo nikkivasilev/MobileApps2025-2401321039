@@ -28,6 +28,18 @@ interface WorkoutDao {
     @Insert
     suspend fun insertExercise(exercise: ExerciseEntity): Long
 
+    @Update
+    suspend fun updateExercise(exercise: ExerciseEntity)
+
+    @Query("DELETE FROM exercises WHERE id = :id")
+    suspend fun deleteExercise(id: Long)
+
+    @Query("SELECT COUNT(DISTINCT workoutId) FROM workout_sets WHERE exerciseId = :exerciseId")
+    suspend fun countWorkoutsUsing(exerciseId: Long): Int
+
+    @Query("SELECT COUNT(DISTINCT routineId) FROM routine_exercises WHERE exerciseId = :exerciseId")
+    suspend fun countRoutinesUsing(exerciseId: Long): Int
+
     // Routines
 
     @Transaction
