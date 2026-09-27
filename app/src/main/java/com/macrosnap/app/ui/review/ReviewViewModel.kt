@@ -21,10 +21,12 @@ import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.ui.ReviewRoute
+import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
 import com.macrosnap.app.ui.components.SERVINGS_STEP
+import com.macrosnap.app.ui.trySave
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -56,7 +58,7 @@ interface ReviewActions {
 }
 
 class ReviewViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val foodAnalyzer: FoodAnalyzer,
     private val productRepository: ProductRepository,
     private val recipeRepository: RecipeRepository,
@@ -69,8 +71,10 @@ class ReviewViewModel(
     private var lookupJob: Job? = null
     private var photoKept = false
 
+    private val restored = restoreReview(savedStateHandle[SAVED_REVIEW_KEY], route.photoPath)
+
     private val _uiState = MutableStateFlow(
-        ReviewUiState(
+        restored ?: ReviewUiState(
             mealType = MealType.forTime(LocalTime.now()),
             photoPath = route.photoPath,
             editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
@@ -85,11 +89,22 @@ class ReviewViewModel(
         get() = photoPath == null && barcode == null && recipeId == null && !describe
 
     init {
-        // A photo waits for the user's hint before the first request: one well-aimed call beats
-        // a blind guess plus a retry, and the free tier's daily quota is small.
-        when {
-            route.barcode != null -> lookUpBarcode(route.barcode)
-            route.recipeId != null -> loadRecipe(route.recipeId)
+        if (restored != null) {
+            nextDraftId = (restored.items.maxOfOrNull { it.id } ?: -1) + 1
+        } else {
+            // A photo waits for the user's hint before the first request: one well-aimed call beats
+            // a blind guess plus a retry, and the free tier's daily quota is small.
+            when {
+                route.barcode != null -> lookUpBarcode(route.barcode)
+                route.recipeId != null -> loadRecipe(route.recipeId)
+            }
+        }
+        viewModelScope.launch {
+            // Only settled states are kept: a restore mid-lookup would show an empty list with no
+            // request running, whereas no saved state simply starts the lookup again.
+            _uiState.collect { state ->
+                if (state.status == ReviewStatus.Ready) savedStateHandle[SAVED_REVIEW_KEY] = state.toSavedJson()
+            }
         }
     }
 
@@ -103,7 +118,9 @@ class ReviewViewModel(
                     state.copy(
                         status = ReviewStatus.Ready,
                         notes = outcome.value.notes,
-                        items = outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence) },
+                        // Keep what the user added by hand or by describing; only the photo's own guesses are replaced.
+                        items = state.items.filterNot { it.fromPhoto } +
+                            outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence, fromPhoto = true) },
                     )
                 }
                 is Outcome.Failure -> _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
@@ -222,21 +239,28 @@ class ReviewViewModel(
         if (!state.canSave) return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            foodRepository.addAll(
-                items = state.items.map { it.item },
-                date = LocalDate.ofEpochDay(route.epochDay),
-                mealType = state.mealType,
-                source = when {
-                    route.photoPath != null -> EntrySource.PHOTO
-                    route.barcode != null -> EntrySource.BARCODE
-                    route.recipeId != null -> EntrySource.RECIPE
-                    route.describe -> EntrySource.TEXT
-                    else -> EntrySource.MANUAL
-                },
-                photoPath = route.photoPath,
-            )
-            photoKept = true
-            _effects.send(ReviewEffect.Saved)
+            val saved = trySave {
+                foodRepository.addAll(
+                    items = state.items.map { it.item },
+                    date = LocalDate.ofEpochDay(route.epochDay),
+                    mealType = state.mealType,
+                    source = when {
+                        route.photoPath != null -> EntrySource.PHOTO
+                        route.barcode != null -> EntrySource.BARCODE
+                        route.recipeId != null -> EntrySource.RECIPE
+                        route.describe -> EntrySource.TEXT
+                        else -> EntrySource.MANUAL
+                    },
+                    photoPath = route.photoPath,
+                )
+            }
+            if (saved) {
+                photoKept = true
+                _effects.send(ReviewEffect.Saved)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(ReviewEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 
@@ -246,6 +270,7 @@ class ReviewViewModel(
 
     companion object {
         private const val MIN_GRAMS = 5.0
+        private const val SAVED_REVIEW_KEY = "review"
 
         val Factory = viewModelFactory {
             initializer {

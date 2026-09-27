@@ -16,7 +16,9 @@ import com.macrosnap.app.model.SetRecord
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.sum
+import com.macrosnap.app.ui.currentDates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,18 +44,11 @@ class ProgressViewModel(
 ) : ViewModel() {
 
     private val weightInput = MutableStateFlow("")
+    /** Null means today; set when logging a weigh-in from an earlier day. */
+    private val weightDate = MutableStateFlow<LocalDate?>(null)
     private val selectedExerciseId = MutableStateFlow<Long?>(null)
 
     val uiState: StateFlow<ProgressUiState> = run {
-        val today = LocalDate.now()
-        val weekStart = today.minusDays(DAYS_SHOWN - 1)
-
-        val wellness = combine(
-            wellnessRepository.observeSleepRange(weekStart, today),
-            wellnessRepository.observeWaterRange(weekStart, today),
-            workoutRepository.observeWorkoutDays(weekStart, today),
-        ) { sleep, water, days -> WellnessWeek(sleep, water, days) }
-
         val trained = combine(workoutRepository.observeExercises(), workoutRepository.observeExerciseIdsWithHistory()) { all, ids ->
             all.filter { it.id in ids.toSet() }
         }
@@ -67,16 +62,38 @@ class ProgressViewModel(
             }
         }
 
-        combine(
-            weightInput,
+        // The 7-day window slides forward at midnight instead of staying on the day the screen opened.
+        currentDates().flatMapLatest { today -> observeWeek(today, foodRepository, wellnessRepository, workoutRepository, settingsStore, strength) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
+    }
+
+    private fun observeWeek(
+        today: LocalDate,
+        foodRepository: FoodRepository,
+        wellnessRepository: WellnessRepository,
+        workoutRepository: WorkoutRepository,
+        settingsStore: SettingsStore,
+        strength: Flow<Strength>,
+    ): Flow<ProgressUiState> {
+        val weekStart = today.minusDays(DAYS_SHOWN - 1)
+
+        val wellness = combine(
+            wellnessRepository.observeSleepRange(weekStart, today),
+            wellnessRepository.observeWaterRange(weekStart, today),
+            workoutRepository.observeWorkoutDays(weekStart, today),
+        ) { sleep, water, days -> WellnessWeek(sleep, water, days) }
+
+        return combine(
+            combine(weightInput, weightDate) { input, date -> input to date },
             weightRepository.observeAll(),
             foodRepository.observeRange(weekStart, today),
             settingsStore.settings,
             combine(wellness, strength) { w, s -> w to s },
-        ) { input, weights, entries, settings, (wellnessWeek, strengthData) ->
+        ) { (input, date), weights, entries, settings, (wellnessWeek, strengthData) ->
             val totalsByDate = entries.groupBy { it.date }.mapValues { (_, day) -> day.map { it.item.total }.sum() }
             ProgressUiState(
                 weightInput = input,
+                weightDate = date,
                 weights = weights,
                 week = (0 until DAYS_SHOWN).map { offset ->
                     val date = weekStart.plusDays(offset)
@@ -92,17 +109,23 @@ class ProgressViewModel(
                 selectedExercise = strengthData.selected,
                 records = strengthData.records,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
+        }
     }
 
     fun onWeightInputChange(input: String) {
         weightInput.value = input
     }
 
+    fun onWeightDateChange(date: LocalDate) {
+        weightDate.value = date.takeIf { it < LocalDate.now() }
+    }
+
     fun onLogWeight() {
         val weight = uiState.value.parsedWeight ?: return
+        val date = weightDate.value ?: LocalDate.now()
         weightInput.value = ""
-        viewModelScope.launch { weightRepository.log(LocalDate.now(), weight) }
+        weightDate.value = null
+        viewModelScope.launch { weightRepository.log(date, weight) }
     }
 
     fun onDeleteWeight(date: LocalDate) {

@@ -5,6 +5,7 @@ import com.macrosnap.app.data.local.SupplementEntity
 import com.macrosnap.app.data.local.SupplementLogEntity
 import com.macrosnap.app.model.Supplement
 import com.macrosnap.app.model.SupplementStatus
+import com.macrosnap.app.model.sumMicros
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -14,9 +15,24 @@ class SupplementRepository(private val supplementDao: SupplementDao) {
 
     fun observeAll(): Flow<List<Supplement>> = supplementDao.observeAll().map { rows -> rows.map { it.toModel() } }
 
+    /**
+     * Active supplements plus any no longer taken that were logged that day, so switching one off
+     * doesn't erase it from past days. Nutrients come from each dose's snapshot.
+     */
     fun observeDay(date: LocalDate): Flow<List<SupplementStatus>> =
-        combine(supplementDao.observeActive(), supplementDao.observeLogs(date.toEpochDay())) { supplements, logs ->
-            supplements.map { row -> SupplementStatus(row.toModel(), logs.count { it.supplementId == row.id }) }
+        combine(supplementDao.observeAll(), supplementDao.observeLogs(date.toEpochDay())) { supplements, logs ->
+            val logsBySupplement = logs.groupBy { it.supplementId }
+            supplements
+                .filter { it.isActive || it.id in logsBySupplement }
+                .map { row ->
+                    val supplement = row.toModel()
+                    val doses = logsBySupplement[row.id].orEmpty()
+                    SupplementStatus(
+                        supplement = supplement,
+                        takenCount = doses.size,
+                        micros = doses.map { log -> log.micros?.let(MicrosJson::decode) ?: supplement.micros }.sumMicros(),
+                    )
+                }
         }
 
     suspend fun get(id: Long): Supplement? = supplementDao.get(id)?.toModel()
@@ -39,8 +55,17 @@ class SupplementRepository(private val supplementDao: SupplementDao) {
 
     suspend fun delete(id: Long) = supplementDao.delete(id)
 
-    suspend fun take(supplementId: Long, date: LocalDate) =
-        supplementDao.insertLog(SupplementLogEntity(supplementId = supplementId, epochDay = date.toEpochDay(), takenAt = System.currentTimeMillis()))
+    suspend fun take(supplementId: Long, date: LocalDate) {
+        val supplement = supplementDao.get(supplementId) ?: return
+        supplementDao.insertLog(
+            SupplementLogEntity(
+                supplementId = supplementId,
+                epochDay = date.toEpochDay(),
+                takenAt = System.currentTimeMillis(),
+                micros = supplement.micros,
+            ),
+        )
+    }
 
     suspend fun untake(supplementId: Long, date: LocalDate) = supplementDao.deleteLatestLog(supplementId, date.toEpochDay())
 }

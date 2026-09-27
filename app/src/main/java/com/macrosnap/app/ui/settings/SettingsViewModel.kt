@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -116,9 +117,14 @@ class SettingsViewModel(
         val apiKey = state.apiKeyInput.trim()
         val models = state.models.ifEmpty { AppSettings.DEFAULT_MODELS }
         viewModelScope.launch {
+            val hadKey = settingsStore.settings.first().apiKey.isNotBlank()
             settingsStore.setApiKey(apiKey)
             settingsStore.setModels(models)
-            if (apiKey.isEmpty()) return@launch
+            if (apiKey.isEmpty()) {
+                // An empty field removes the key; say so rather than let it look like nothing happened.
+                if (hadKey) _effects.send(SettingsEffect.ShowMessage("API key removed. Photo and text analysis are off until you add one."))
+                return@launch
+            }
 
             _uiState.update { it.copy(keyCheck = KeyCheckState.Checking) }
             val result = when (val outcome = apiKeyChecker.check(apiKey, models)) {

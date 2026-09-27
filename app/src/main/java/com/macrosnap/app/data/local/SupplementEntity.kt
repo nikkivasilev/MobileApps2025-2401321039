@@ -34,4 +34,6 @@ data class SupplementLogEntity(
     val supplementId: Long,
     val epochDay: Long,
     val takenAt: Long,
+    /** Nutrients of this dose as the supplement was defined when taken, so later edits don't rewrite history. */
+    val micros: String? = null,
 )

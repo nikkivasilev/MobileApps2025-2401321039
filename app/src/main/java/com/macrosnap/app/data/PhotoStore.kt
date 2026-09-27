@@ -13,9 +13,22 @@ class PhotoStore(
     private val io: CoroutineDispatcher,
 ) {
 
+    private val photoDir: File get() = File(context.filesDir, "photos")
+
     fun newPhotoFile(): File {
-        val dir = File(context.filesDir, "photos").apply { mkdirs() }
+        val dir = photoDir.apply { mkdirs() }
         return File(dir, "meal_${System.currentTimeMillis()}.jpg")
+    }
+
+    /**
+     * Deletes photos no entry points to: reviews abandoned when the process died never got to
+     * clean up after themselves. Recent files are spared, since a restored review may still use one.
+     */
+    suspend fun deleteUnreferenced(referenced: Set<String>, olderThanMillis: Long) = withContext(io) {
+        val cutoff = System.currentTimeMillis() - olderThanMillis
+        photoDir.listFiles().orEmpty()
+            .filter { it.isFile && it.path !in referenced && it.lastModified() < cutoff }
+            .forEach { it.delete() }
     }
 
     fun shareableUri(file: File): Uri =

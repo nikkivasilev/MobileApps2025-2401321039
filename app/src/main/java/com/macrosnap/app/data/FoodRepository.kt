@@ -52,6 +52,10 @@ class FoodRepository(
 
     suspend fun update(entry: FoodEntry) = foodDao.update(entry.toEntity())
 
+    suspend fun deleteOrphanPhotos() {
+        photoStore.deleteUnreferenced(foodDao.photoPaths().toSet(), olderThanMillis = ORPHAN_PHOTO_GRACE_MILLIS)
+    }
+
     suspend fun delete(entry: FoodEntry) {
         foodDao.deleteById(entry.id)
         // One photo can back several entries (every item on the plate), so it goes with the last one.
@@ -59,6 +63,8 @@ class FoodRepository(
         if (foodDao.countByPhoto(photoPath) == 0) photoStore.delete(photoPath)
     }
 }
+
+private const val ORPHAN_PHOTO_GRACE_MILLIS = 2L * 24 * 60 * 60 * 1000
 
 private fun FoodEntryEntity.toModel() = FoodEntry(
     id = id,

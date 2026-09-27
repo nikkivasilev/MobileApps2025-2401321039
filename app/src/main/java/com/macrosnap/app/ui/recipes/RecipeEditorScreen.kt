@@ -28,6 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -60,24 +63,27 @@ fun RecipeEditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val snackbarHostState = remember { SnackbarHostState() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
                     RecipeEditorEffect.Close -> onClose()
+                    is RecipeEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
                 }
             }
         }
     }
 
-    RecipeEditorContent(uiState = uiState, actions = viewModel, onClose = onClose)
+    RecipeEditorContent(uiState = uiState, actions = viewModel, snackbarHostState = snackbarHostState, onClose = onClose)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeEditorContent(uiState: RecipeEditorUiState, actions: RecipeEditorActions, onClose: () -> Unit) {
+private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState: SnackbarHostState, actions: RecipeEditorActions, onClose: () -> Unit) {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(if (uiState.isExisting) "Edit recipe" else "New recipe") },

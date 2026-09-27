@@ -16,7 +16,9 @@ class MacroSnapApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { container.workoutRepository.seedExercisesIfEmpty() }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        scope.launch { container.workoutRepository.seedExercisesIfEmpty() }
+        scope.launch { container.foodRepository.deleteOrphanPhotos() }
     }
 }
 

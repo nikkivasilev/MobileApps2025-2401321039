@@ -12,9 +12,6 @@ interface SupplementDao {
     @Query("SELECT * FROM supplements ORDER BY createdAt, id")
     fun observeAll(): Flow<List<SupplementEntity>>
 
-    @Query("SELECT * FROM supplements WHERE isActive = 1 ORDER BY createdAt, id")
-    fun observeActive(): Flow<List<SupplementEntity>>
-
     @Query("SELECT * FROM supplements WHERE id = :id")
     suspend fun get(id: Long): SupplementEntity?
 

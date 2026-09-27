@@ -26,13 +26,18 @@ class ImageEncoder(private val io: CoroutineDispatcher) {
         BitmapFactory.decodeFile(path, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw IOException("Unreadable image: $path")
 
+        val rotation = ExifInterface(path).rotationDegrees
+        // Already shrunk by an earlier attempt: send it as is rather than lose quality to another JPEG pass.
+        if (max(bounds.outWidth, bounds.outHeight) <= MAX_SIDE && rotation == 0 && bounds.outMimeType == "image/jpeg") {
+            return@withContext Base64.encodeToString(File(path).readBytes(), Base64.NO_WRAP)
+        }
+
         var sampleSize = 1
         while (max(bounds.outWidth, bounds.outHeight) / (sampleSize * 2) >= MAX_SIDE) sampleSize *= 2
 
         val decoded = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sampleSize })
             ?: throw IOException("Unreadable image: $path")
 
-        val rotation = ExifInterface(path).rotationDegrees
         val scale = min(1f, MAX_SIDE.toFloat() / max(decoded.width, decoded.height))
         val matrix = Matrix().apply {
             postScale(scale, scale)

@@ -40,5 +40,6 @@ data class RecipeEditorUiState(
 }
 
 sealed interface RecipeEditorEffect {
+    data class ShowMessage(val message: String) : RecipeEditorEffect
     data object Close : RecipeEditorEffect
 }

@@ -26,6 +26,7 @@ import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.Workout
+import com.macrosnap.app.ui.currentDates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,6 +96,17 @@ class TodayViewModel(
 
     private val _effects = Channel<TodayEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
+
+    init {
+        // Left open over midnight, "today" moves on with the clock; a past day being browsed stays put.
+        viewModelScope.launch {
+            var previousToday = LocalDate.now()
+            currentDates().collect { today ->
+                selectedDate.update { if (it == previousToday) today else it }
+                previousToday = today
+            }
+        }
+    }
 
     private val dayData = selectedDate.flatMapLatest { date ->
         combine(

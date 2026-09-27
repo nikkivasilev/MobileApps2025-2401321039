@@ -3,6 +3,7 @@ package com.macrosnap.app.ui.progress
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,8 +30,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +62,9 @@ import com.macrosnap.app.model.WeightEntry
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.components.formatSleepDuration
 import com.macrosnap.app.ui.whole
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -84,6 +92,7 @@ fun ProgressScreen(viewModel: ProgressViewModel = viewModel(factory = ProgressVi
             WeightCard(
                 uiState = uiState,
                 onInputChange = viewModel::onWeightInputChange,
+                onDateChange = viewModel::onWeightDateChange,
                 onLog = viewModel::onLogWeight,
                 onDelete = viewModel::onDeleteWeight,
             )
@@ -356,9 +365,12 @@ private fun WeekBars(
 private fun WeightCard(
     uiState: ProgressUiState,
     onInputChange: (String) -> Unit,
+    onDateChange: (LocalDate) -> Unit,
     onLog: () -> Unit,
     onDelete: (LocalDate) -> Unit,
 ) {
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Body weight", style = MaterialTheme.typography.titleMedium)
@@ -379,12 +391,15 @@ private fun WeightCard(
                 OutlinedTextField(
                     value = uiState.weightInput,
                     onValueChange = onInputChange,
-                    label = { Text("Today's weight (kg)") },
+                    label = { Text("Weight (kg)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
                 )
                 Button(onClick = onLog, enabled = uiState.parsedWeight != null) { Text("Log") }
+            }
+            TextButton(onClick = { showDatePicker = true }, contentPadding = PaddingValues(0.dp)) {
+                Text(uiState.weightDate?.let { "For ${it.format(DATE_FORMAT)}" } ?: "For today · change date")
             }
 
             if (uiState.weights.size >= 2) WeightChart(uiState.weights)
@@ -399,6 +414,44 @@ private fun WeightCard(
                 }
             }
         }
+    }
+
+    if (showDatePicker) {
+        WeightDatePicker(
+            initial = uiState.weightDate ?: LocalDate.now(),
+            onPick = {
+                onDateChange(it)
+                showDatePicker = false
+            },
+            onDismiss = { showDatePicker = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WeightDatePicker(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+    // The picker works in UTC midnights; converting through UTC keeps the chosen calendar day intact.
+    val todayMillis = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= todayMillis
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
+                        ?: onDismiss()
+                },
+            ) { Text("OK") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    ) {
+        DatePicker(state = state)
     }
 }
 
