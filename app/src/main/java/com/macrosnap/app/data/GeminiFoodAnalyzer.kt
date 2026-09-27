@@ -81,6 +81,7 @@ class GeminiFoodAnalyzer(
             generationConfig = GenerationConfig(responseMimeType = "application/json", responseSchema = schema),
         )
         var lastError: DataError = DataError.ModelUnavailable
+        var hitMinuteLimit = false
         for (model in settings.models) {
             val outcome = try {
                 extractText(api.generateContent(model, settings.apiKey, request))
@@ -93,10 +94,13 @@ class GeminiFoodAnalyzer(
                 is Outcome.Success -> return outcome
                 is Outcome.Failure -> {
                     lastError = outcome.error
+                    if ((outcome.error as? DataError.RateLimited)?.daily == false) hitMinuteLimit = true
                     if (!outcome.error.isWorthTryingNextModel) return outcome
                 }
             }
         }
+        // If any model was only rate-limited for the minute, waiting helps, so say that rather than "used up today".
+        if (lastError is DataError.RateLimited && hitMinuteLimit) lastError = DataError.RateLimited(daily = false)
         return Outcome.Failure(lastError)
     }
 

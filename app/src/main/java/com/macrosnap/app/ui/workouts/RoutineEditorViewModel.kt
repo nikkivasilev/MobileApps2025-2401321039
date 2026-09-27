@@ -16,6 +16,8 @@ import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.model.Routine
 import com.macrosnap.app.model.RoutineExercise
 import com.macrosnap.app.ui.RoutineEditorRoute
+import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
+import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +55,7 @@ data class RoutineEditorUiState(
 }
 
 sealed interface RoutineEditorEffect {
+    data class ShowMessage(val message: String) : RoutineEditorEffect
     data object Close : RoutineEditorEffect
 }
 
@@ -131,8 +134,12 @@ class RoutineEditorViewModel(
         val routine = _uiState.value.takeIf { it.canSave }?.routine ?: return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            workoutRepository.saveRoutine(routine)
-            _effects.send(RoutineEditorEffect.Close)
+            if (trySave { workoutRepository.saveRoutine(routine) }) {
+                _effects.send(RoutineEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(RoutineEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 
@@ -143,8 +150,12 @@ class RoutineEditorViewModel(
     override fun onDeleteConfirm() {
         _uiState.update { it.copy(showDeleteConfirm = false, isSaving = true) }
         viewModelScope.launch {
-            workoutRepository.deleteRoutine(route.routineId)
-            _effects.send(RoutineEditorEffect.Close)
+            if (trySave { workoutRepository.deleteRoutine(route.routineId) }) {
+                _effects.send(RoutineEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(RoutineEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 

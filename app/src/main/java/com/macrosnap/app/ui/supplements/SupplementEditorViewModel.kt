@@ -13,9 +13,11 @@ import com.macrosnap.app.data.FoodAnalyzer
 import com.macrosnap.app.data.SupplementRepository
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.SupplementEditorRoute
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.toInputs
+import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,8 +119,12 @@ class SupplementEditorViewModel(
         val supplement = _uiState.value.takeIf { it.canSave }?.supplement ?: return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            supplementRepository.save(supplement)
-            _effects.send(SupplementEditorEffect.Close)
+            if (trySave { supplementRepository.save(supplement) }) {
+                _effects.send(SupplementEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(SupplementEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 
@@ -129,8 +135,12 @@ class SupplementEditorViewModel(
     override fun onDeleteConfirm() {
         _uiState.update { it.copy(showDeleteConfirm = false, isSaving = true) }
         viewModelScope.launch {
-            supplementRepository.delete(route.supplementId)
-            _effects.send(SupplementEditorEffect.Close)
+            if (trySave { supplementRepository.delete(route.supplementId) }) {
+                _effects.send(SupplementEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(SupplementEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 

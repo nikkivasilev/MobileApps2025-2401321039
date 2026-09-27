@@ -18,12 +18,13 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
 
     suspend fun save(recipe: Recipe): Long {
         val now = System.currentTimeMillis()
+        val existing = if (recipe.id != 0L) recipeDao.get(recipe.id)?.recipe else null
         val entity = RecipeEntity(
             id = recipe.id,
             name = recipe.name,
             cookedWeightGrams = recipe.cookedWeightGrams,
             servings = recipe.servings,
-            createdAt = now,
+            createdAt = existing?.createdAt ?: now,
             updatedAt = now,
         )
         val ingredients = recipe.ingredients.mapIndexed { index, item ->

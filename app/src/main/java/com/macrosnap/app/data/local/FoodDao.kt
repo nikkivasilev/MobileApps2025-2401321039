@@ -26,4 +26,7 @@ interface FoodDao {
 
     @Query("SELECT COUNT(*) FROM food_entries WHERE photoPath = :photoPath")
     suspend fun countByPhoto(photoPath: String): Int
+
+    @Query("SELECT DISTINCT photoPath FROM food_entries WHERE photoPath IS NOT NULL")
+    suspend fun photoPaths(): List<String>
 }

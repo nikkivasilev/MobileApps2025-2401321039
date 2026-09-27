@@ -15,10 +15,12 @@ import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.ui.RecipeEditorRoute
+import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
+import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -144,8 +146,12 @@ class RecipeEditorViewModel(
         val recipe = _uiState.value.takeIf { it.canSave }?.recipe ?: return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            recipeRepository.save(recipe)
-            _effects.send(RecipeEditorEffect.Close)
+            if (trySave { recipeRepository.save(recipe) }) {
+                _effects.send(RecipeEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(RecipeEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 
@@ -156,8 +162,12 @@ class RecipeEditorViewModel(
     override fun onDeleteConfirm() {
         _uiState.update { it.copy(showDeleteConfirm = false, isSaving = true) }
         viewModelScope.launch {
-            recipeRepository.delete(route.recipeId)
-            _effects.send(RecipeEditorEffect.Close)
+            if (trySave { recipeRepository.delete(route.recipeId) }) {
+                _effects.send(RecipeEditorEffect.Close)
+            } else {
+                _uiState.update { it.copy(isSaving = false) }
+                _effects.send(RecipeEditorEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
         }
     }
 

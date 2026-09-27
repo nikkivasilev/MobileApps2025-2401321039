@@ -12,6 +12,8 @@ import java.time.LocalDate
 
 data class ProgressUiState(
     val weightInput: String = "",
+    /** Day the next weigh-in is logged for; null means today. */
+    val weightDate: LocalDate? = null,
     val weights: List<WeightEntry> = emptyList(),
     val week: List<DayTotal> = emptyList(),
     val goals: Goals = Goals.DEFAULT,

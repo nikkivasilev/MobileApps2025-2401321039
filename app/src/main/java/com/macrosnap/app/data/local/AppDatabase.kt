@@ -21,7 +21,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutEntity::class,
         WorkoutSetEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -122,6 +122,16 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sets_workoutId` ON `workout_sets` (`workoutId`)")
                     db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sets_exerciseId` ON `workout_sets` (`exerciseId`)")
+                }
+            },
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE `supplement_logs` ADD COLUMN `micros` TEXT")
+                    // Existing doses get the supplement's current content: the best record there is.
+                    db.execSQL(
+                        "UPDATE `supplement_logs` SET `micros` = " +
+                            "(SELECT `micros` FROM `supplements` WHERE `supplements`.`id` = `supplement_logs`.`supplementId`)",
+                    )
                 }
             },
         )

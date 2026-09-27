@@ -9,23 +9,27 @@ import kotlin.math.roundToInt
 /**
  * MET-based estimate: kcal = MET × body weight (kg) × hours. Resistance training is scored on
  * the whole session at 3.5 MET (the Compendium's "weight training, general", which already
- * accounts for rest between sets); cardio sets use their own MET and logged time.
+ * accounts for rest between sets); cardio sets use their own MET and logged time. The session
+ * time credited to strength is capped per completed set, so a workout left open for hours
+ * doesn't turn into thousands of kcal.
  */
 object CalorieBurnEstimator {
 
     const val DEFAULT_BODY_WEIGHT_KG = 75.0
     private const val STRENGTH_MET = 3.5
+    /** A set plus the rest after it rarely runs past this; more session time than that was idle. */
+    private const val MAX_SECONDS_PER_STRENGTH_SET = 5 * 60
 
     fun estimate(workout: Workout, bodyWeightKg: Double): Int {
         val weight = bodyWeightKg.takeIf { it > 0 } ?: DEFAULT_BODY_WEIGHT_KG
         var cardioSeconds = 0
         var kcal = 0.0
-        var hasStrength = false
+        var strengthSets = 0
 
         workout.exercises.forEach { entry ->
             entry.sets.filter { it.isDone && it.hasWork }.forEach { set ->
                 when (entry.exercise.type) {
-                    ExerciseType.STRENGTH -> hasStrength = true
+                    ExerciseType.STRENGTH -> strengthSets++
                     ExerciseType.CARDIO -> {
                         val seconds = set.durationSec.takeIf { it > 0 } ?: return@forEach
                         cardioSeconds += seconds
@@ -34,9 +38,10 @@ object CalorieBurnEstimator {
                 }
             }
         }
-        if (hasStrength) {
+        if (strengthSets > 0) {
             val totalSeconds = ((workout.endedAt ?: System.currentTimeMillis()) - workout.startedAt) / 1000.0
-            val strengthSeconds = (totalSeconds - cardioSeconds).coerceAtLeast(0.0)
+            val strengthSeconds = (totalSeconds - cardioSeconds)
+                .coerceIn(0.0, strengthSets * MAX_SECONDS_PER_STRENGTH_SET.toDouble())
             kcal += STRENGTH_MET * weight * strengthSeconds / 3600.0
         }
         return kcal.roundToInt()

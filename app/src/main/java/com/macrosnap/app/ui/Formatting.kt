@@ -22,7 +22,11 @@ fun DataError.userMessage(): String = when (this) {
     DataError.NoApiKey -> "Add your free Gemini API key in Settings to analyze photos."
     DataError.InvalidApiKey -> "The Gemini API key was rejected. Check it in Settings."
     DataError.Network -> "No connection. Check your internet and try again."
-    DataError.RateLimited -> "Today's free quota is used up on every configured model. Try again later or log this one manually."
+    is DataError.RateLimited -> if (daily) {
+        "Today's free quota is used up on every configured model. Try again later or log this one manually."
+    } else {
+        "Gemini's free tier is busy (per-minute limit). Wait a minute and try again, or log this one manually."
+    }
     DataError.ModelUnavailable -> "None of the configured Gemini models are available. Check the model list in Settings."
     DataError.Server -> "Gemini is having trouble right now. Try again in a moment."
     DataError.BadImage -> "That photo couldn't be read. Try taking it again."

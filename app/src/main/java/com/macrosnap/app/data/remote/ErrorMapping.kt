@@ -24,7 +24,8 @@ private fun HttpException.toDataError(): DataError {
         400 -> if ("API key" in body || "API_KEY" in body) DataError.InvalidApiKey else DataError.Unexpected(body.take(300))
         401, 403 -> DataError.InvalidApiKey
         404 -> DataError.ModelUnavailable
-        429 -> DataError.RateLimited
+        // Gemini names the exhausted quota, e.g. GenerateRequestsPerDayPerProjectPerModel-FreeTier.
+        429 -> DataError.RateLimited(daily = "PerDay" in body)
         in 500..599 -> DataError.Server
         else -> DataError.Unexpected("HTTP ${code()}")
     }

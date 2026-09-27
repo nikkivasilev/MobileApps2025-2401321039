@@ -14,7 +14,8 @@ data class Supplement(
 data class SupplementStatus(
     val supplement: Supplement,
     val takenCount: Int,
+    /** What the doses taken that day contained, as recorded when each was taken. */
+    val micros: Micros,
 ) {
     val isDone: Boolean get() = takenCount >= supplement.timesPerDay
-    val micros: Micros get() = supplement.micros.scaled(takenCount.toDouble())
 }

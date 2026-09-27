@@ -35,5 +35,6 @@ sealed interface ReviewStatus {
 }
 
 sealed interface ReviewEffect {
+    data class ShowMessage(val message: String) : ReviewEffect
     data object Saved : ReviewEffect
 }

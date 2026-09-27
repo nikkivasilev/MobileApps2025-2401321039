@@ -41,5 +41,6 @@ data class SupplementEditorUiState(
 }
 
 sealed interface SupplementEditorEffect {
+    data class ShowMessage(val message: String) : SupplementEditorEffect
     data object Close : SupplementEditorEffect
 }
