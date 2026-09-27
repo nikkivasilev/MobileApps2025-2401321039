@@ -4,12 +4,12 @@ import com.macrosnap.app.data.local.ExerciseEntity
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
 
-/** Seeded once on first launch; the user adds anything missing as a custom exercise. */
+/** Seeded once on first launch; the user adds anything missing from the Exercises screen. */
 object ExerciseLibrary {
 
     val DEFAULTS: List<ExerciseEntity> = buildList {
         fun s(name: String, group: MuscleGroup) = add(ExerciseEntity(name = name, muscleGroup = group.name, type = ExerciseType.STRENGTH.name, isCustom = false))
-        fun c(name: String) = add(ExerciseEntity(name = name, muscleGroup = MuscleGroup.CARDIO.name, type = ExerciseType.CARDIO.name, isCustom = false))
+        fun c(name: String) = add(ExerciseEntity(name = name, muscleGroup = MuscleGroup.CARDIO.name, type = ExerciseType.CARDIO.name, isCustom = false, defaultSets = 1))
 
         s("Bench press", MuscleGroup.CHEST)
         s("Incline bench press", MuscleGroup.CHEST)

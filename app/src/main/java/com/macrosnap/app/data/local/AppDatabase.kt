@@ -21,7 +21,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutEntity::class,
         WorkoutSetEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -132,6 +132,14 @@ abstract class AppDatabase : RoomDatabase() {
                         "UPDATE `supplement_logs` SET `micros` = " +
                             "(SELECT `micros` FROM `supplements` WHERE `supplements`.`id` = `supplement_logs`.`supplementId`)",
                     )
+                }
+            },
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE `exercises` ADD COLUMN `defaultSets` INTEGER NOT NULL DEFAULT 3")
+                    db.execSQL("ALTER TABLE `exercises` ADD COLUMN `defaultReps` INTEGER NOT NULL DEFAULT 8")
+                    // A cardio exercise is usually one continuous effort, not three.
+                    db.execSQL("UPDATE `exercises` SET `defaultSets` = 1 WHERE `type` = 'CARDIO'")
                 }
             },
         )

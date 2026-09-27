@@ -11,8 +11,6 @@ import androidx.navigation.toRoute
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.WorkoutRepository
 import com.macrosnap.app.model.Exercise
-import com.macrosnap.app.model.ExerciseType
-import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.model.Routine
 import com.macrosnap.app.model.RoutineExercise
 import com.macrosnap.app.ui.RoutineEditorRoute
@@ -28,8 +26,8 @@ import kotlinx.coroutines.launch
 
 data class RoutineExerciseDraft(
     val exercise: Exercise,
-    val setsInput: String = "3",
-    val repsInput: String = "8",
+    val setsInput: String = exercise.defaultSets.toString(),
+    val repsInput: String = exercise.defaultReps.toString(),
 ) {
     val sets: Int? get() = setsInput.trim().toIntOrNull()?.takeIf { it in 1..20 }
     val reps: Int? get() = repsInput.trim().toIntOrNull()?.takeIf { it in 1..200 }
@@ -65,7 +63,7 @@ interface RoutineEditorActions {
     fun onAddExerciseClick()
     fun onPickerDismiss()
     fun onExerciseSelected(exercise: Exercise)
-    fun onExerciseCreated(name: String, group: MuscleGroup, type: ExerciseType)
+    fun onExerciseCreated(exercise: Exercise)
     fun onDraftChange(index: Int, draft: RoutineExerciseDraft)
     fun onDraftRemove(index: Int)
     fun onSave()
@@ -118,8 +116,8 @@ class RoutineEditorViewModel(
         it.copy(showPicker = false, drafts = it.drafts + RoutineExerciseDraft(exercise))
     }
 
-    override fun onExerciseCreated(name: String, group: MuscleGroup, type: ExerciseType) {
-        viewModelScope.launch { onExerciseSelected(workoutRepository.addCustomExercise(name, group, type)) }
+    override fun onExerciseCreated(exercise: Exercise) {
+        viewModelScope.launch { onExerciseSelected(workoutRepository.saveExercise(exercise)) }
     }
 
     override fun onDraftChange(index: Int, draft: RoutineExerciseDraft) = _uiState.update { state ->

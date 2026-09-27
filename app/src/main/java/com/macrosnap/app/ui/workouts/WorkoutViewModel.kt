@@ -15,7 +15,6 @@ import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.data.settings.SettingsStore
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
-import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutExercise
 import com.macrosnap.app.model.WorkoutSet
@@ -38,7 +37,7 @@ interface WorkoutActions {
     fun onAddExerciseClick()
     fun onPickerDismiss()
     fun onExerciseSelected(exercise: Exercise)
-    fun onExerciseCreated(name: String, group: MuscleGroup, type: ExerciseType)
+    fun onExerciseCreated(exercise: Exercise)
     fun onRemoveExercise(exerciseId: Long)
     fun onAddSet(exerciseId: Long)
     fun onRemoveLastSet(exerciseId: Long)
@@ -119,18 +118,26 @@ class WorkoutViewModel(
             return
         }
         viewModelScope.launch {
+            // Repeat last session's sets; an exercise never logged before starts from its defaults.
             val last = workoutRepository.lastSets(exercise.id, workout.id)
-            val set = workoutRepository.addSet(workout.id, exercise, workout.exercises.size, 0, last.firstOrNull())
-            updateWorkout { it.copy(exercises = it.exercises + WorkoutExercise(exercise, listOf(set))) }
-            _uiState.update { it.copy(inputs = it.inputs + (set.id to set.toInputs()), lastSets = it.lastSets + (exercise.id to last)) }
+            val order = workout.exercises.size
+            val sets = if (last.isNotEmpty()) {
+                last.mapIndexed { index, previous -> workoutRepository.addSet(workout.id, exercise, order, index, previous) }
+            } else {
+                val reps = if (exercise.type == ExerciseType.STRENGTH) exercise.defaultReps else 0
+                (0 until exercise.defaultSets.coerceAtLeast(1)).map { index ->
+                    workoutRepository.addSet(workout.id, exercise, order, index, template = null, reps = reps)
+                }
+            }
+            updateWorkout { it.copy(exercises = it.exercises + WorkoutExercise(exercise, sets)) }
+            _uiState.update { state ->
+                state.copy(inputs = state.inputs + sets.associate { it.id to it.toInputs() }, lastSets = state.lastSets + (exercise.id to last))
+            }
         }
     }
 
-    override fun onExerciseCreated(name: String, group: MuscleGroup, type: ExerciseType) {
-        viewModelScope.launch {
-            val exercise = workoutRepository.addCustomExercise(name, group, type)
-            onExerciseSelected(exercise)
-        }
+    override fun onExerciseCreated(exercise: Exercise) {
+        viewModelScope.launch { onExerciseSelected(workoutRepository.saveExercise(exercise)) }
     }
 
     override fun onRemoveExercise(exerciseId: Long) {
