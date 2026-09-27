@@ -29,4 +29,4 @@ enum class MealType(val label: String) {
     }
 }
 
-enum class EntrySource { PHOTO, BARCODE, MANUAL, TEXT, RECIPE }
+enum class EntrySource { PHOTO, BARCODE, MANUAL, TEXT, RECIPE, HISTORY }

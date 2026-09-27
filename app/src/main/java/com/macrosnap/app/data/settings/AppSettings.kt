@@ -17,6 +17,8 @@ data class AppSettings(
     val restSeconds: Int,
     /** When on, Today's calorie goal grows by the estimated burn of that day's workouts. */
     val addWorkoutBurn: Boolean,
+    /** Food keys hidden from "Your foods", with when; logging one again after that brings it back. */
+    val hiddenFoods: Map<String, Long> = emptyMap(),
 ) {
     val nutrientTargets: Micros get() = Nutrient.defaultTargets(profile?.sex) + nutrientOverrides
 

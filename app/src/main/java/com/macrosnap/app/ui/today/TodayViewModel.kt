@@ -22,11 +22,14 @@ import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.Workout
+import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.currentDates
+import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +55,8 @@ interface TodayActions {
     fun onEditorDismiss()
     fun onEntryEdited(item: FoodItem, mealType: MealType?)
     fun onEntryDeleted()
+    fun onLogAgain()
+    fun onHidePastFood(food: PastFood)
     fun onSupplementTaken(supplementId: Long)
     fun onSupplementUntaken(supplementId: Long)
     fun onWaterAdd(ml: Int)
@@ -128,8 +133,8 @@ class TodayViewModel(
         dayData,
         settingsStore.settings,
         recipeRepository.observeAll(),
-        combine(overlays, bodyWeight) { o, w -> o to w },
-    ) { day, settings, recipes, (overlays, weightKg) ->
+        combine(overlays, bodyWeight, foodRepository.observePastFoods()) { o, w, p -> Triple(o, w, p) },
+    ) { day, settings, recipes, (overlays, weightKg, pastFoods) ->
         TodayUiState(
             date = day.date,
             goals = settings.goals,
@@ -146,6 +151,7 @@ class TodayViewModel(
             showSleepSheet = overlays.showSleepSheet,
             workoutBurnKcal = day.workouts.filter { !it.isActive }.sumOf { CalorieBurnEstimator.estimate(it, weightKg) },
             addWorkoutBurn = settings.addWorkoutBurn,
+            pastFoods = pastFoods,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(date = LocalDate.now()))
 
@@ -187,6 +193,34 @@ class TodayViewModel(
         editing.value = null
         viewing.value = null
         viewModelScope.launch { foodRepository.delete(entry) }
+    }
+
+    /** Logs the viewed entry once more, today, in the meal that fits the time: a repeat is eaten now. */
+    override fun onLogAgain() {
+        val entry = viewing.value ?: return
+        viewing.value = null
+        val today = LocalDate.now()
+        viewModelScope.launch {
+            val saved = trySave {
+                foodRepository.addAll(
+                    items = listOf(entry.item),
+                    date = today,
+                    mealType = MealType.forTime(LocalTime.now()),
+                    source = entry.source,
+                    // Several entries may share one photo; deleting removes it only with the last.
+                    photoPath = entry.photoPath,
+                )
+            }
+            _effects.send(TodayEffect.ShowMessage(if (saved) "Logged ${entry.item.name} again" else SAVE_FAILED_MESSAGE))
+            if (saved) selectedDate.value = today
+        }
+    }
+
+    override fun onHidePastFood(food: PastFood) {
+        viewModelScope.launch {
+            foodRepository.hidePastFood(food.key)
+            _effects.send(TodayEffect.ShowMessage("${food.item.name} hidden from your foods until you log it again"))
+        }
     }
 
     override fun onSupplementTaken(supplementId: Long) {

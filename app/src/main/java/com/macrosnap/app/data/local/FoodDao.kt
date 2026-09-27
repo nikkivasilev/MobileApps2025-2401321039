@@ -15,6 +15,10 @@ interface FoodDao {
     @Query("SELECT * FROM food_entries WHERE epochDay BETWEEN :fromEpochDay AND :toEpochDay")
     fun observeRange(fromEpochDay: Long, toEpochDay: Long): Flow<List<FoodEntryEntity>>
 
+    /** Newest first; the history of every food ever logged, for "Your foods". */
+    @Query("SELECT * FROM food_entries ORDER BY createdAt DESC, id DESC")
+    fun observeAll(): Flow<List<FoodEntryEntity>>
+
     @Insert
     suspend fun insertAll(entries: List<FoodEntryEntity>)
 

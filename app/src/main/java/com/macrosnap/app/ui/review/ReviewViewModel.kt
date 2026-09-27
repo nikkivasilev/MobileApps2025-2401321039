@@ -21,6 +21,8 @@ import com.macrosnap.app.model.EntrySource
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.acceptSuggestion
 import com.macrosnap.app.ui.ReviewRoute
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.components.DescribeStatus
@@ -48,6 +50,7 @@ interface ReviewActions {
     fun onReanalyze()
     fun onDescribeChange(text: String)
     fun onDescribeSubmit()
+    fun onSuggestionClick(food: PastFood)
     fun onMealTypeSelect(mealType: MealType)
     fun onGramsStep(draftId: Long, deltaGrams: Double)
     fun onServingsStep(draftId: Long, deltaServings: Double)
@@ -81,6 +84,7 @@ class ReviewViewModel(
         restored ?: ReviewUiState(
             mealType = MealType.forTime(LocalTime.now()),
             photoPath = route.photoPath,
+            describeInput = route.describeText.orEmpty(),
             editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
         ),
     )
@@ -90,7 +94,7 @@ class ReviewViewModel(
     val effects = _effects.receiveAsFlow()
 
     private val ReviewRoute.isBlankManualEntry: Boolean
-        get() = photoPath == null && barcode == null && recipeId == null && !describe
+        get() = photoPath == null && barcode == null && recipeId == null && pastFoodKey == null && !describe
 
     init {
         if (restored != null) {
@@ -101,7 +105,11 @@ class ReviewViewModel(
             when {
                 route.barcode != null -> lookUpBarcode(route.barcode)
                 route.recipeId != null -> loadRecipe(route.recipeId)
+                route.pastFoodKey != null -> loadPastFood(route.pastFoodKey)
             }
+        }
+        viewModelScope.launch {
+            foodRepository.observePastFoods().collect { foods -> _uiState.update { it.copy(pastFoods = foods) } }
         }
         viewModelScope.launch {
             // Only settled states are kept: a restore mid-lookup would show an empty list with no
@@ -201,6 +209,30 @@ class ReviewViewModel(
         }
     }
 
+    private fun loadPastFood(key: String) {
+        _uiState.update { it.copy(status = ReviewStatus.Loading("Loading…")) }
+        lookupJob = viewModelScope.launch {
+            val food = foodRepository.pastFood(key)
+            _uiState.update { state ->
+                if (food == null) {
+                    state.copy(status = ReviewStatus.Failed(DataError.Unexpected("That food is no longer in your log.")))
+                } else {
+                    state.copy(status = ReviewStatus.Ready, items = listOf(DraftItem(nextDraftId++, food.item)))
+                }
+            }
+        }
+    }
+
+    override fun onSuggestionClick(food: PastFood) = _uiState.update { state ->
+        val (item, remaining) = acceptSuggestion(state.describeInput, food)
+        state.copy(
+            items = state.items + DraftItem(nextDraftId++, item),
+            describeInput = remaining,
+            describeStatus = DescribeStatus.Idle,
+            status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status,
+        )
+    }
+
     override fun onHintChange(hint: String) = _uiState.update { it.copy(hint = hint) }
 
     override fun onReanalyze() {
@@ -293,6 +325,7 @@ class ReviewViewModel(
                         route.photoPath != null -> EntrySource.PHOTO
                         route.barcode != null -> EntrySource.BARCODE
                         route.recipeId != null -> EntrySource.RECIPE
+                        route.pastFoodKey != null -> EntrySource.HISTORY
                         route.describe -> EntrySource.TEXT
                         else -> EntrySource.MANUAL
                     },

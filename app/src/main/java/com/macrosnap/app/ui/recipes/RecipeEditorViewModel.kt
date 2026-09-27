@@ -10,10 +10,13 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.toRoute
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.FoodAnalyzer
+import com.macrosnap.app.data.FoodRepository
 import com.macrosnap.app.data.RecipeRepository
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.acceptSuggestion
 import com.macrosnap.app.ui.RecipeEditorRoute
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.compact
@@ -36,6 +39,7 @@ interface RecipeEditorActions {
     fun onCookedWeightChange(value: String)
     fun onDescribeChange(text: String)
     fun onDescribeSubmit()
+    fun onSuggestionClick(food: PastFood)
     fun onGramsStep(draftId: Long, deltaGrams: Double)
     fun onIngredientClick(draft: DraftItem)
     fun onAddIngredientClick()
@@ -53,6 +57,7 @@ class RecipeEditorViewModel(
     savedStateHandle: SavedStateHandle,
     private val recipeRepository: RecipeRepository,
     private val foodAnalyzer: FoodAnalyzer,
+    foodRepository: FoodRepository,
 ) : ViewModel(), RecipeEditorActions {
 
     private val route = savedStateHandle.toRoute<RecipeEditorRoute>()
@@ -65,6 +70,9 @@ class RecipeEditorViewModel(
     val effects = _effects.receiveAsFlow()
 
     init {
+        viewModelScope.launch {
+            foodRepository.observePastFoods().collect { foods -> _uiState.update { it.copy(pastFoods = foods) } }
+        }
         if (route.recipeId != 0L) {
             viewModelScope.launch {
                 val recipe = recipeRepository.get(route.recipeId)
@@ -93,6 +101,11 @@ class RecipeEditorViewModel(
 
     override fun onDescribeChange(text: String) = _uiState.update {
         it.copy(describeInput = text, describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus)
+    }
+
+    override fun onSuggestionClick(food: PastFood) = _uiState.update { state ->
+        val (item, remaining) = acceptSuggestion(state.describeInput, food)
+        state.copy(ingredients = state.ingredients + DraftItem(nextDraftId++, item), describeInput = remaining, describeStatus = DescribeStatus.Idle)
     }
 
     override fun onDescribeSubmit() {
@@ -176,7 +189,7 @@ class RecipeEditorViewModel(
 
         val Factory = viewModelFactory {
             initializer {
-                RecipeEditorViewModel(createSavedStateHandle(), appContainer.recipeRepository, appContainer.foodAnalyzer)
+                RecipeEditorViewModel(createSavedStateHandle(), appContainer.recipeRepository, appContainer.foodAnalyzer, appContainer.foodRepository)
             }
         }
     }

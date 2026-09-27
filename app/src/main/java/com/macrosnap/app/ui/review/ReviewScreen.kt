@@ -199,6 +199,8 @@ private fun ReviewContent(
                         onSubmit = actions::onDescribeSubmit,
                         status = uiState.describeStatus,
                         label = "Describe what to add",
+                        suggestions = uiState.describeSuggestions,
+                        onSuggestionClick = actions::onSuggestionClick,
                     )
                 }
                 item(key = "add") {
