@@ -1,0 +1,263 @@
+package com.macrosnap.app.ui.review
+
+import androidx.compose.runtime.Stable
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.toRoute
+import com.macrosnap.app.appContainer
+import com.macrosnap.app.data.FoodAnalyzer
+import com.macrosnap.app.data.FoodRepository
+import com.macrosnap.app.data.PhotoStore
+import com.macrosnap.app.data.ProductRepository
+import com.macrosnap.app.data.RecipeRepository
+import com.macrosnap.app.model.AnalysisResult
+import com.macrosnap.app.model.DataError
+import com.macrosnap.app.model.EntrySource
+import com.macrosnap.app.model.FoodItem
+import com.macrosnap.app.model.MealType
+import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.ui.ReviewRoute
+import com.macrosnap.app.ui.components.DescribeStatus
+import com.macrosnap.app.ui.components.DraftItem
+import com.macrosnap.app.ui.components.EditorTarget
+import com.macrosnap.app.ui.components.SERVINGS_STEP
+import com.macrosnap.app.ui.whole
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+
+@Stable
+interface ReviewActions {
+    fun onHintChange(hint: String)
+    fun onReanalyze()
+    fun onDescribeChange(text: String)
+    fun onDescribeSubmit()
+    fun onMealTypeSelect(mealType: MealType)
+    fun onGramsStep(draftId: Long, deltaGrams: Double)
+    fun onServingsStep(draftId: Long, deltaServings: Double)
+    fun onItemClick(draft: DraftItem)
+    fun onAddItemClick()
+    fun onItemRemove(draftId: Long)
+    fun onEditorSave(item: FoodItem)
+    fun onEditorDismiss()
+    fun onSave()
+    suspend fun describeItem(text: String): Outcome<AnalysisResult>
+}
+
+class ReviewViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val foodAnalyzer: FoodAnalyzer,
+    private val productRepository: ProductRepository,
+    private val recipeRepository: RecipeRepository,
+    private val foodRepository: FoodRepository,
+    private val photoStore: PhotoStore,
+) : ViewModel(), ReviewActions {
+
+    private val route = savedStateHandle.toRoute<ReviewRoute>()
+    private var nextDraftId = 0L
+    private var lookupJob: Job? = null
+    private var photoKept = false
+
+    private val _uiState = MutableStateFlow(
+        ReviewUiState(
+            mealType = MealType.forTime(LocalTime.now()),
+            photoPath = route.photoPath,
+            editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
+        ),
+    )
+    val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
+
+    private val _effects = Channel<ReviewEffect>(Channel.BUFFERED)
+    val effects = _effects.receiveAsFlow()
+
+    private val ReviewRoute.isBlankManualEntry: Boolean
+        get() = photoPath == null && barcode == null && recipeId == null && !describe
+
+    init {
+        // A photo waits for the user's hint before the first request: one well-aimed call beats
+        // a blind guess plus a retry, and the free tier's daily quota is small.
+        when {
+            route.barcode != null -> lookUpBarcode(route.barcode)
+            route.recipeId != null -> loadRecipe(route.recipeId)
+        }
+    }
+
+    private fun analyzePhoto(photoPath: String) {
+        lookupJob?.cancel()
+        _uiState.update { it.copy(status = ReviewStatus.Loading("Analyzing your meal…"), hasAnalyzed = true) }
+        lookupJob = viewModelScope.launch {
+            val hint = _uiState.value.hint.takeIf { it.isNotBlank() }
+            when (val outcome = foodAnalyzer.analyzePhoto(photoPath, hint)) {
+                is Outcome.Success -> _uiState.update { state ->
+                    state.copy(
+                        status = ReviewStatus.Ready,
+                        notes = outcome.value.notes,
+                        items = outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence) },
+                    )
+                }
+                is Outcome.Failure -> _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
+            }
+        }
+    }
+
+    private fun lookUpBarcode(barcode: String) {
+        _uiState.update { it.copy(status = ReviewStatus.Loading("Looking up barcode $barcode…")) }
+        lookupJob = viewModelScope.launch {
+            when (val outcome = productRepository.lookup(barcode)) {
+                is Outcome.Success -> _uiState.update { state ->
+                    state.copy(status = ReviewStatus.Ready, items = listOf(DraftItem(nextDraftId++, outcome.value)))
+                }
+                is Outcome.Failure -> _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
+            }
+        }
+    }
+
+    private fun loadRecipe(recipeId: Long) {
+        _uiState.update { it.copy(status = ReviewStatus.Loading("Loading recipe…")) }
+        lookupJob = viewModelScope.launch {
+            val recipe = recipeRepository.get(recipeId)
+            if (recipe == null) {
+                _uiState.update { it.copy(status = ReviewStatus.Failed(DataError.Unexpected("That recipe no longer exists."))) }
+                return@launch
+            }
+            _uiState.update { state ->
+                state.copy(
+                    status = ReviewStatus.Ready,
+                    items = listOf(DraftItem(nextDraftId++, recipe.portion(recipe.servingGrams), servingGrams = recipe.servingGrams)),
+                    notes = "One serving of ${recipe.name} is ${recipe.servingGrams.whole()} g " +
+                        "(${recipe.totalWeight.whole()} g makes ${recipe.servings}). Adjust the grams to what you ate.",
+                )
+            }
+        }
+    }
+
+    override fun onHintChange(hint: String) = _uiState.update { it.copy(hint = hint) }
+
+    override fun onReanalyze() {
+        route.photoPath?.let(::analyzePhoto)
+    }
+
+    override fun onDescribeChange(text: String) = _uiState.update {
+        it.copy(describeInput = text, describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus)
+    }
+
+    override fun onDescribeSubmit() {
+        val description = _uiState.value.describeInput.trim()
+        if (description.isEmpty() || _uiState.value.describeStatus is DescribeStatus.Loading) return
+        _uiState.update { it.copy(describeStatus = DescribeStatus.Loading) }
+        viewModelScope.launch {
+            when (val outcome = foodAnalyzer.analyzeText(description)) {
+                is Outcome.Success -> _uiState.update { state ->
+                    state.copy(
+                        describeInput = "",
+                        describeStatus = DescribeStatus.Idle,
+                        notes = outcome.value.notes ?: state.notes,
+                        items = state.items + outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence) },
+                        status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status,
+                    )
+                }
+                is Outcome.Failure -> _uiState.update { it.copy(describeStatus = DescribeStatus.Failed(outcome.error)) }
+            }
+        }
+    }
+
+    override fun onMealTypeSelect(mealType: MealType) = _uiState.update { it.copy(mealType = mealType) }
+
+    override fun onGramsStep(draftId: Long, deltaGrams: Double) = _uiState.update { state ->
+        state.copy(
+            items = state.items.map { draft ->
+                if (draft.id != draftId) return@map draft
+                draft.copy(item = draft.item.copy(grams = (draft.item.grams + deltaGrams).coerceAtLeast(MIN_GRAMS)))
+            },
+        )
+    }
+
+    override fun onServingsStep(draftId: Long, deltaServings: Double) = _uiState.update { state ->
+        state.copy(
+            items = state.items.map { draft ->
+                val servingGrams = draft.servingGrams
+                if (draft.id != draftId || servingGrams == null) return@map draft
+                // Snap to the step grid so 300 g + ½ serving reads "1.5 servings", not "1.49".
+                val current = draft.item.grams / servingGrams
+                val next = (Math.round((current + deltaServings) / SERVINGS_STEP) * SERVINGS_STEP).coerceAtLeast(SERVINGS_STEP)
+                draft.copy(item = draft.item.copy(grams = next * servingGrams))
+            },
+        )
+    }
+
+    override fun onItemClick(draft: DraftItem) = _uiState.update { it.copy(editor = EditorTarget.Existing(draft)) }
+
+    override fun onAddItemClick() = _uiState.update { it.copy(editor = EditorTarget.NewItem) }
+
+    override fun onItemRemove(draftId: Long) = _uiState.update { state ->
+        state.copy(items = state.items.filterNot { it.id == draftId })
+    }
+
+    override fun onEditorSave(item: FoodItem) = _uiState.update { state ->
+        val items = when (val target = state.editor) {
+            is EditorTarget.Existing -> state.items.map { if (it.id == target.draft.id) it.copy(item = item) else it }
+            EditorTarget.NewItem, null -> state.items + DraftItem(nextDraftId++, item)
+        }
+        // A manual item also clears a failed analysis: the user has moved on from it.
+        state.copy(items = items, editor = null, status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status)
+    }
+
+    override fun onEditorDismiss() = _uiState.update { it.copy(editor = null) }
+
+    override suspend fun describeItem(text: String): Outcome<AnalysisResult> = foodAnalyzer.analyzeText(text)
+
+    override fun onSave() {
+        val state = _uiState.value
+        if (!state.canSave) return
+        _uiState.update { it.copy(isSaving = true) }
+        viewModelScope.launch {
+            foodRepository.addAll(
+                items = state.items.map { it.item },
+                date = LocalDate.ofEpochDay(route.epochDay),
+                mealType = state.mealType,
+                source = when {
+                    route.photoPath != null -> EntrySource.PHOTO
+                    route.barcode != null -> EntrySource.BARCODE
+                    route.recipeId != null -> EntrySource.RECIPE
+                    route.describe -> EntrySource.TEXT
+                    else -> EntrySource.MANUAL
+                },
+                photoPath = route.photoPath,
+            )
+            photoKept = true
+            _effects.send(ReviewEffect.Saved)
+        }
+    }
+
+    override fun onCleared() {
+        if (!photoKept) route.photoPath?.let(photoStore::deleteNow)
+    }
+
+    companion object {
+        private const val MIN_GRAMS = 5.0
+
+        val Factory = viewModelFactory {
+            initializer {
+                ReviewViewModel(
+                    savedStateHandle = createSavedStateHandle(),
+                    foodAnalyzer = appContainer.foodAnalyzer,
+                    productRepository = appContainer.productRepository,
+                    recipeRepository = appContainer.recipeRepository,
+                    foodRepository = appContainer.foodRepository,
+                    photoStore = appContainer.photoStore,
+                )
+            }
+        }
+    }
+}

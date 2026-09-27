@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.MacroSnap" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

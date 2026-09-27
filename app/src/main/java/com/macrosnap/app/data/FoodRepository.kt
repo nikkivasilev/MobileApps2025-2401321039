@@ -1,0 +1,92 @@
+package com.macrosnap.app.data
+
+import com.macrosnap.app.data.local.FoodDao
+import com.macrosnap.app.data.local.FoodEntryEntity
+import com.macrosnap.app.model.EntrySource
+import com.macrosnap.app.model.FoodEntry
+import com.macrosnap.app.model.FoodItem
+import com.macrosnap.app.model.Macros
+import com.macrosnap.app.model.MealType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+
+class FoodRepository(
+    private val foodDao: FoodDao,
+    private val photoStore: PhotoStore,
+) {
+
+    fun observeDay(date: LocalDate): Flow<List<FoodEntry>> =
+        foodDao.observeDay(date.toEpochDay()).map { rows -> rows.map { it.toModel() } }
+
+    fun observeRange(from: LocalDate, to: LocalDate): Flow<List<FoodEntry>> =
+        foodDao.observeRange(from.toEpochDay(), to.toEpochDay()).map { rows -> rows.map { it.toModel() } }
+
+    suspend fun addAll(
+        items: List<FoodItem>,
+        date: LocalDate,
+        mealType: MealType,
+        source: EntrySource,
+        photoPath: String?,
+    ) {
+        val now = System.currentTimeMillis()
+        foodDao.insertAll(
+            items.map { item ->
+                FoodEntryEntity(
+                    epochDay = date.toEpochDay(),
+                    createdAt = now,
+                    mealType = mealType.name,
+                    name = item.name,
+                    grams = item.grams,
+                    kcalPer100 = item.per100g.kcal,
+                    proteinPer100 = item.per100g.protein,
+                    carbsPer100 = item.per100g.carbs,
+                    fatPer100 = item.per100g.fat,
+                    source = source.name,
+                    photoPath = photoPath,
+                    micros = MicrosJson.encode(item.micros100g),
+                )
+            },
+        )
+    }
+
+    suspend fun update(entry: FoodEntry) = foodDao.update(entry.toEntity())
+
+    suspend fun delete(entry: FoodEntry) {
+        foodDao.deleteById(entry.id)
+        // One photo can back several entries (every item on the plate), so it goes with the last one.
+        val photoPath = entry.photoPath ?: return
+        if (foodDao.countByPhoto(photoPath) == 0) photoStore.delete(photoPath)
+    }
+}
+
+private fun FoodEntryEntity.toModel() = FoodEntry(
+    id = id,
+    date = LocalDate.ofEpochDay(epochDay),
+    createdAt = createdAt,
+    mealType = MealType.entries.firstOrNull { it.name == mealType } ?: MealType.SNACK,
+    item = FoodItem(
+        name = name,
+        grams = grams,
+        per100g = Macros(kcalPer100, proteinPer100, carbsPer100, fatPer100),
+        micros100g = MicrosJson.decode(micros),
+    ),
+    source = EntrySource.entries.firstOrNull { it.name == source } ?: EntrySource.MANUAL,
+    photoPath = photoPath,
+)
+
+private fun FoodEntry.toEntity() = FoodEntryEntity(
+    id = id,
+    epochDay = date.toEpochDay(),
+    createdAt = createdAt,
+    mealType = mealType.name,
+    name = item.name,
+    grams = item.grams,
+    kcalPer100 = item.per100g.kcal,
+    proteinPer100 = item.per100g.protein,
+    carbsPer100 = item.per100g.carbs,
+    fatPer100 = item.per100g.fat,
+    source = source.name,
+    photoPath = photoPath,
+    micros = MicrosJson.encode(item.micros100g),
+)

@@ -1,0 +1,106 @@
+package com.macrosnap.app.ui.recipes
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.model.Recipe
+import com.macrosnap.app.ui.RecipeEditorRoute
+import com.macrosnap.app.ui.ReviewRoute
+import com.macrosnap.app.ui.summary
+import com.macrosnap.app.ui.whole
+import java.time.LocalDate
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecipesScreen(
+    onOpenEditor: (RecipeEditorRoute) -> Unit,
+    onOpenReview: (ReviewRoute) -> Unit,
+    viewModel: RecipesViewModel = viewModel(factory = RecipesViewModel.Factory),
+) {
+    val recipes by viewModel.recipes.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Recipes") }) },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { onOpenEditor(RecipeEditorRoute()) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("New recipe") },
+            )
+        },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (recipes.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        text = "Save the dishes you cook. Add ingredients by describing them " +
+                            "(\"500 g chicken thighs, 2 tbsp oil…\"), weigh the finished pot, " +
+                            "and log a serving whenever you eat it.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 32.dp, horizontal = 8.dp),
+                    )
+                }
+            }
+            items(recipes, key = { it.id }) { recipe ->
+                RecipeCard(
+                    recipe = recipe,
+                    onClick = { onOpenEditor(RecipeEditorRoute(recipe.id)) },
+                    onLog = { onOpenReview(ReviewRoute(LocalDate.now().toEpochDay(), recipeId = recipe.id)) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, onLog: () -> Unit) {
+    ElevatedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 4.dp)) {
+            Text(recipe.name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "${recipe.ingredients.size} ${if (recipe.ingredients.size == 1) "ingredient" else "ingredients"} · ${recipe.per100g.kcal.whole()} kcal per 100 g",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Serving (${recipe.servingGrams.whole()} g): ${recipe.perServing.kcal.whole()} kcal · ${recipe.perServing.summary()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onLog) { Text("Log today") }
+            }
+        }
+    }
+}

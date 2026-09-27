@@ -37,8 +37,8 @@ weights and macros; you correct anything that's off and log it. Everything you l
    gradlew.bat installDebug
    ```
 
-   A prebuilt `MacroSnap-debug.apk` is also in this folder - you can copy it to the phone and
-   open it there instead (allow "install unknown apps" when asked).
+   Building also leaves a `MacroSnap-debug.apk` in this folder (not committed to git) - you can
+   copy it to the phone and open it there instead (allow "install unknown apps" when asked).
 
 ## One-time setup in the app
 
