@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
@@ -33,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.SleepLog
+import com.macrosnap.app.ui.theme.AppIcons
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -74,7 +74,7 @@ fun SleepCard(sleep: SleepLog?, goalHours: Double, onClick: () -> Unit, modifier
                     Row {
                         repeat(5) { index ->
                             Icon(
-                                imageVector = if (index < sleep.quality) Icons.Filled.Star else Icons.Outlined.Star,
+                                imageVector = if (index < sleep.quality) Icons.Filled.Star else AppIcons.StarBorder,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.tertiary,
                                 modifier = Modifier.size(16.dp),
@@ -158,7 +158,7 @@ fun SleepSheet(
                 repeat(5) { index ->
                     IconButton(onClick = { quality = index + 1 }) {
                         Icon(
-                            imageVector = if (index < quality) Icons.Filled.Star else Icons.Outlined.Star,
+                            imageVector = if (index < quality) Icons.Filled.Star else AppIcons.StarBorder,
                             contentDescription = "${index + 1} stars",
                             tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(32.dp),
