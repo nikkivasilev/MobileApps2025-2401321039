@@ -168,6 +168,19 @@ private fun ReviewContent(
                 }
             }
 
+            if (uiState.labelWarnings.isNotEmpty()) {
+                item(key = "label-warnings") { LabelWarningsCard(uiState.labelWarnings) }
+            }
+
+            uiState.microsNote?.let { note ->
+                item(key = "micros-note") {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (uiState.isEstimatingMicros) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
             items(uiState.items, key = { it.id }) { draft ->
                 DraftItemCard(
                     draft = draft,
@@ -291,6 +304,23 @@ private fun ErrorCard(error: DataError, canRetry: Boolean, onRetry: () -> Unit, 
                     Button(onClick = onRetry) { Text("Try again") }
                 }
             }
+        }
+    }
+}
+
+/** Crowd-sourced listings can be wrong; say what looked off rather than log it silently. */
+@Composable
+private fun LabelWarningsCard(warnings: List<String>) {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Check this against the label", style = MaterialTheme.typography.titleSmall)
+            warnings.forEach { Text("• $it", style = MaterialTheme.typography.bodyMedium) }
+            Text("Tap the item to correct any value.", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

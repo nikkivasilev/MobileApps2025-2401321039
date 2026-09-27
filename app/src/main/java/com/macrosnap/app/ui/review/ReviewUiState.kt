@@ -15,6 +15,11 @@ data class ReviewUiState(
     val items: List<DraftItem> = emptyList(),
     val photoPath: String? = null,
     val notes: String? = null,
+    /** Problems spotted in a barcode's database listing, shown so the user checks the label. */
+    val labelWarnings: List<String> = emptyList(),
+    /** Where a scanned product's vitamins and minerals came from, or why they're missing. */
+    val microsNote: String? = null,
+    val isEstimatingMicros: Boolean = false,
     val status: ReviewStatus = ReviewStatus.Ready,
     val describeStatus: DescribeStatus = DescribeStatus.Idle,
     val editor: EditorTarget? = null,

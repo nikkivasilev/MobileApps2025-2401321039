@@ -13,7 +13,7 @@ interface OpenFoodFactsApi {
     @GET("api/v2/product/{barcode}")
     suspend fun product(
         @Path("barcode") barcode: String,
-        @Query("fields") fields: String = "product_name,brands,nutriments,serving_quantity",
+        @Query("fields") fields: String = "product_name,brands,nutriments,serving_quantity,quantity",
     ): OffProductResponse
 
     companion object {
@@ -35,4 +35,6 @@ data class OffProduct(
     val brands: String? = null,
     val nutriments: JsonObject? = null,
     @SerialName("serving_quantity") val servingQuantity: JsonElement? = null,
+    /** Package size as printed, e.g. "250 ml". */
+    val quantity: String? = null,
 )

@@ -61,8 +61,12 @@ class AppContainer(context: Context) {
     val supplementRepository = SupplementRepository(database.supplementDao())
     val wellnessRepository = WellnessRepository(database.wellnessDao())
     val workoutRepository = WorkoutRepository(database.workoutDao())
-    val productRepository = ProductRepository(retrofit(OpenFoodFactsApi.BASE_URL).create(OpenFoodFactsApi::class.java))
     val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore, ImageEncoder(io), json)
+    val productRepository = ProductRepository(
+        api = retrofit(OpenFoodFactsApi.BASE_URL).create(OpenFoodFactsApi::class.java),
+        microsCache = database.productMicrosDao(),
+        foodAnalyzer = foodAnalyzer,
+    )
     val apiKeyChecker = ApiKeyChecker(geminiApi)
 
     private fun retrofit(baseUrl: String): Retrofit = Retrofit.Builder()
