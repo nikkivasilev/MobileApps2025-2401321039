@@ -67,6 +67,15 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
 - DataStore (`SettingsStore`/`AppSettings`) holds the Gemini API key (plaintext), model list, goals, profile, nutrient-target overrides (only values differing from the RDA), wellness goals and hidden foods.
 - Exercises are seeded once from `ExerciseLibrary` when the table is empty, so new defaults there don't reach existing installs.
 
+### Design system
+
+- The theme (`ui/theme/Theme.kt`) is a fixed "ink and data" palette with no dynamic colour. `primary` is near-black in light mode and near-white in dark mode. Hue is kept for tracked quantities, read through `AppTheme.colors` (`protein`, `carbs`, `fat`, `water`, `sleep`, `micros`, `calories`, plus `card`, `tile` and `track` surfaces). `MacroColors.*` are theme-aware getters over the same values.
+- Build screens from the shared pieces, not raw Material cards:
+  - `AppCard`, `CardHeader`, `IconBadge`, `SectionTitle`, `MacroDots`, `Tag` and `appChipColors()` in `ui/components/Surfaces.kt`
+  - `ProgressRing`, `PillBar`, `CalorieHero` and `MacroTile` in `MacroSummary.kt`
+- `AppCard` is flat (no elevation), with 24dp corners. Sheets that hold cards use `containerColor = MaterialTheme.colorScheme.background`.
+- Typography lives in `ui/theme/Type.kt`. It uses Inter, bundled as four static weights in `res/font` (Regular, Medium, SemiBold, Bold; OFL licence in `third_party/inter/`). Number-heavy styles use tabular figures (`tnum`). A new weight needs its own TTF, or Android synthesizes it.
+
 ### UI gotchas
 
 - Only `material-icons-core` is included (the extended set is too heavy for the unminified build). Missing icons are hand-built `ImageVector`s in `ui/theme/AppIcons.kt`. Note `Icons.Outlined.Star` renders solid; use `AppIcons.StarBorder` for an empty star.

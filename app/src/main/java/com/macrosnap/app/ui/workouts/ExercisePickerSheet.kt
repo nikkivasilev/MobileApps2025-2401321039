@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
+import com.macrosnap.app.ui.components.appChipColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,9 +81,9 @@ fun ExercisePickerSheet(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(selected = group == null, onClick = { group = null }, label = { Text("All") })
+                FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == null, onClick = { group = null }, label = { Text("All") })
                 MuscleGroup.entries.forEach { option ->
-                    FilterChip(selected = group == option, onClick = { group = if (group == option) null else option }, label = { Text(option.label) })
+                    FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == option, onClick = { group = if (group == option) null else option }, label = { Text(option.label) })
                 }
             }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {

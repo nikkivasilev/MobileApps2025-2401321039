@@ -4,8 +4,8 @@ import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.Goals
 import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.MealType
-import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Micros
+import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
@@ -13,7 +13,9 @@ import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.add
 import com.macrosnap.app.model.sum
 import com.macrosnap.app.model.sumMicros
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 data class TodayUiState(
     val date: LocalDate,
@@ -32,7 +34,11 @@ data class TodayUiState(
     val workoutBurnKcal: Int = 0,
     val addWorkoutBurn: Boolean = false,
     val pastFoods: List<PastFood> = emptyList(),
+    /** Calories eaten on each day of [weekDays] that has entries. */
+    val weekKcal: Map<LocalDate, Double> = emptyMap(),
 ) {
+    /** Monday to Sunday of the week holding [date]. */
+    val weekDays: List<LocalDate> get() = weekStart(date).let { start -> (0L..6L).map(start::plusDays) }
     /** The goal the ring and "left" number use; workouts extend it only when the user opted in. */
     val effectiveKcalGoal: Int get() = goals.kcal + if (addWorkoutBurn) workoutBurnKcal else 0
     val totals: Macros get() = entries.map { it.item.total }.sum()
@@ -41,6 +47,8 @@ data class TodayUiState(
     val entriesByMeal: Map<MealType, List<FoodEntry>> get() = entries.groupBy { it.mealType }.toSortedMap()
     val isToday: Boolean get() = date == LocalDate.now()
 }
+
+fun weekStart(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
 sealed interface TodayEffect {
     data class OpenPhotoReview(val epochDay: Long, val photoPath: String) : TodayEffect

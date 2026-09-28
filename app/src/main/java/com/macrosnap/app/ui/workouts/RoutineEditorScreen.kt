@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +49,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.ui.components.AppCard
 
 @Composable
 fun RoutineEditorScreen(
@@ -134,7 +134,7 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                 )
             }
             itemsIndexed(uiState.drafts, key = { index, draft -> "${draft.exercise.id}-$index" }) { index, draft ->
-                ElevatedCard(Modifier.fillMaxWidth()) {
+                AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
                     Row(
                         modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,

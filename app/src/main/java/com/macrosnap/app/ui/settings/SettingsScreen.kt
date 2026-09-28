@@ -3,6 +3,7 @@ package com.macrosnap.app.ui.settings
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -14,17 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -47,8 +48,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -62,7 +66,12 @@ import com.macrosnap.app.model.ActivityLevel
 import com.macrosnap.app.model.GoalType
 import com.macrosnap.app.model.Sex
 import com.macrosnap.app.ui.SupplementEditorRoute
+import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.NutrientFields
+import com.macrosnap.app.ui.components.appChipColors
+import com.macrosnap.app.ui.theme.AppIcons
+import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.userMessage
 
 private const val API_KEY_URL = "https://aistudio.google.com/apikey"
@@ -128,7 +137,7 @@ private fun SettingsContent(
 
 @Composable
 private fun SupplementsCard(uiState: SettingsUiState, onOpenSupplementEditor: (SupplementEditorRoute) -> Unit) {
-    SettingsCard("Supplements") {
+    SettingsCard("Supplements", AppIcons.Pill, AppTheme.colors.micros) {
         if (uiState.supplements.isEmpty()) {
             Text(
                 text = "Add what you take (creatine, vitamin D, fish oil…) and Today shows a checklist. " +
@@ -138,20 +147,33 @@ private fun SupplementsCard(uiState: SettingsUiState, onOpenSupplementEditor: (S
             )
         }
         uiState.supplements.forEach { supplement ->
-            ListItem(
-                headlineContent = { Text(supplement.name) },
-                supportingContent = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable { onOpenSupplementEditor(SupplementEditorRoute(supplement.id)) }
+                    .background(AppTheme.colors.tile)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(supplement.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                     Text(
-                        buildString {
+                        text = buildString {
                             append(supplement.doseLabel)
                             if (supplement.timesPerDay > 1) append(" · ${supplement.timesPerDay}× a day")
                             if (!supplement.isActive) append(" · paused")
                         },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier.clickable { onOpenSupplementEditor(SupplementEditorRoute(supplement.id)) },
-            )
+                }
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         OutlinedButton(onClick = { onOpenSupplementEditor(SupplementEditorRoute()) }) {
             Icon(Icons.Filled.Add, contentDescription = null)
@@ -162,7 +184,7 @@ private fun SupplementsCard(uiState: SettingsUiState, onOpenSupplementEditor: (S
 
 @Composable
 private fun WellnessCard(uiState: SettingsUiState, actions: SettingsActions) {
-    SettingsCard("Water, sleep & gym") {
+    SettingsCard("Water, sleep & gym", AppIcons.WaterDrop, AppTheme.colors.water) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NumberInput("Water goal (ml)", uiState.waterGoalInput, KeyboardType.Number, Modifier.weight(1f), actions::onWaterGoalChange)
             NumberInput("Sleep goal (h)", uiState.sleepGoalInput, KeyboardType.Decimal, Modifier.weight(1f), actions::onSleepGoalChange)
@@ -185,7 +207,7 @@ private fun WellnessCard(uiState: SettingsUiState, actions: SettingsActions) {
 
 @Composable
 private fun NutrientTargetsCard(uiState: SettingsUiState, actions: SettingsActions) {
-    SettingsCard("Vitamin & mineral targets") {
+    SettingsCard("Vitamin & mineral targets", AppIcons.Leaf, AppTheme.colors.micros) {
         Text(
             text = "Pre-filled with adult recommended daily intakes for your sex (from the goal calculator). " +
                 "Caffeine is a daily maximum. Tip: 1000 IU of vitamin D is 25 µg.",
@@ -205,7 +227,7 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
     val context = LocalContext.current
     var showKey by rememberSaveable { mutableStateOf(false) }
 
-    SettingsCard("AI recognition") {
+    SettingsCard("AI recognition", AppIcons.Sparkle, MaterialTheme.colorScheme.onSurface) {
         Text(
             text = "MacroSnap uses Google's Gemini through its free tier. Create a key in Google AI Studio " +
                 "(a Google account is all it takes, no card), then paste it here. It stays on this phone.",
@@ -273,7 +295,7 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
 
 @Composable
 private fun GoalsCard(uiState: SettingsUiState, actions: SettingsActions) {
-    SettingsCard("Daily goals") {
+    SettingsCard("Daily goals", AppIcons.Flame, AppTheme.colors.calories) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             GoalInput("Calories", uiState.kcalInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.KCAL, it) }
             GoalInput("Protein g", uiState.proteinInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.PROTEIN, it) }
@@ -288,7 +310,7 @@ private fun GoalsCard(uiState: SettingsUiState, actions: SettingsActions) {
 
 @Composable
 private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
-    SettingsCard("Goal calculator") {
+    SettingsCard("Goal calculator", Icons.Filled.Person, MaterialTheme.colorScheme.onSurface) {
         Text(
             text = "Estimates your daily needs with the Mifflin-St Jeor formula. Treat it as a starting point " +
                 "and adjust after two weeks of tracking your weight.",
@@ -308,6 +330,8 @@ private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
         ) {
             ActivityLevel.entries.forEach { level ->
                 FilterChip(
+                    colors = appChipColors(),
+                    shape = CircleShape,
                     selected = uiState.activity == level,
                     onClick = { actions.onActivitySelect(level) },
                     label = { Text(level.label) },
@@ -331,10 +355,10 @@ private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
 }
 
 @Composable
-private fun SettingsCard(title: String, content: @Composable () -> Unit) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
+private fun SettingsCard(title: String, icon: ImageVector, tint: Color, content: @Composable () -> Unit) {
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CardHeader(title = title, icon = icon, tint = tint)
             content()
         }
     }
