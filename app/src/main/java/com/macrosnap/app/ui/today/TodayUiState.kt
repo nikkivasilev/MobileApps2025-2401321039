@@ -6,6 +6,7 @@ import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PendingPhoto
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
@@ -36,6 +37,8 @@ data class TodayUiState(
     val pastFoods: List<PastFood> = emptyList(),
     /** Calories eaten on each day of [weekDays] that has entries. */
     val weekKcal: Map<LocalDate, Double> = emptyMap(),
+    /** Photos whose analysis failed while Gemini was unavailable, from any day, oldest first. */
+    val pendingPhotos: List<PendingPhoto> = emptyList(),
 ) {
     /** Monday to Sunday of the week holding [date]. */
     val weekDays: List<LocalDate> get() = weekStart(date).let { start -> (0L..6L).map(start::plusDays) }

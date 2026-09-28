@@ -28,9 +28,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -45,6 +48,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,6 +80,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PendingPhoto
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.sum
@@ -180,6 +185,7 @@ fun TodayScreen(
         snackbarHostState = snackbarHostState,
         onAdd = ::onAdd,
         onPastFood = { onOpenReview(ReviewRoute(epochDay, pastFoodKey = it.key)) },
+        onResumePending = { onOpenReview(ReviewRoute(it.date.toEpochDay(), photoPath = it.photoPath, resumePending = true)) },
         onDescribe = { onOpenReview(ReviewRoute(epochDay, describe = true, describeText = it)) },
     )
 
@@ -204,6 +210,7 @@ private fun TodayContent(
     snackbarHostState: SnackbarHostState,
     onAdd: (AddMethod) -> Unit,
     onPastFood: (PastFood) -> Unit,
+    onResumePending: (PendingPhoto) -> Unit,
     onDescribe: (String) -> Unit,
 ) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
@@ -253,6 +260,16 @@ private fun TodayContent(
                     MacroTile("Protein", MacroColors.Protein, totals.protein, uiState.goals.protein, Modifier.weight(1f))
                     MacroTile("Carbs", MacroColors.Carbs, totals.carbs, uiState.goals.carbs, Modifier.weight(1f))
                     MacroTile("Fat", MacroColors.Fat, totals.fat, uiState.goals.fat, Modifier.weight(1f))
+                }
+            }
+
+            if (uiState.pendingPhotos.isNotEmpty()) {
+                item(key = "pending") {
+                    PendingPhotosCard(
+                        photos = uiState.pendingPhotos,
+                        onResume = onResumePending,
+                        onDiscard = actions::onDiscardPendingPhoto,
+                    )
                 }
             }
 
@@ -465,6 +482,70 @@ private fun WeekStrip(
                 }
             }
         }
+    }
+}
+
+/** Photos Gemini couldn't take when they were sent; each can be sent again or thrown away. */
+@Composable
+private fun PendingPhotosCard(photos: List<PendingPhoto>, onResume: (PendingPhoto) -> Unit, onDiscard: (PendingPhoto) -> Unit) {
+    var discarding by remember { mutableStateOf<PendingPhoto?>(null) }
+    AppCard {
+        CardHeader(
+            title = "Waiting to analyze",
+            icon = Icons.Filled.Refresh,
+            tint = AppTheme.colors.carbs,
+            subtitle = "Gemini couldn't take ${if (photos.size == 1) "this photo" else "these photos"} earlier. Try again now.",
+        )
+        photos.forEach { photo ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FoodThumbnail(photo.photoPath, photo.mealType.label)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "${photo.mealType.label} · ${photo.date.friendlyLabel()}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = photo.hint.ifBlank { "No hint" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                IconButton(onClick = { discarding = photo }) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Discard photo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                FilledTonalButton(
+                    onClick = { onResume(photo) },
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    modifier = Modifier.height(36.dp),
+                ) { Text("Analyze") }
+            }
+        }
+    }
+
+    discarding?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { discarding = null },
+            title = { Text("Discard this photo?") },
+            text = { Text("It's deleted without being analyzed. Nothing was logged from it.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    discarding = null
+                    onDiscard(photo)
+                }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { discarding = null }) { Text("Cancel") } },
+        )
     }
 }
 

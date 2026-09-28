@@ -14,6 +14,13 @@ sealed interface DataError {
     data class Unexpected(val detail: String?) : DataError
 }
 
+/**
+ * Failures worth waiting out: the request was fine, the service just couldn't take it now. A photo
+ * that fails this way is kept to resubmit later rather than thrown away.
+ */
+val DataError.isTemporary: Boolean
+    get() = this is DataError.Server || this is DataError.RateLimited || this is DataError.Network
+
 sealed interface Outcome<out T> {
     data class Success<T>(val value: T) : Outcome<T>
     data class Failure(val error: DataError) : Outcome<Nothing>

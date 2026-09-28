@@ -29,6 +29,8 @@ data class ReviewUiState(
     val isSaving: Boolean = false,
     /** False until the photo has been sent once; the first send waits for the user's hint. */
     val hasAnalyzed: Boolean = false,
+    /** The photo is kept on Today's waiting list, so leaving without logging doesn't delete it. */
+    val savedForLater: Boolean = false,
 ) {
     val awaitingFirstAnalysis: Boolean get() = photoPath != null && !hasAnalyzed && status !is ReviewStatus.Loading
     val totals: Macros get() = items.map { it.item.total }.sum()

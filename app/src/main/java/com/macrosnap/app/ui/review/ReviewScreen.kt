@@ -1,5 +1,6 @@
 package com.macrosnap.app.ui.review
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,12 +21,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -157,6 +160,8 @@ private fun ReviewContent(
                         canRetry = uiState.canReanalyze,
                         onRetry = actions::onReanalyze,
                         onOpenSettings = onOpenSettings,
+                        savedForLater = uiState.savedForLater,
+                        onDone = onClose,
                     )
                 }
                 ReviewStatus.Ready -> Unit
@@ -307,7 +312,14 @@ private fun LoadingRow(label: String) {
 }
 
 @Composable
-private fun ErrorCard(error: DataError, canRetry: Boolean, onRetry: () -> Unit, onOpenSettings: () -> Unit) {
+private fun ErrorCard(
+    error: DataError,
+    canRetry: Boolean,
+    onRetry: () -> Unit,
+    onOpenSettings: () -> Unit,
+    savedForLater: Boolean,
+    onDone: () -> Unit,
+) {
     val needsSettings = error is DataError.NoApiKey || error is DataError.InvalidApiKey || error is DataError.ModelUnavailable
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
@@ -317,12 +329,26 @@ private fun ErrorCard(error: DataError, canRetry: Boolean, onRetry: () -> Unit, 
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(error.userMessage(), style = MaterialTheme.typography.bodyLarge)
+            if (savedForLater) {
+                Text(
+                    text = "The photo is saved under \"Waiting to analyze\" on Today, so you can resubmit it later.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (needsSettings) {
                     Button(onClick = onOpenSettings) { Text("Open Settings") }
                 }
                 if (canRetry && !needsSettings) {
                     Button(onClick = onRetry) { Text("Try again") }
+                }
+                if (savedForLater) {
+                    // On the error container, so it takes that surface's text colour rather than the theme outline.
+                    OutlinedButton(
+                        onClick = onDone,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalContentColor.current),
+                        border = BorderStroke(1.dp, LocalContentColor.current.copy(alpha = 0.5f)),
+                    ) { Text("Resubmit later") }
                 }
             }
         }

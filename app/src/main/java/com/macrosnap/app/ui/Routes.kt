@@ -50,4 +50,6 @@ data class ReviewRoute(
     /** A food from "Your foods", by [com.macrosnap.app.model.foodKey]. */
     val pastFoodKey: String? = null,
     val describeText: String? = null,
+    /** [photoPath] was kept after a failed analysis; send it again straight away with its saved hint. */
+    val resumePending: Boolean = false,
 )

@@ -6,7 +6,9 @@ weights and macros; you correct anything that's off and log it. Everything you l
 ## Features
 
 - **Photo logging** - camera or gallery. Gemini (free tier) returns each food with grams and
-  per-100 g nutrition; you adjust grams with +/- or edit any value before saving.
+  per-100 g nutrition; you adjust grams with +/- or edit any value before saving. If Gemini is
+  overloaded, out of quota or unreachable, the photo is kept under **Waiting to analyze** on Today
+  with its meal and hint, so you can resubmit it later (or log it by hand, or discard it).
 - **Your foods** - everything you've logged before, most frequent first, at the top of the Add food
   sheet with a search box. Tap one to log it again at your usual amount - no AI request. While you
   describe a meal, matching past foods are suggested too, and any logged entry has a **Log again** button.
@@ -74,7 +76,8 @@ The key is stored only in the app's private storage (and the app is excluded fro
   https://aistudio.google.com/rate-limit. At the time of writing the full Flash model allows only
   a couple of dozen requests a day while Flash-Lite allows hundreds, so the app tries the models
   in the order listed in Settings and falls through when one runs out of quota. The error message
-  tells you whether you hit the daily quota or only a per-minute limit.
+  tells you whether you hit the daily quota or only a per-minute limit, and the photo waits on
+  Today until you resubmit it.
 - Reusing past foods costs no requests, and barcode vitamin estimates are cached per product, so
   the quota mostly goes to new photos and descriptions.
 - On the free tier Google may use submitted content to improve its products. Meal photos, text you
@@ -100,7 +103,7 @@ app/src/main/java/com/macrosnap/app/
   model/      plain domain types (FoodItem stores nutrition per 100 g + grams eaten),
               past-food history and matching
   domain/     GoalCalculator, CalorieBurnEstimator
-  data/       Room database (v7, migrations in AppDatabase), DataStore settings,
+  data/       Room database (v8, migrations in AppDatabase), DataStore settings,
               Gemini + Open Food Facts clients, repositories
               FoodAnalyzer is the seam for swapping the recognition backend
   ui/         Compose screens: today, workouts, review, recipes, supplements, progress, settings (+ shared components)
