@@ -23,6 +23,7 @@ import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.acceptSuggestion
+import com.macrosnap.app.model.isTemporary
 import com.macrosnap.app.ui.ReviewRoute
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.components.DescribeStatus
@@ -34,6 +35,7 @@ import com.macrosnap.app.ui.userMessage
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -77,15 +79,20 @@ class ReviewViewModel(
     private var lookupJob: Job? = null
     private var microsJob: Job? = null
     private var photoKept = false
+    private var pendingUpdateJob: Job? = null
 
     private val restored = restoreReview(savedStateHandle[SAVED_REVIEW_KEY], route.photoPath)
 
     private val _uiState = MutableStateFlow(
-        restored ?: ReviewUiState(
+        restored?.let { it.copy(savedForLater = it.savedForLater || route.resumePending) } ?: ReviewUiState(
             mealType = MealType.forTime(LocalTime.now()),
             photoPath = route.photoPath,
             describeInput = route.describeText.orEmpty(),
             editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
+            // A resubmitted photo already has its hint; go straight to the request instead of asking again.
+            hasAnalyzed = route.resumePending,
+            status = if (route.resumePending) ReviewStatus.Loading(ANALYZING_LABEL) else ReviewStatus.Ready,
+            savedForLater = route.resumePending,
         ),
     )
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
@@ -108,6 +115,17 @@ class ReviewViewModel(
                 route.pastFoodKey != null -> loadPastFood(route.pastFoodKey)
             }
         }
+        route.photoPath?.let { path ->
+            viewModelScope.launch {
+                // Also covers a review restored after process death that was already kept for later.
+                val pending = foodRepository.pendingPhoto(path)
+                if (pending != null) _uiState.update { it.copy(savedForLater = true) }
+                if (route.resumePending && restored == null) {
+                    if (pending != null) _uiState.update { it.copy(hint = pending.hint, mealType = pending.mealType) }
+                    analyzePhoto(path)
+                }
+            }
+        }
         viewModelScope.launch {
             foodRepository.observePastFoods().collect { foods -> _uiState.update { it.copy(pastFoods = foods) } }
         }
@@ -122,7 +140,7 @@ class ReviewViewModel(
 
     private fun analyzePhoto(photoPath: String) {
         lookupJob?.cancel()
-        _uiState.update { it.copy(status = ReviewStatus.Loading("Analyzing your meal…"), hasAnalyzed = true) }
+        _uiState.update { it.copy(status = ReviewStatus.Loading(ANALYZING_LABEL), hasAnalyzed = true) }
         lookupJob = viewModelScope.launch {
             val hint = _uiState.value.hint.takeIf { it.isNotBlank() }
             when (val outcome = foodAnalyzer.analyzePhoto(photoPath, hint)) {
@@ -135,8 +153,33 @@ class ReviewViewModel(
                             outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence, fromPhoto = true) },
                     )
                 }
-                is Outcome.Failure -> _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
+                is Outcome.Failure -> {
+                    _uiState.update { it.copy(status = ReviewStatus.Failed(outcome.error)) }
+                    if (outcome.error.isTemporary) keepForLater(photoPath)
+                }
             }
+        }
+    }
+
+    /** Gemini couldn't take the photo right now: put it on Today's waiting list rather than lose it. */
+    private suspend fun keepForLater(photoPath: String) {
+        val state = _uiState.value
+        val kept = trySave {
+            foodRepository.keepPendingPhoto(photoPath, LocalDate.ofEpochDay(route.epochDay), state.mealType, state.hint)
+        }
+        if (kept) _uiState.update { it.copy(savedForLater = true) }
+    }
+
+    /** Keeps a waiting photo's meal and hint in step with the screen, so a resubmit uses the latest. */
+    private fun updatePendingPhoto() {
+        val path = route.photoPath ?: return
+        if (!_uiState.value.savedForLater) return
+        pendingUpdateJob?.cancel()
+        pendingUpdateJob = viewModelScope.launch {
+            delay(PENDING_UPDATE_DELAY_MILLIS)
+            if (photoKept) return@launch
+            val state = _uiState.value
+            trySave { foodRepository.keepPendingPhoto(path, LocalDate.ofEpochDay(route.epochDay), state.mealType, state.hint) }
         }
     }
 
@@ -233,7 +276,10 @@ class ReviewViewModel(
         )
     }
 
-    override fun onHintChange(hint: String) = _uiState.update { it.copy(hint = hint) }
+    override fun onHintChange(hint: String) {
+        _uiState.update { it.copy(hint = hint) }
+        updatePendingPhoto()
+    }
 
     override fun onReanalyze() {
         route.photoPath?.let(::analyzePhoto)
@@ -263,7 +309,10 @@ class ReviewViewModel(
         }
     }
 
-    override fun onMealTypeSelect(mealType: MealType) = _uiState.update { it.copy(mealType = mealType) }
+    override fun onMealTypeSelect(mealType: MealType) {
+        _uiState.update { it.copy(mealType = mealType) }
+        updatePendingPhoto()
+    }
 
     override fun onGramsStep(draftId: Long, deltaGrams: Double) = _uiState.update { state ->
         state.copy(
@@ -312,6 +361,7 @@ class ReviewViewModel(
         val state = _uiState.value
         if (!state.canSave) return
         _uiState.update { it.copy(isSaving = true) }
+        pendingUpdateJob?.cancel()
         viewModelScope.launch {
             // Give a vitamin estimate that's nearly done the chance to land; a slow one isn't worth the wait.
             microsJob?.let { job -> withTimeoutOrNull(MICROS_WAIT_MILLIS) { job.join() } }
@@ -343,13 +393,15 @@ class ReviewViewModel(
     }
 
     override fun onCleared() {
-        if (!photoKept) route.photoPath?.let(photoStore::deleteNow)
+        if (!photoKept && !_uiState.value.savedForLater) route.photoPath?.let(photoStore::deleteNow)
     }
 
     companion object {
         private const val MIN_GRAMS = 5.0
         private const val SAVED_REVIEW_KEY = "review"
         private const val MICROS_WAIT_MILLIS = 15_000L
+        private const val PENDING_UPDATE_DELAY_MILLIS = 500L
+        private const val ANALYZING_LABEL = "Analyzing your meal…"
 
         val Factory = viewModelFactory {
             initializer {

@@ -44,6 +44,9 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
 - Photos wait for an optional hint before the first analysis; re-analysis replaces only `fromPhoto` drafts. `ImageEncoder` shrinks the file in place to ≤1024 px and skips re-encoding an already-shrunk JPEG.
 - Review state survives process death via `ReviewDraft.kt` (JSON in `SavedStateHandle`, saved only while `status == Ready`).
 - An unsaved photo is deleted in `onCleared`; one photo can back several entries and is deleted with the last one; `MacroSnapApp` sweeps unreferenced photos older than two days on start.
+- When a photo analysis fails with a `DataError.isTemporary` error (Server, RateLimited, Network), `ReviewViewModel` keeps the photo in `pending_photos` along with its day, meal and hint. `ReviewUiState.savedForLater` then stops `onCleared` from deleting the file.
+  - Today lists these photos under "Waiting to analyze". Resubmitting opens `ReviewRoute(resumePending = true)`, which sends the photo straight away.
+  - `FoodRepository.addAll` removes the pending row when the photo is logged, and the orphan sweep counts pending photos as referenced.
 - "Your foods" (`model/PastFood.kt`) is derived from `food_entries`, not stored: grouped by `foodKey(name)`, nutrition from the newest entry, grams = most common of the last 10, ranked by recency-decayed frequency. Hidden foods are a key→timestamp map in DataStore and reappear once logged again. The same history feeds the describe-field suggestions and the Add food sheet.
 
 ### Nutrition model
@@ -63,7 +66,7 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
 
 ### Persistence
 
-- Room database `macrosnap.db`, currently **version 7**, `exportSchema = false`, no destructive fallback. Every schema change needs a hand-written `Migration` appended to `AppDatabase.MIGRATIONS`. A column added with `DEFAULT x` in SQL needs a matching `@ColumnInfo(defaultValue = "x")` on the entity, or Room's schema validation fails at startup. Enums are stored as their `name` strings.
+- Room database `macrosnap.db`, currently **version 8**, `exportSchema = false`, no destructive fallback. Every schema change needs a hand-written `Migration` appended to `AppDatabase.MIGRATIONS`. A column added with `DEFAULT x` in SQL needs a matching `@ColumnInfo(defaultValue = "x")` on the entity, or Room's schema validation fails at startup. Enums are stored as their `name` strings.
 - DataStore (`SettingsStore`/`AppSettings`) holds the Gemini API key (plaintext), model list, goals, profile, nutrient-target overrides (only values differing from the RDA), wellness goals and hidden foods.
 - Exercises are seeded once from `ExerciseLibrary` when the table is empty, so new defaults there don't reach existing installs.
 

@@ -2,6 +2,8 @@ package com.macrosnap.app.data
 
 import com.macrosnap.app.data.local.FoodDao
 import com.macrosnap.app.data.local.FoodEntryEntity
+import com.macrosnap.app.data.local.PendingPhotoDao
+import com.macrosnap.app.data.local.PendingPhotoEntity
 import com.macrosnap.app.data.settings.SettingsStore
 import com.macrosnap.app.model.EntrySource
 import com.macrosnap.app.model.FoodEntry
@@ -10,15 +12,20 @@ import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PendingPhoto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import java.io.File
 import java.time.LocalDate
 
 class FoodRepository(
     private val foodDao: FoodDao,
+    private val pendingPhotoDao: PendingPhotoDao,
     private val photoStore: PhotoStore,
     private val settingsStore: SettingsStore,
 ) {
@@ -67,12 +74,35 @@ class FoodRepository(
                 )
             },
         )
+        // Logged at last: the entries own the photo now, so it's no longer waiting.
+        if (photoPath != null) pendingPhotoDao.delete(photoPath)
+    }
+
+    /** Photos waiting to be analyzed again, oldest first; one whose file has gone is left out. */
+    fun observePendingPhotos(): Flow<List<PendingPhoto>> =
+        pendingPhotoDao.observeAll()
+            .map { rows -> rows.filter { File(it.photoPath).exists() }.map { it.toModel() } }
+            .flowOn(Dispatchers.IO)
+
+    suspend fun pendingPhoto(photoPath: String): PendingPhoto? = pendingPhotoDao.get(photoPath)?.toModel()
+
+    /** Keeps a photo to resubmit later; saving it again updates the meal and hint but not its place in the list. */
+    suspend fun keepPendingPhoto(photoPath: String, date: LocalDate, mealType: MealType, hint: String) {
+        val savedAt = pendingPhotoDao.get(photoPath)?.savedAt ?: System.currentTimeMillis()
+        pendingPhotoDao.upsert(PendingPhotoEntity(photoPath, date.toEpochDay(), mealType.name, hint, savedAt))
+    }
+
+    /** Drops a waiting photo, and its file unless a logged entry already uses it. */
+    suspend fun discardPendingPhoto(photoPath: String) {
+        pendingPhotoDao.delete(photoPath)
+        if (foodDao.countByPhoto(photoPath) == 0) photoStore.delete(photoPath)
     }
 
     suspend fun update(entry: FoodEntry) = foodDao.update(entry.toEntity())
 
     suspend fun deleteOrphanPhotos() {
-        photoStore.deleteUnreferenced(foodDao.photoPaths().toSet(), olderThanMillis = ORPHAN_PHOTO_GRACE_MILLIS)
+        val referenced = foodDao.photoPaths().toSet() + pendingPhotoDao.photoPaths()
+        photoStore.deleteUnreferenced(referenced, olderThanMillis = ORPHAN_PHOTO_GRACE_MILLIS)
     }
 
     suspend fun delete(entry: FoodEntry) {
@@ -114,4 +144,12 @@ private fun FoodEntry.toEntity() = FoodEntryEntity(
     source = source.name,
     photoPath = photoPath,
     micros = MicrosJson.encode(item.micros100g),
+)
+
+private fun PendingPhotoEntity.toModel() = PendingPhoto(
+    photoPath = photoPath,
+    date = LocalDate.ofEpochDay(epochDay),
+    mealType = MealType.entries.firstOrNull { it.name == mealType } ?: MealType.SNACK,
+    hint = hint,
+    savedAt = savedAt,
 )

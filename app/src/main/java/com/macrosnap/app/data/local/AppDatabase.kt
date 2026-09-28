@@ -21,8 +21,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutEntity::class,
         WorkoutSetEntity::class,
         ProductMicrosEntity::class,
+        PendingPhotoEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun wellnessDao(): WellnessDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun productMicrosDao(): ProductMicrosDao
+    abstract fun pendingPhotoDao(): PendingPhotoDao
 
     companion object {
         val MIGRATIONS: Array<Migration> = arrayOf(
@@ -149,6 +151,15 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `product_micros` (" +
                             "`barcode` TEXT NOT NULL, `micros` TEXT, `estimatedAt` INTEGER NOT NULL, PRIMARY KEY(`barcode`))",
+                    )
+                }
+            },
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `pending_photos` (" +
+                            "`photoPath` TEXT NOT NULL, `epochDay` INTEGER NOT NULL, `mealType` TEXT NOT NULL, " +
+                            "`hint` TEXT NOT NULL, `savedAt` INTEGER NOT NULL, PRIMARY KEY(`photoPath`))",
                     )
                 }
             },

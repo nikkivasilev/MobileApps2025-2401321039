@@ -23,6 +23,7 @@ import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PendingPhoto
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.WaterDay
@@ -60,6 +61,7 @@ interface TodayActions {
     fun onEntryDeleted()
     fun onLogAgain()
     fun onHidePastFood(food: PastFood)
+    fun onDiscardPendingPhoto(photo: PendingPhoto)
     fun onSupplementTaken(supplementId: Long)
     fun onSupplementUntaken(supplementId: Long)
     fun onWaterAdd(ml: Int)
@@ -82,7 +84,13 @@ private data class DayData(
     val workouts: List<Workout>,
 )
 
-private data class Extras(val overlays: Overlays, val weightKg: Double, val pastFoods: List<PastFood>, val weekKcal: Map<LocalDate, Double>)
+private data class Extras(
+    val overlays: Overlays,
+    val weightKg: Double,
+    val pastFoods: List<PastFood>,
+    val weekKcal: Map<LocalDate, Double>,
+    val pendingPhotos: List<PendingPhoto>,
+)
 
 private data class Overlays(val viewing: FoodEntry?, val editing: FoodEntry?, val showSleepSheet: Boolean)
 
@@ -145,8 +153,8 @@ class TodayViewModel(
         dayData,
         settingsStore.settings,
         recipeRepository.observeAll(),
-        combine(overlays, bodyWeight, foodRepository.observePastFoods(), weekKcal, ::Extras),
-    ) { day, settings, recipes, (overlays, weightKg, pastFoods, weekKcal) ->
+        combine(overlays, bodyWeight, foodRepository.observePastFoods(), weekKcal, foodRepository.observePendingPhotos(), ::Extras),
+    ) { day, settings, recipes, (overlays, weightKg, pastFoods, weekKcal, pendingPhotos) ->
         TodayUiState(
             date = day.date,
             goals = settings.goals,
@@ -165,6 +173,7 @@ class TodayViewModel(
             addWorkoutBurn = settings.addWorkoutBurn,
             pastFoods = pastFoods,
             weekKcal = weekKcal,
+            pendingPhotos = pendingPhotos,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(date = LocalDate.now()))
 
@@ -284,6 +293,14 @@ class TodayViewModel(
     fun newPhotoTarget(): PhotoTarget {
         val file = photoStore.newPhotoFile()
         return PhotoTarget(file.path, photoStore.shareableUri(file))
+    }
+
+    override fun onDiscardPendingPhoto(photo: PendingPhoto) {
+        viewModelScope.launch {
+            if (!trySave { foodRepository.discardPendingPhoto(photo.photoPath) }) {
+                _effects.send(TodayEffect.ShowMessage(SAVE_FAILED_MESSAGE))
+            }
+        }
     }
 
     fun onPhotoDiscarded(path: String) {
