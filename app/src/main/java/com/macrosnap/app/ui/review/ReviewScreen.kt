@@ -16,16 +16,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,7 +46,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -55,12 +54,17 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.macrosnap.app.model.DataError
+import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.DescribeField
 import com.macrosnap.app.ui.components.DraftItemCard
 import com.macrosnap.app.ui.components.EditorTarget
+import com.macrosnap.app.ui.components.IconBadge
 import com.macrosnap.app.ui.components.ItemEditorSheet
+import com.macrosnap.app.ui.components.MacroDots
 import com.macrosnap.app.ui.components.MealTypeChips
-import com.macrosnap.app.ui.summary
+import com.macrosnap.app.ui.theme.AppIcons
+import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.userMessage
 import com.macrosnap.app.ui.whole
 import java.io.File
@@ -129,8 +133,8 @@ private fun ReviewContent(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(16.dp)),
+                            .height(240.dp)
+                            .clip(MaterialTheme.shapes.large),
                     )
                 }
             }
@@ -248,11 +252,16 @@ private fun ReviewContent(
 private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAnalyze: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-    ElevatedCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("What's on the plate?", style = MaterialTheme.typography.titleMedium)
+    AppCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CardHeader(
+                title = "What's on the plate?",
+                icon = AppIcons.Sparkle,
+                tint = MaterialTheme.colorScheme.onSurface,
+                subtitle = "Optional, but a few words help the AI a lot",
+            )
             Text(
-                text = "A few words help the AI a lot: the dish, how it was cooked, anything hidden (oil, sauce, sugar). Leave it empty to let it guess.",
+                text = "The dish, how it was cooked, anything hidden (oil, sauce, sugar). Leave it empty to let it guess.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -265,7 +274,14 @@ private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAn
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
             )
-            Button(onClick = onAnalyze, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onAnalyze,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+            ) {
+                Icon(AppIcons.Sparkle, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(if (hint.isBlank()) "Analyze photo" else "Analyze with hint")
             }
         }
@@ -274,16 +290,19 @@ private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAn
 
 @Composable
 private fun LoadingRow(label: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
-        Spacer(Modifier.width(16.dp))
-        Text(label, style = MaterialTheme.typography.bodyLarge)
+    AppCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(AppIcons.Sparkle, MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.width(12.dp))
+            Text(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+        }
+        LinearProgressIndicator(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            trackColor = AppTheme.colors.track,
+        )
     }
 }
 
@@ -293,7 +312,7 @@ private fun ErrorCard(error: DataError, canRetry: Boolean, onRetry: () -> Unit, 
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -316,7 +335,7 @@ private fun LabelWarningsCard(warnings: List<String>) {
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer,
         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -329,24 +348,28 @@ private fun LabelWarningsCard(warnings: List<String>) {
 
 @Composable
 private fun SaveBar(uiState: ReviewUiState, onSave: () -> Unit) {
-    Surface(tonalElevation = 3.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("${uiState.totals.kcal.whole()} kcal", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    text = uiState.totals.summary(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Button(onClick = onSave, enabled = uiState.canSave) {
-                Text(if (uiState.items.size > 1) "Log ${uiState.items.size} items" else "Log it")
+    Surface(color = AppTheme.colors.card) {
+        Column {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("${uiState.totals.kcal.whole()} kcal", style = MaterialTheme.typography.titleLarge)
+                    MacroDots(uiState.totals, Modifier.padding(top = 2.dp))
+                }
+                Button(
+                    onClick = onSave,
+                    enabled = uiState.canSave,
+                    contentPadding = PaddingValues(horizontal = 28.dp),
+                    modifier = Modifier.height(52.dp),
+                ) {
+                    Text(if (uiState.items.size > 1) "Log ${uiState.items.size} items" else "Log it")
+                }
             }
         }
     }

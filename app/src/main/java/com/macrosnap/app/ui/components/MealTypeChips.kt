@@ -4,6 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,8 @@ fun MealTypeChips(selected: MealType, onSelect: (MealType) -> Unit, modifier: Mo
     ) {
         MealType.entries.forEach { type ->
             FilterChip(
+                colors = appChipColors(),
+                shape = CircleShape,
                 selected = selected == type,
                 onClick = { onSelect(type) },
                 label = { Text(type.label) },

@@ -1,22 +1,25 @@
 package com.macrosnap.app.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.ShortNavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -30,6 +33,7 @@ import com.macrosnap.app.ui.review.ReviewScreen
 import com.macrosnap.app.ui.settings.SettingsScreen
 import com.macrosnap.app.ui.supplements.SupplementEditorScreen
 import com.macrosnap.app.ui.theme.AppIcons
+import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.today.TodayScreen
 import com.macrosnap.app.ui.workouts.ExercisesScreen
 import com.macrosnap.app.ui.workouts.RoutineEditorScreen
@@ -45,8 +49,8 @@ private enum class TopLevelDestination(
 ) {
     TODAY("Today", Icons.Filled.Home, TodayRoute, TodayRoute::class),
     WORKOUTS("Gym", AppIcons.Dumbbell, WorkoutsRoute, WorkoutsRoute::class),
-    RECIPES("Recipes", Icons.AutoMirrored.Filled.List, RecipesRoute, RecipesRoute::class),
-    PROGRESS("Progress", Icons.Filled.DateRange, ProgressRoute, ProgressRoute::class),
+    RECIPES("Recipes", AppIcons.Restaurant, RecipesRoute, RecipesRoute::class),
+    PROGRESS("Progress", AppIcons.BarChart, ProgressRoute, ProgressRoute::class),
     SETTINGS("Settings", Icons.Filled.Settings, SettingsRoute, SettingsRoute::class),
 }
 
@@ -70,14 +74,24 @@ fun MacroSnapNavHost() {
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
-                    TopLevelDestination.entries.forEach { item ->
-                        NavigationBarItem(
-                            selected = destination?.hasRoute(item.routeClass) == true,
-                            onClick = { navigateToTopLevel(item.route) },
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            label = { Text(item.label) },
-                        )
+                Column {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                    ShortNavigationBar(containerColor = AppTheme.colors.card) {
+                        TopLevelDestination.entries.forEach { item ->
+                            ShortNavigationBarItem(
+                                selected = destination?.hasRoute(item.routeClass) == true,
+                                onClick = { navigateToTopLevel(item.route) },
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                label = { Text(item.label) },
+                                colors = ShortNavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                    selectedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
+                            )
+                        }
                     }
                 }
             }

@@ -15,8 +15,8 @@ import com.macrosnap.app.data.SupplementRepository
 import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.WellnessRepository
 import com.macrosnap.app.data.WorkoutRepository
-import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.data.settings.SettingsStore
+import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.FoodItem
@@ -30,25 +30,28 @@ import com.macrosnap.app.model.Workout
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.currentDates
 import com.macrosnap.app.ui.trySave
+import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
 
 @Stable
 interface TodayActions {
     fun onPreviousDay()
     fun onNextDay()
     fun onJumpToToday()
+    fun onSelectDate(date: LocalDate)
     fun onEntryClick(entry: FoodEntry)
     fun onDetailDismiss()
     fun onEditClick()
@@ -78,6 +81,8 @@ private data class DayData(
     val sleep: SleepLog?,
     val workouts: List<Workout>,
 )
+
+private data class Extras(val overlays: Overlays, val weightKg: Double, val pastFoods: List<PastFood>, val weekKcal: Map<LocalDate, Double>)
 
 private data class Overlays(val viewing: FoodEntry?, val editing: FoodEntry?, val showSleepSheet: Boolean)
 
@@ -127,14 +132,21 @@ class TodayViewModel(
         latest ?: settings.profile?.weightKg ?: CalorieBurnEstimator.DEFAULT_BODY_WEIGHT_KG
     }
 
+    // Only re-queried when the selection moves to another week, not on every day change.
+    private val weekKcal = selectedDate.map { weekStart(it) }.distinctUntilChanged().flatMapLatest { start ->
+        foodRepository.observeRange(start, start.plusDays(6)).map { entries ->
+            entries.groupBy { it.date }.mapValues { (_, dayEntries) -> dayEntries.sumOf { it.item.total.kcal } }
+        }
+    }
+
     private val overlays = combine(viewing, editing, showSleepSheet) { v, e, s -> Overlays(v, e, s) }
 
     val uiState: StateFlow<TodayUiState> = combine(
         dayData,
         settingsStore.settings,
         recipeRepository.observeAll(),
-        combine(overlays, bodyWeight, foodRepository.observePastFoods()) { o, w, p -> Triple(o, w, p) },
-    ) { day, settings, recipes, (overlays, weightKg, pastFoods) ->
+        combine(overlays, bodyWeight, foodRepository.observePastFoods(), weekKcal, ::Extras),
+    ) { day, settings, recipes, (overlays, weightKg, pastFoods, weekKcal) ->
         TodayUiState(
             date = day.date,
             goals = settings.goals,
@@ -152,6 +164,7 @@ class TodayViewModel(
             workoutBurnKcal = day.workouts.filter { !it.isActive }.sumOf { CalorieBurnEstimator.estimate(it, weightKg) },
             addWorkoutBurn = settings.addWorkoutBurn,
             pastFoods = pastFoods,
+            weekKcal = weekKcal,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TodayUiState(date = LocalDate.now()))
 
@@ -161,6 +174,10 @@ class TodayViewModel(
 
     override fun onJumpToToday() {
         selectedDate.value = LocalDate.now()
+    }
+
+    override fun onSelectDate(date: LocalDate) {
+        if (date <= LocalDate.now()) selectedDate.value = date
     }
 
     override fun onEntryClick(entry: FoodEntry) {

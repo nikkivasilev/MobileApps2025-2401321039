@@ -3,14 +3,16 @@ package com.macrosnap.app.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.ui.theme.AppIcons
+import com.macrosnap.app.ui.theme.AppTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -43,44 +46,44 @@ fun formatSleepDuration(minutes: Long): String = "${minutes / 60} h ${(minutes %
 
 @Composable
 fun SleepCard(sleep: SleepLog?, goalHours: Double, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    ElevatedCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Sleep", style = MaterialTheme.typography.titleMedium)
-                if (sleep == null) {
-                    Text(
-                        text = "Tap to log last night",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Text(
-                        text = "${sleep.bedtime.toLocalTime().format(TIME_FORMAT)} → ${sleep.wakeTime.toLocalTime().format(TIME_FORMAT)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+    val tint = AppTheme.colors.sleep
+    AppCard(modifier, onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(AppIcons.Moon, tint, size = 32.dp)
+            Spacer(Modifier.width(10.dp))
+            Text("Sleep", style = MaterialTheme.typography.titleMedium)
+        }
+        Spacer(Modifier.weight(1f).heightIn(min = 12.dp))
+        if (sleep == null) {
+            Text("—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = "Tap to log last night",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        } else {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("${sleep.minutes / 60}h ${(sleep.minutes % 60).toString().padStart(2, '0')}m", style = MaterialTheme.typography.headlineSmall)
             }
-            if (sleep != null) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = formatSleepDuration(sleep.minutes),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (sleep.hours >= goalHours) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            Text(
+                text = "${sleep.bedtime.toLocalTime().format(TIME_FORMAT)} → ${sleep.wakeTime.toLocalTime().format(TIME_FORMAT)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            PillBar(
+                progress = if (goalHours > 0) (sleep.hours / goalHours).toFloat() else 0f,
+                color = tint,
+                modifier = Modifier.padding(top = 8.dp, bottom = 10.dp),
+            )
+            Row {
+                repeat(5) { index ->
+                    Icon(
+                        imageVector = if (index < sleep.quality) Icons.Filled.Star else AppIcons.StarBorder,
+                        contentDescription = null,
+                        tint = if (index < sleep.quality) AppTheme.colors.highlight else MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(18.dp),
                     )
-                    Row {
-                        repeat(5) { index ->
-                            Icon(
-                                imageVector = if (index < sleep.quality) Icons.Filled.Star else AppIcons.StarBorder,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.size(16.dp),
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -131,6 +134,7 @@ fun SleepSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.background,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(
@@ -160,8 +164,8 @@ fun SleepSheet(
                         Icon(
                             imageVector = if (index < quality) Icons.Filled.Star else AppIcons.StarBorder,
                             contentDescription = "${index + 1} stars",
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(32.dp),
+                            tint = if (index < quality) AppTheme.colors.highlight else MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(36.dp),
                         )
                     }
                 }

@@ -12,9 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -40,6 +38,10 @@ import com.macrosnap.app.model.Routine
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.ui.RoutineEditorRoute
 import com.macrosnap.app.ui.WorkoutRoute
+import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.components.CardHeader
+import com.macrosnap.app.ui.components.SectionTitle
+import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.whole
 import java.time.format.DateTimeFormatter
 
@@ -76,6 +78,8 @@ fun WorkoutsScreen(
         floatingActionButton = {
             if (uiState.active == null) {
                 ExtendedFloatingActionButton(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     onClick = viewModel::onStartEmpty,
                     icon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
                     text = { Text("Start workout") },
@@ -92,46 +96,58 @@ fun WorkoutsScreen(
         ) {
             uiState.active?.let { active ->
                 item(key = "active") {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    AppCard(
                         onClick = { onOpenWorkout(WorkoutRoute(active.id)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        contentPadding = PaddingValues(20.dp),
                     ) {
-                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text("Workout in progress", style = MaterialTheme.typography.labelLarge)
-                                Text(active.name, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    text = "Workout in progress",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                )
+                                Text(active.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
                                 Text(
                                     text = "${active.durationMinutes} min · ${active.doneSets} sets done",
                                     style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 )
                             }
-                            Button(onClick = { onOpenWorkout(WorkoutRoute(active.id)) }) { Text("Continue") }
+                            Button(
+                                onClick = { onOpenWorkout(WorkoutRoute(active.id)) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.onPrimary,
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            ) { Text("Continue") }
                         }
                     }
                 }
             }
 
             item(key = "routines-header") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Routines", style = MaterialTheme.typography.titleMedium)
+                SectionTitle("Routines") {
                     TextButton(onClick = { onOpenRoutine(RoutineEditorRoute()) }) { Text("New routine") }
                 }
             }
             if (uiState.routines.isEmpty()) {
                 item(key = "routines-empty") {
-                    Text(
-                        text = "Save your usual sessions (Push, Pull, Legs…) as routines. Starting one pre-fills every " +
-                            "set with what you lifted last time.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    AppCard {
+                        CardHeader(
+                            title = "No routines yet",
+                            icon = AppIcons.Dumbbell,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "Save your usual sessions (Push, Pull, Legs…) as routines. Starting one pre-fills every " +
+                                "set with what you lifted last time.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    }
                 }
             }
             items(uiState.routines, key = { "routine-${it.id}" }) { routine ->
@@ -144,7 +160,7 @@ fun WorkoutsScreen(
             }
 
             item(key = "history-header") {
-                Text("History", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
+                SectionTitle("History")
             }
             if (uiState.history.isEmpty()) {
                 item(key = "history-empty") {
@@ -152,6 +168,7 @@ fun WorkoutsScreen(
                         text = "Finished workouts show up here.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp),
                     )
                 }
             }
@@ -164,7 +181,7 @@ fun WorkoutsScreen(
 
 @Composable
 private fun RoutineCard(routine: Routine, canStart: Boolean, onStart: () -> Unit, onEdit: () -> Unit) {
-    ElevatedCard(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+    AppCard(Modifier.fillMaxWidth(), onClick = onEdit, contentPadding = PaddingValues(0.dp)) {
         Row(
             modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -185,7 +202,7 @@ private fun RoutineCard(routine: Routine, canStart: Boolean, onStart: () -> Unit
 
 @Composable
 private fun HistoryCard(workout: Workout, burnKcal: Int?, onClick: () -> Unit) {
-    ElevatedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+    AppCard(Modifier.fillMaxWidth(), onClick = onClick, contentPadding = PaddingValues(0.dp)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(workout.name, style = MaterialTheme.typography.titleMedium)

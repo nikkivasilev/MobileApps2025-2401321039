@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -56,6 +57,7 @@ import com.macrosnap.app.data.ExerciseUsage
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
+import com.macrosnap.app.ui.components.appChipColors
 
 @Composable
 fun ExercisesScreen(
@@ -101,6 +103,8 @@ private fun ExercisesContent(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 onClick = actions::onNewClick,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text("New exercise") },
@@ -131,6 +135,8 @@ private fun ExercisesContent(
                 FilterChip(selected = uiState.groupFilter == null, onClick = { actions.onGroupFilterChange(null) }, label = { Text("All") })
                 MuscleGroup.entries.forEach { option ->
                     FilterChip(
+                        colors = appChipColors(),
+                        shape = CircleShape,
                         selected = uiState.groupFilter == option,
                         onClick = { actions.onGroupFilterChange(if (uiState.groupFilter == option) null else option) },
                         label = { Text(option.label) },

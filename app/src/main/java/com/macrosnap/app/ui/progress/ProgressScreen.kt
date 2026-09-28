@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -45,12 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,14 +62,17 @@ import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.WeightEntry
 import com.macrosnap.app.ui.compact
+import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.formatSleepDuration
+import com.macrosnap.app.ui.theme.AppIcons
+import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.whole
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,10 +88,10 @@ fun ProgressScreen(viewModel: ProgressViewModel = viewModel(factory = ProgressVi
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            StrengthCard(uiState, onExerciseSelect = viewModel::onExerciseSelect)
             WeekCard(uiState)
+            StrengthCard(uiState, onExerciseSelect = viewModel::onExerciseSelect)
             SleepWeekCard(uiState)
             WaterWeekCard(uiState)
             WeightCard(
@@ -103,13 +108,13 @@ fun ProgressScreen(viewModel: ProgressViewModel = viewModel(factory = ProgressVi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StrengthCard(uiState: ProgressUiState, onExerciseSelect: (Exercise) -> Unit) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Strength", style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = "Workouts this week: ${uiState.workoutDays.size}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            CardHeader(
+                title = "Strength",
+                icon = AppIcons.Dumbbell,
+                tint = MaterialTheme.colorScheme.onSurface,
+                subtitle = "${uiState.workoutDays.size} ${if (uiState.workoutDays.size == 1) "workout" else "workouts"} this week",
             )
             if (uiState.trainedExercises.isEmpty()) {
                 Text(
@@ -190,6 +195,7 @@ private fun StrengthCard(uiState: ProgressUiState, onExerciseSelect: (Exercise) 
 
 @Composable
 private fun LineChart(values: List<Double>, lineColor: Color) {
+    val cardColor = AppTheme.colors.card
     Canvas(
         Modifier
             .fillMaxWidth()
@@ -205,26 +211,27 @@ private fun LineChart(values: List<Double>, lineColor: Color) {
         )
         val path = Path()
         values.indices.forEach { i -> val p = pointAt(i); if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y) }
+        drawAreaUnder(path, pointAt(0).x, pointAt(values.lastIndex).x, lineColor)
         drawPath(path, lineColor, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-        values.indices.forEach { drawCircle(lineColor, radius = 4.dp.toPx(), center = pointAt(it)) }
+        values.indices.forEach { drawCircle(lineColor, radius = 4.dp.toPx(), center = pointAt(it))
+        values.indices.forEach { drawCircle(cardColor, radius = 2.dp.toPx(), center = pointAt(it)) } }
     }
 }
 
 @Composable
 private fun SleepWeekCard(uiState: ProgressUiState) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Sleep", style = MaterialTheme.typography.titleMedium)
+            CardHeader(title = "Sleep", icon = AppIcons.Moon, tint = AppTheme.colors.sleep, subtitle = "Last 7 nights")
             val avg = uiState.averageSleepHours
-            Text(
-                text = if (avg != null) {
-                    "Average ${formatSleepDuration((avg * 60).toLong())} · quality ${uiState.averageSleepQuality?.compact()}/5 · ${uiState.sleepWeek.size} nights logged"
-                } else {
-                    "Log a few nights from the Today screen to see your week."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (avg != null) {
+                HeadlineStat(
+                    value = formatSleepDuration((avg * 60).toLong()),
+                    caption = "average · quality ${uiState.averageSleepQuality?.compact()}/5 · ${uiState.sleepWeek.size} nights logged",
+                )
+            } else {
+                EmptyHint("Log a few nights from the Today screen to see your week.")
+            }
             val today = LocalDate.now()
             val days = (6 downTo 0).map { today.minusDays(it.toLong()) }
             val byDay = uiState.sleepWeek.associateBy { it.date }
@@ -233,6 +240,7 @@ private fun SleepWeekCard(uiState: ProgressUiState) {
                 values = days.map { byDay[it]?.hours ?: 0.0 },
                 goal = uiState.sleepGoalHours,
                 overIsBad = false,
+                barColor = AppTheme.colors.sleep,
             )
             Text(
                 text = "Dashed line: your ${uiState.sleepGoalHours.compact()} h goal",
@@ -245,21 +253,22 @@ private fun SleepWeekCard(uiState: ProgressUiState) {
 
 @Composable
 private fun WaterWeekCard(uiState: ProgressUiState) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Water", style = MaterialTheme.typography.titleMedium)
+            CardHeader(title = "Water", icon = AppIcons.WaterDrop, tint = AppTheme.colors.water, subtitle = "Last 7 days")
             val avg = uiState.averageWaterMl
-            Text(
-                text = if (avg != null) "Average ${(avg / 1000).compact()} L on logged days" else "Tap the water buttons on Today to fill this in.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (avg != null) {
+                HeadlineStat(value = "${(avg / 1000).compact()} L", caption = "average on logged days")
+            } else {
+                EmptyHint("Tap the water buttons on Today to fill this in.")
+            }
             val days = uiState.waterWeek.map { it.date }.ifEmpty { (6 downTo 0).map { LocalDate.now().minusDays(it.toLong()) } }
             WeekBars(
                 days = days,
                 values = uiState.waterWeek.map { it.totalMl / 1000.0 }.ifEmpty { days.map { 0.0 } },
                 goal = uiState.waterGoalMl / 1000.0,
                 overIsBad = false,
+                barColor = AppTheme.colors.water,
             )
         }
     }
@@ -267,25 +276,25 @@ private fun WaterWeekCard(uiState: ProgressUiState) {
 
 @Composable
 private fun WeekCard(uiState: ProgressUiState) {
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Calories, last 7 days", style = MaterialTheme.typography.titleMedium)
+            CardHeader(title = "Calories", icon = AppIcons.Flame, tint = AppTheme.colors.calories, subtitle = "Last 7 days")
             val averageKcal = uiState.averageKcal
             val averageProtein = uiState.averageProtein
-            Text(
-                text = if (averageKcal != null && averageProtein != null) {
-                    "Average on logged days: ${averageKcal.whole()} kcal · ${averageProtein.whole()} g protein"
-                } else {
-                    "Log a few meals to see your weekly average."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (averageKcal != null && averageProtein != null) {
+                HeadlineStat(
+                    value = "${averageKcal.whole()} kcal",
+                    caption = "daily average on logged days · ${averageProtein.whole()} g protein",
+                )
+            } else {
+                EmptyHint("Log a few meals to see your weekly average.")
+            }
             WeekBars(
                 days = uiState.week.map { it.date },
                 values = uiState.week.map { it.total.kcal },
                 goal = uiState.goals.kcal.toDouble(),
                 overIsBad = true,
+                barColor = AppTheme.colors.calories,
                 workoutDays = uiState.workoutDays,
             )
             Text(
@@ -303,12 +312,15 @@ private fun WeekBars(
     values: List<Double>,
     goal: Double,
     overIsBad: Boolean,
+    barColor: Color,
     workoutDays: Set<LocalDate> = emptySet(),
 ) {
-    val barColor = MaterialTheme.colorScheme.primary
-    val lowColor = MaterialTheme.colorScheme.tertiary
+    // Short of a goal you want to reach: the same hue, faded, so the week still reads as one series.
+    val lowColor = barColor.copy(alpha = 0.4f)
     val overColor = MaterialTheme.colorScheme.error
     val goalColor = MaterialTheme.colorScheme.outline
+    val trackColor = AppTheme.colors.track
+    val locale = LocalConfiguration.current.locales[0]
     Column {
         Canvas(
             Modifier
@@ -318,9 +330,19 @@ private fun WeekBars(
             if (days.isEmpty()) return@Canvas
             val maxValue = maxOf(values.maxOrNull() ?: 0.0, goal * 1.15, 0.001)
             val slot = size.width / days.size
-            val barWidth = slot * 0.55f
+            val barWidth = slot * 0.42f
+            val radius = CornerRadius(barWidth / 2)
+            days.indices.forEach { index ->
+                drawRoundRect(
+                    color = trackColor,
+                    topLeft = Offset(slot * index + (slot - barWidth) / 2, 0f),
+                    size = Size(barWidth, size.height),
+                    cornerRadius = radius,
+                )
+            }
             values.forEachIndexed { index, value ->
-                val barHeight = (value / maxValue).toFloat() * size.height
+                // Never shorter than it is wide, so a small value still reads as a rounded bar.
+                val barHeight = ((value / maxValue).toFloat() * size.height).let { if (it > 0f) it.coerceAtLeast(barWidth) else 0f }
                 if (barHeight > 0f) {
                     val color = when {
                         overIsBad && value > goal * 1.05 -> overColor
@@ -331,11 +353,11 @@ private fun WeekBars(
                         color = color,
                         topLeft = Offset(slot * index + (slot - barWidth) / 2, size.height - barHeight),
                         size = Size(barWidth, barHeight),
-                        cornerRadius = CornerRadius(6.dp.toPx()),
+                        cornerRadius = radius,
                     )
                 }
                 if (days[index] in workoutDays) {
-                    drawCircle(goalColor, radius = 3.dp.toPx(), center = Offset(slot * index + slot / 2, size.height - 4.dp.toPx()))
+                    drawCircle(goalColor, radius = 3.dp.toPx(), center = Offset(slot * index + slot / 2, 4.dp.toPx()))
                 }
             }
             val goalY = size.height - (goal / maxValue).toFloat() * size.height
@@ -350,7 +372,7 @@ private fun WeekBars(
         Row(Modifier.fillMaxWidth()) {
             days.forEach { day ->
                 Text(
-                    text = day.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    text = day.dayOfWeek.getDisplayName(TextStyle.NARROW, locale),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -371,19 +393,16 @@ private fun WeightCard(
 ) {
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
 
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Body weight", style = MaterialTheme.typography.titleMedium)
+            CardHeader(title = "Body weight", icon = AppIcons.Scale, tint = MaterialTheme.colorScheme.onSurface)
 
             val latest = uiState.latestWeight
             if (latest != null) {
                 val change = uiState.weightChange
-                Text(
-                    text = buildString {
-                        append("${latest.weightKg.compact()} kg")
-                        if (change != null) append("  (${if (change > 0) "+" else ""}${change.compact()} kg since you started)")
-                    },
-                    style = MaterialTheme.typography.headlineSmall,
+                HeadlineStat(
+                    value = "${latest.weightKg.compact()} kg",
+                    caption = if (change != null) "${if (change > 0) "+" else ""}${change.compact()} kg since you started" else "latest",
                 )
             }
 
@@ -458,6 +477,7 @@ private fun WeightDatePicker(initial: LocalDate, onPick: (LocalDate) -> Unit, on
 @Composable
 private fun WeightChart(weights: List<WeightEntry>) {
     val lineColor = MaterialTheme.colorScheme.primary
+    val cardColor = AppTheme.colors.card
     Canvas(
         Modifier
             .fillMaxWidth()
@@ -480,10 +500,37 @@ private fun WeightChart(weights: List<WeightEntry>) {
             val point = pointFor(entry)
             if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
         }
+        drawAreaUnder(path, pointFor(weights.first()).x, pointFor(weights.last()).x, lineColor)
         drawPath(path, lineColor, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         weights.forEach { drawCircle(lineColor, radius = 4.dp.toPx(), center = pointFor(it)) }
+        weights.forEach { drawCircle(cardColor, radius = 2.dp.toPx(), center = pointFor(it)) }
     }
 }
 
 private const val RECENT_WEIGHTS = 7
 private val DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, d MMM")
+
+/** A big figure with a line of context under it, the lead of each Progress card. */
+@Composable
+private fun HeadlineStat(value: String, caption: String) {
+    Column {
+        Text(value, style = MaterialTheme.typography.headlineMedium)
+        Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun EmptyHint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** Fills from the line down to the chart's floor with the line colour, fading out downwards. */
+private fun DrawScope.drawAreaUnder(line: Path, startX: Float, endX: Float, color: Color) {
+    val area = Path().apply {
+        addPath(line)
+        lineTo(endX, size.height)
+        lineTo(startX, size.height)
+        close()
+    }
+    drawPath(area, Brush.verticalGradient(listOf(color.copy(alpha = 0.18f), color.copy(alpha = 0f))))
+}

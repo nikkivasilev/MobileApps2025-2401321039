@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,9 +54,10 @@ import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.WorkoutExercise
 import com.macrosnap.app.model.WorkoutSet
 import com.macrosnap.app.ui.compact
+import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.whole
-import kotlinx.coroutines.delay
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 
 @Composable
 fun WorkoutScreen(
@@ -264,7 +264,7 @@ private fun ExerciseCard(
     actions: WorkoutActions,
 ) {
     val exercise = entry.exercise
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

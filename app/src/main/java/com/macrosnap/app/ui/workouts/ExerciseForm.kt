@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
+import com.macrosnap.app.ui.components.appChipColors
 
 /** Text inputs for an exercise's defaults; null from the parsers means the input isn't usable yet. */
 fun parseDefaultSets(input: String): Int? = input.trim().toIntOrNull()?.takeIf { it in Exercise.SETS_RANGE }
@@ -48,7 +50,7 @@ fun ExerciseDetailsFields(
         // Wrapped rather than scrolled, so the selected group is always in view.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MuscleGroup.entries.forEach { option ->
-                FilterChip(selected = group == option, onClick = { onGroupChange(option) }, label = { Text(option.label) })
+                FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == option, onClick = { onGroupChange(option) }, label = { Text(option.label) })
             }
         }
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {

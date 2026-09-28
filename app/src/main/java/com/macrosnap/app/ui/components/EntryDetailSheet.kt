@@ -1,5 +1,6 @@
 package com.macrosnap.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,15 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.macrosnap.app.model.EntrySource
@@ -91,7 +90,7 @@ fun EntryDetailSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(160.dp)
-                        .clip(RoundedCornerShape(16.dp)),
+                        .clip(MaterialTheme.shapes.large),
                 )
             }
             Text(item.name, style = MaterialTheme.typography.titleLarge)
@@ -101,11 +100,11 @@ fun EntryDetailSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Text("${total.kcal.whole()} kcal", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("${total.kcal.whole()} kcal", style = MaterialTheme.typography.headlineMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MacroTile("Protein", total.protein, MacroColors.Protein, Modifier.weight(1f))
-                MacroTile("Carbs", total.carbs, MacroColors.Carbs, Modifier.weight(1f))
-                MacroTile("Fat", total.fat, MacroColors.Fat, Modifier.weight(1f))
+                MacroAmount("Protein", total.protein, MacroColors.Protein, Modifier.weight(1f))
+                MacroAmount("Carbs", total.carbs, MacroColors.Carbs, Modifier.weight(1f))
+                MacroAmount("Fat", total.fat, MacroColors.Fat, Modifier.weight(1f))
             }
             Text(
                 text = "Per 100 g: ${item.per100g.kcal.whole()} kcal · P ${item.per100g.protein.compact()} · " +
@@ -157,9 +156,14 @@ fun EntryDetailSheet(
 }
 
 @Composable
-private fun MacroTile(label: String, grams: Double, color: Color, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("${grams.whole()} g", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = color)
+private fun MacroAmount(label: String, grams: Double, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(color.copy(alpha = 0.12f), MaterialTheme.shapes.medium)
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("${grams.whole()} g", style = MaterialTheme.typography.titleLarge, color = color)
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
