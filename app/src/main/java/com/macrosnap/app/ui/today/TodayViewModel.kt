@@ -24,6 +24,7 @@ import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PastMeal
 import com.macrosnap.app.model.PendingPhoto
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.SupplementStatus
@@ -63,6 +64,7 @@ interface TodayActions {
     fun onEntryDeleted()
     fun onLogAgain()
     fun onHidePastFood(food: PastFood)
+    fun onHidePastMeal(meal: PastMeal)
     fun onDiscardPendingPhoto(photo: PendingPhoto)
     fun onSupplementTaken(supplementId: Long)
     fun onSupplementUntaken(supplementId: Long)
@@ -89,10 +91,12 @@ private data class DayData(
 private data class Extras(
     val overlays: Overlays,
     val weightKg: Double,
-    val pastFoods: List<PastFood>,
+    val history: History,
     val weekKcal: Map<LocalDate, Double>,
     val pendingPhotos: List<PendingPhoto>,
 )
+
+private data class History(val pastFoods: List<PastFood>, val pastMeals: List<PastMeal>)
 
 private data class Overlays(val viewing: FoodEntry?, val editing: FoodEntry?, val showSleepSheet: Boolean)
 
@@ -151,12 +155,14 @@ class TodayViewModel(
 
     private val overlays = combine(viewing, editing, showSleepSheet) { v, e, s -> Overlays(v, e, s) }
 
+    private val history = combine(foodRepository.observePastFoods(), foodRepository.observePastMeals(), ::History)
+
     val uiState: StateFlow<TodayUiState> = combine(
         dayData,
         settingsStore.settings,
         recipeRepository.observeAll(),
-        combine(overlays, bodyWeight, foodRepository.observePastFoods(), weekKcal, foodRepository.observePendingPhotos(), ::Extras),
-    ) { day, settings, recipes, (overlays, weightKg, pastFoods, weekKcal, pendingPhotos) ->
+        combine(overlays, bodyWeight, history, weekKcal, foodRepository.observePendingPhotos(), ::Extras),
+    ) { day, settings, recipes, (overlays, weightKg, history, weekKcal, pendingPhotos) ->
         TodayUiState(
             date = day.date,
             goals = settings.goals,
@@ -173,7 +179,8 @@ class TodayViewModel(
             showSleepSheet = overlays.showSleepSheet,
             workoutBurnKcal = day.workouts.filter { !it.isActive }.sumOf { CalorieBurnEstimator.estimate(it, weightKg) },
             addWorkoutBurn = settings.addWorkoutBurn,
-            pastFoods = pastFoods,
+            pastFoods = history.pastFoods,
+            pastMeals = history.pastMeals,
             weekKcal = weekKcal,
             pendingPhotos = pendingPhotos,
         )
@@ -248,6 +255,13 @@ class TodayViewModel(
         viewModelScope.launch {
             foodRepository.hidePastFood(food.key)
             _effects.send(TodayEffect.ShowMessage(uiText(R.string.today_food_hidden, food.item.name)))
+        }
+    }
+
+    override fun onHidePastMeal(meal: PastMeal) {
+        viewModelScope.launch {
+            foodRepository.hidePastMeal(meal.key)
+            _effects.send(TodayEffect.ShowMessage(uiText(R.string.today_meal_hidden, meal.name)))
         }
     }
 

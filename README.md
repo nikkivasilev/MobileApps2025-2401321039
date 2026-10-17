@@ -12,6 +12,9 @@ weights and macros; you correct anything that's off and log it. Everything you l
 - **Your foods** - everything you've logged before, most frequent first, at the top of the Add food
   sheet with a search box. Tap one to log it again at your usual amount - no AI request. While you
   describe a meal, matching past foods are suggested too, and any logged entry has a **Log again** button.
+- **Your meals** - foods you've eaten together more than once (say, the same lunch) show above Your
+  foods; one tap fills the review screen with the whole meal at your usual amounts. Any meal on Today
+  also has **Log again today** in its menu, for a one-off repeat.
 - **Barcode scanning** - label values for packaged food from Open Food Facts (no key needed). Listings
   are crowd-sourced, so the app checks them: kJ typed as kcal is converted, calories that don't fit
   the macros or a serving that can't be right are flagged for you to check against the label.

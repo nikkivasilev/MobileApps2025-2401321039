@@ -101,7 +101,10 @@ class ReviewViewModel(
     val effects = _effects.receiveAsFlow()
 
     private val ReviewRoute.isBlankManualEntry: Boolean
-        get() = photoPath == null && barcode == null && recipeId == null && pastFoodKey == null && !describe
+        get() = photoPath == null && barcode == null && recipeId == null && pastFoodKey == null && !isPastMeal && !describe
+
+    private val ReviewRoute.isPastMeal: Boolean
+        get() = pastMealKey != null || copyMealEpochDay != null
 
     init {
         if (restored != null) {
@@ -113,6 +116,8 @@ class ReviewViewModel(
                 route.barcode != null -> lookUpBarcode(route.barcode)
                 route.recipeId != null -> loadRecipe(route.recipeId)
                 route.pastFoodKey != null -> loadPastFood(route.pastFoodKey)
+                route.pastMealKey != null -> loadPastMeal(route.pastMealKey)
+                route.copyMealEpochDay != null -> copyMeal(LocalDate.ofEpochDay(route.copyMealEpochDay), route.copyMealType)
             }
         }
         route.photoPath?.let { path ->
@@ -263,6 +268,30 @@ class ReviewViewModel(
         }
     }
 
+    private fun loadPastMeal(key: String) {
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_loading))) }
+        lookupJob = viewModelScope.launch {
+            showMeal(foodRepository.pastMeal(key)?.items.orEmpty())
+        }
+    }
+
+    /** Another day's meal, logged again: it keeps its meal, since the button sat on that meal's card. */
+    private fun copyMeal(date: LocalDate, mealTypeName: String?) {
+        val mealType = MealType.entries.firstOrNull { it.name == mealTypeName } ?: return
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_loading)), mealType = mealType) }
+        lookupJob = viewModelScope.launch {
+            showMeal(foodRepository.mealOn(date, mealType))
+        }
+    }
+
+    private fun showMeal(items: List<FoodItem>) = _uiState.update { state ->
+        if (items.isEmpty()) {
+            state.copy(status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_meal_missing)))
+        } else {
+            state.copy(status = ReviewStatus.Ready, items = items.map { DraftItem(nextDraftId++, it) })
+        }
+    }
+
     override fun onSuggestionClick(food: PastFood) = _uiState.update { state ->
         val (item, remaining) = acceptSuggestion(state.describeInput, food)
         state.copy(
@@ -372,7 +401,7 @@ class ReviewViewModel(
                         route.photoPath != null -> EntrySource.PHOTO
                         route.barcode != null -> EntrySource.BARCODE
                         route.recipeId != null -> EntrySource.RECIPE
-                        route.pastFoodKey != null -> EntrySource.HISTORY
+                        route.pastFoodKey != null || route.isPastMeal -> EntrySource.HISTORY
                         route.describe -> EntrySource.TEXT
                         else -> EntrySource.MANUAL
                     },

@@ -1,6 +1,7 @@
 package com.macrosnap.app.ui.today
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,38 +41,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.macrosnap.app.R
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PastMeal
 import com.macrosnap.app.model.matching
 import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.components.IconBadge
+import com.macrosnap.app.ui.components.MacroDots
 import com.macrosnap.app.ui.components.PastFoodRow
 import com.macrosnap.app.ui.components.SectionTitle
+import com.macrosnap.app.ui.components.Tag
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
+import com.macrosnap.app.ui.whole
 
 /** Enough to scroll through without making the sheet heavy; search reaches the rest. */
 private const val MAX_LISTED_FOODS = 100
 
+/** Only the habits: the meals worth one tap sit above the foods without pushing them away. */
+private const val MAX_LISTED_MEALS = 5
+
 /**
- * The add-food sheet: the ways to add something new as a compact grid, then foods logged before
- * (search, or the most frequent), so a repeat takes one tap and no AI request.
+ * The add-food sheet: the ways to add something new as a compact grid, then meals and foods
+ * logged before (search, or the most frequent), so a repeat takes one tap and no AI request.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AddFoodSheet(
     pastFoods: List<PastFood>,
+    pastMeals: List<PastMeal>,
     onMethod: (AddMethod) -> Unit,
     onPastFood: (PastFood) -> Unit,
+    onPastMeal: (PastMeal) -> Unit,
     onDescribe: (String) -> Unit,
     onHide: (PastFood) -> Unit,
+    onHideMeal: (PastMeal) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var hiding by remember { mutableStateOf<PastFood?>(null) }
+    var hidingMeal by remember { mutableStateOf<PastMeal?>(null) }
     val matches = remember(pastFoods, query) { pastFoods.matching(query) }
 
     ModalBottomSheet(
@@ -112,16 +128,12 @@ internal fun AddFoodSheet(
 
             if (query.isBlank()) {
                 item(key = "methods") { MethodGrid(onMethod) }
+                if (pastMeals.isNotEmpty()) {
+                    item(key = "meals-title") { HistoryTitle(stringResource(R.string.today_your_meals), showHint = true) }
+                    pastMealItems(pastMeals.take(MAX_LISTED_MEALS), onPastMeal) { hidingMeal = it }
+                }
                 if (pastFoods.isNotEmpty()) {
-                    item(key = "foods-title") {
-                        SectionTitle(stringResource(R.string.today_your_foods), Modifier.padding(top = 8.dp, bottom = 4.dp)) {
-                            Text(
-                                text = stringResource(R.string.today_long_press_hide),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    item(key = "foods-title") { HistoryTitle(stringResource(R.string.today_your_foods), showHint = pastMeals.isEmpty()) }
                     pastFoodItems(pastFoods.take(MAX_LISTED_FOODS), onPastFood) { hiding = it }
                 }
             } else {
@@ -156,6 +168,21 @@ internal fun AddFoodSheet(
                 }
             }
         }
+    }
+
+    hidingMeal?.let { meal ->
+        AlertDialog(
+            onDismissRequest = { hidingMeal = null },
+            title = { Text(stringResource(R.string.today_hide_meal_title)) },
+            text = { Text(stringResource(R.string.today_hide_meal_text, meal.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    hidingMeal = null
+                    onHideMeal(meal)
+                }) { Text(stringResource(R.string.today_hide)) }
+            },
+            dismissButton = { TextButton(onClick = { hidingMeal = null }) { Text(stringResource(R.string.action_cancel)) } },
+        )
     }
 
     hiding?.let { food ->
@@ -230,6 +257,65 @@ private fun LazyListScope.pastFoodItems(foods: List<PastFood>, onClick: (PastFoo
                 onLongClick = { onLongClick(food) },
             )
         }
+    }
+}
+
+@Composable
+private fun HistoryTitle(title: String, showHint: Boolean) {
+    SectionTitle(title, Modifier.padding(top = 8.dp, bottom = 4.dp)) {
+        if (showHint) {
+            Text(
+                text = stringResource(R.string.today_long_press_hide),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun LazyListScope.pastMealItems(meals: List<PastMeal>, onClick: (PastMeal) -> Unit, onLongClick: (PastMeal) -> Unit) {
+    itemsIndexed(meals, key = { _, meal -> "meal-${meal.key}" }) { index, meal ->
+        Surface(
+            color = AppTheme.colors.card,
+            shape = groupedShape(index, meals.size),
+            modifier = Modifier.padding(bottom = if (index == meals.size - 1) 0.dp else 2.dp),
+        ) {
+            PastMealRow(meal, onClick = { onClick(meal) }, onLongClick = { onLongClick(meal) })
+        }
+    }
+}
+
+/** The meal's foods by name, then its size and macros, like a past food's row. */
+@Composable
+private fun PastMealRow(meal: PastMeal, onClick: () -> Unit, onLongClick: () -> Unit) {
+    val total = meal.total
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = meal.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+                Text(
+                    text = pluralStringResource(R.plurals.today_past_meal_amount, meal.items.size, meal.items.size, total.kcal.whole()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(10.dp))
+                MacroDots(total)
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Tag("${meal.timesLogged}×", MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

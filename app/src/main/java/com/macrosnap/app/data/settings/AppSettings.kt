@@ -19,6 +19,8 @@ data class AppSettings(
     val addWorkoutBurn: Boolean,
     /** Food keys hidden from "Your foods", with when; logging one again after that brings it back. */
     val hiddenFoods: Map<String, Long> = emptyMap(),
+    /** Meal keys hidden from "Your meals", with when; eating one again after that brings it back. */
+    val hiddenMeals: Map<String, Long> = emptyMap(),
 ) {
     val nutrientTargets: Micros get() = Nutrient.defaultTargets(profile?.sex) + nutrientOverrides
 

@@ -10,8 +10,10 @@ import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.FoodHistory
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.Macros
+import com.macrosnap.app.model.MealHistory
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PastMeal
 import com.macrosnap.app.model.PendingPhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +43,22 @@ class FoodRepository(
         FoodHistory.build(foodDao.observeAll().first().map { it.toModel() }).firstOrNull { it.key == key }
 
     suspend fun hidePastFood(key: String) = settingsStore.hideFood(key)
+
+    /** Meals eaten more than once with the same foods, most useful first; see [MealHistory.build]. */
+    fun observePastMeals(): Flow<List<PastMeal>> =
+        combine(foodDao.observeAll(), settingsStore.settings.map { it.hiddenMeals }.distinctUntilChanged()) { rows, hidden ->
+            MealHistory.build(rows.map { it.toModel() }, hidden)
+        }
+
+    /** Looks a past meal up by key, including hidden ones: the caller already chose it. */
+    suspend fun pastMeal(key: String): PastMeal? =
+        MealHistory.build(foodDao.observeAll().first().map { it.toModel() }).firstOrNull { it.key == key }
+
+    suspend fun hidePastMeal(key: String) = settingsStore.hideMeal(key)
+
+    /** What was logged under one meal on one day, in the order it was logged. */
+    suspend fun mealOn(date: LocalDate, mealType: MealType): List<FoodItem> =
+        foodDao.observeDay(date.toEpochDay()).first().map { it.toModel() }.filter { it.mealType == mealType }.map { it.item }
 
     fun observeDay(date: LocalDate): Flow<List<FoodEntry>> =
         foodDao.observeDay(date.toEpochDay()).map { rows -> rows.map { it.toModel() } }
