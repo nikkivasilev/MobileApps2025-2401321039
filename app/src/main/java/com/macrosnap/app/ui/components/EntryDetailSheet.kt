@@ -1,5 +1,6 @@
 package com.macrosnap.app.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,13 +30,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.macrosnap.app.R
 import com.macrosnap.app.model.EntrySource
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.ui.compact
+import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.theme.MacroColors
+import com.macrosnap.app.ui.unitLabel
 import com.macrosnap.app.ui.whole
 import java.io.File
 
@@ -59,14 +64,14 @@ fun EntryDetailSheet(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete this entry?") },
-            text = { Text("${item.name} (${total.kcal.whole()} kcal) will be removed from the log.") },
+            title = { Text(stringResource(R.string.review_delete_entry_title)) },
+            text = { Text(stringResource(R.string.review_delete_entry_named, item.name, total.kcal.whole())) },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; onDelete() }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -95,30 +100,32 @@ fun EntryDetailSheet(
             }
             Text(item.name, style = MaterialTheme.typography.titleLarge)
             Text(
-                text = "${item.grams.compact()} g · ${entry.mealType.label} · ${entry.source.label}",
+                text = "${stringResource(R.string.amount_g, item.grams.compact())} · ${entry.mealType.label} · ${stringResource(entry.source.labelRes)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Text("${total.kcal.whole()} kcal", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.amount_kcal, total.kcal.whole()), style = MaterialTheme.typography.headlineMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MacroAmount("Protein", total.protein, MacroColors.Protein, Modifier.weight(1f))
-                MacroAmount("Carbs", total.carbs, MacroColors.Carbs, Modifier.weight(1f))
-                MacroAmount("Fat", total.fat, MacroColors.Fat, Modifier.weight(1f))
+                MacroAmount(stringResource(R.string.protein), total.protein, MacroColors.Protein, Modifier.weight(1f))
+                MacroAmount(stringResource(R.string.carbs), total.carbs, MacroColors.Carbs, Modifier.weight(1f))
+                MacroAmount(stringResource(R.string.fat), total.fat, MacroColors.Fat, Modifier.weight(1f))
             }
             Text(
-                text = "Per 100 g: ${item.per100g.kcal.whole()} kcal · P ${item.per100g.protein.compact()} · " +
-                    "C ${item.per100g.carbs.compact()} · F ${item.per100g.fat.compact()} g",
+                text = stringResource(
+                    R.string.review_per_100g,
+                    item.per100g.kcal.whole(),
+                    stringResource(R.string.macros_summary, item.per100g.protein.compact(), item.per100g.carbs.compact(), item.per100g.fat.compact()),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider()
-            Text("Vitamins & minerals", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.review_micros_title), style = MaterialTheme.typography.titleMedium)
             if (micros.isEmpty()) {
                 Text(
-                    text = "No estimate for this entry. Entries logged before this feature, and manual " +
-                        "entries without values, don't have one.",
+                    text = stringResource(R.string.review_no_micros),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -129,7 +136,7 @@ fun EntryDetailSheet(
                             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(nutrient.label, style = MaterialTheme.typography.bodyMedium)
                                 Text(
-                                    text = "${(micros[nutrient] ?: 0.0).compact()} ${nutrient.unit}",
+                                    text = "${(micros[nutrient] ?: 0.0).compact()} ${nutrient.unitLabel}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(end = 16.dp),
@@ -147,9 +154,9 @@ fun EntryDetailSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
-                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text("Edit") }
-                Button(onClick = onLogAgain, modifier = Modifier.weight(1f)) { Text(if (logsToToday) "Log today" else "Log again") }
+                TextButton(onClick = { confirmDelete = true }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_edit)) }
+                Button(onClick = onLogAgain, modifier = Modifier.weight(1f)) { Text(stringResource(if (logsToToday) R.string.review_log_today else R.string.review_log_again)) }
             }
         }
     }
@@ -163,17 +170,17 @@ private fun MacroAmount(label: String, grams: Double, color: Color, modifier: Mo
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("${grams.whole()} g", style = MaterialTheme.typography.titleLarge, color = color)
+        Text(stringResource(R.string.amount_g, grams.whole()), style = MaterialTheme.typography.titleLarge, color = color)
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-private val EntrySource.label: String
-    get() = when (this) {
-        EntrySource.PHOTO -> "from photo"
-        EntrySource.BARCODE -> "from barcode"
-        EntrySource.MANUAL -> "entered manually"
-        EntrySource.TEXT -> "from description"
-        EntrySource.RECIPE -> "from recipe"
-        EntrySource.HISTORY -> "from your foods"
+private val EntrySource.labelRes: Int
+    @StringRes get() = when (this) {
+        EntrySource.PHOTO -> R.string.review_source_photo
+        EntrySource.BARCODE -> R.string.review_source_barcode
+        EntrySource.MANUAL -> R.string.review_source_manual
+        EntrySource.TEXT -> R.string.review_source_text
+        EntrySource.RECIPE -> R.string.review_source_recipe
+        EntrySource.HISTORY -> R.string.review_source_history
     }

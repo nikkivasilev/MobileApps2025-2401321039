@@ -32,17 +32,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.SleepLog
+import com.macrosnap.app.ui.DatePatterns
+import com.macrosnap.app.ui.formatted
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
-private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-fun formatSleepDuration(minutes: Long): String = "${minutes / 60} h ${(minutes % 60).toString().padStart(2, '0')} min"
+@Composable
+fun formatSleepDuration(minutes: Long): String =
+    stringResource(R.string.today_sleep_duration, minutes / 60, (minutes % 60).toString().padStart(2, '0'))
 
 @Composable
 fun SleepCard(sleep: SleepLog?, goalHours: Double, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -51,23 +55,23 @@ fun SleepCard(sleep: SleepLog?, goalHours: Double, onClick: () -> Unit, modifier
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconBadge(AppIcons.Moon, tint, size = 32.dp)
             Spacer(Modifier.width(10.dp))
-            Text("Sleep", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.today_sleep), style = MaterialTheme.typography.titleMedium)
         }
         Spacer(Modifier.weight(1f).heightIn(min = 12.dp))
         if (sleep == null) {
             Text("—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                text = "Tap to log last night",
+                text = stringResource(R.string.today_sleep_empty),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
         } else {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("${sleep.minutes / 60}h ${(sleep.minutes % 60).toString().padStart(2, '0')}m", style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.today_sleep_short, sleep.minutes / 60, (sleep.minutes % 60).toString().padStart(2, '0')), style = MaterialTheme.typography.headlineSmall)
             }
             Text(
-                text = "${sleep.bedtime.toLocalTime().format(TIME_FORMAT)} → ${sleep.wakeTime.toLocalTime().format(TIME_FORMAT)}",
+                text = "${sleep.bedtime.toLocalTime().formatted(DatePatterns.TIME)} → ${sleep.wakeTime.toLocalTime().formatted(DatePatterns.TIME)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -110,7 +114,7 @@ fun SleepSheet(
         val state = rememberTimePickerState(initialHour = current.hour, initialMinute = current.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { editing = null },
-            title = { Text(if (which == "bed") "Bedtime" else "Woke up at") },
+            title = { Text(stringResource(if (which == "bed") R.string.today_bedtime else R.string.today_woke_up_at)) },
             text = { TimePicker(state = state) },
             confirmButton = {
                 TextButton(
@@ -119,9 +123,9 @@ fun SleepSheet(
                         if (which == "bed") bedtime = picked else wakeTime = picked
                         editing = null
                     },
-                ) { Text("OK") }
+                ) { Text(stringResource(R.string.action_ok)) }
             },
-            dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -144,26 +148,26 @@ fun SleepSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Sleep · night before ${date.format(DateTimeFormatter.ofPattern("EEE d MMM"))}", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.today_sleep_sheet_title, date.formatted(DatePatterns.SHORT)), style = MaterialTheme.typography.titleLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = { editing = "bed" }, modifier = Modifier.weight(1f)) {
-                    Text("Bed ${bedtime.format(TIME_FORMAT)}")
+                    Text(stringResource(R.string.today_bed_at, bedtime.formatted(DatePatterns.TIME)))
                 }
                 OutlinedButton(onClick = { editing = "wake" }, modifier = Modifier.weight(1f)) {
-                    Text("Up ${wakeTime.format(TIME_FORMAT)}")
+                    Text(stringResource(R.string.today_up_at, wakeTime.formatted(DatePatterns.TIME)))
                 }
             }
             Text(
-                text = "Slept ${formatSleepDuration(minutes.toLong())}",
+                text = stringResource(R.string.today_slept, formatSleepDuration(minutes.toLong())),
                 style = MaterialTheme.typography.headlineSmall,
             )
-            Text("How did you sleep?", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.today_sleep_quality), style = MaterialTheme.typography.labelLarge)
             Row {
                 repeat(5) { index ->
                     IconButton(onClick = { quality = index + 1 }) {
                         Icon(
                             imageVector = if (index < quality) Icons.Filled.Star else AppIcons.StarBorder,
-                            contentDescription = "${index + 1} stars",
+                            contentDescription = pluralStringResource(R.plurals.today_stars, index + 1, index + 1),
                             tint = if (index < quality) AppTheme.colors.highlight else MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(36.dp),
                         )
@@ -172,9 +176,9 @@ fun SleepSheet(
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (onDelete != null) {
-                    TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
                 }
-                Button(onClick = { onSave(bedtime, wakeTime, quality) }, modifier = Modifier.weight(1f)) { Text("Save") }
+                Button(onClick = { onSave(bedtime, wakeTime, quality) }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_save)) }
             }
         }
     }

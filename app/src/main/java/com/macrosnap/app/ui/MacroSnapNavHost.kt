@@ -1,5 +1,6 @@
 package com.macrosnap.app.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -26,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.macrosnap.app.R
 import com.macrosnap.app.ui.progress.ProgressScreen
 import com.macrosnap.app.ui.recipes.RecipeEditorScreen
 import com.macrosnap.app.ui.recipes.RecipesScreen
@@ -42,16 +45,16 @@ import com.macrosnap.app.ui.workouts.WorkoutsScreen
 import kotlin.reflect.KClass
 
 private enum class TopLevelDestination(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
     val route: Any,
     val routeClass: KClass<*>,
 ) {
-    TODAY("Today", Icons.Filled.Home, TodayRoute, TodayRoute::class),
-    WORKOUTS("Gym", AppIcons.Dumbbell, WorkoutsRoute, WorkoutsRoute::class),
-    RECIPES("Recipes", AppIcons.Restaurant, RecipesRoute, RecipesRoute::class),
-    PROGRESS("Progress", AppIcons.BarChart, ProgressRoute, ProgressRoute::class),
-    SETTINGS("Settings", Icons.Filled.Settings, SettingsRoute, SettingsRoute::class),
+    TODAY(R.string.nav_today, Icons.Filled.Home, TodayRoute, TodayRoute::class),
+    WORKOUTS(R.string.nav_gym, AppIcons.Dumbbell, WorkoutsRoute, WorkoutsRoute::class),
+    RECIPES(R.string.nav_recipes, AppIcons.Restaurant, RecipesRoute, RecipesRoute::class),
+    PROGRESS(R.string.nav_progress, AppIcons.BarChart, ProgressRoute, ProgressRoute::class),
+    SETTINGS(R.string.nav_settings, Icons.Filled.Settings, SettingsRoute, SettingsRoute::class),
 }
 
 @Composable
@@ -82,7 +85,7 @@ fun MacroSnapNavHost() {
                                 selected = destination?.hasRoute(item.routeClass) == true,
                                 onClick = { navigateToTopLevel(item.route) },
                                 icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(item.label) },
+                                label = { Text(stringResource(item.labelRes)) },
                                 colors = ShortNavigationBarItemDefaults.colors(
                                     selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                                     selectedIndicatorColor = MaterialTheme.colorScheme.primary,

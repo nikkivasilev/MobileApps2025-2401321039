@@ -16,12 +16,15 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.ui.components.appChipColors
+import com.macrosnap.app.ui.label
 
 /** Text inputs for an exercise's defaults; null from the parsers means the input isn't usable yet. */
 fun parseDefaultSets(input: String): Int? = input.trim().toIntOrNull()?.takeIf { it in Exercise.SETS_RANGE }
@@ -59,14 +62,14 @@ fun ExerciseDetailsFields(
                     selected = type == option,
                     onClick = { onTypeChange(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, ExerciseType.entries.size),
-                ) { Text(if (option == ExerciseType.STRENGTH) "Weight × reps" else "Time / distance") }
+                ) { Text(stringResource(if (option == ExerciseType.STRENGTH) R.string.workout_type_strength else R.string.workout_type_cardio)) }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = setsInput,
                 onValueChange = { onSetsChange(it.filter(Char::isDigit).take(2)) },
-                label = { Text("Default sets") },
+                label = { Text(stringResource(R.string.workout_default_sets)) },
                 singleLine = true,
                 isError = parseDefaultSets(setsInput) == null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -76,7 +79,7 @@ fun ExerciseDetailsFields(
                 OutlinedTextField(
                     value = repsInput,
                     onValueChange = { onRepsChange(it.filter(Char::isDigit).take(3)) },
-                    label = { Text("Default reps") },
+                    label = { Text(stringResource(R.string.workout_default_reps)) },
                     singleLine = true,
                     isError = parseDefaultReps(repsInput) == null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -85,7 +88,7 @@ fun ExerciseDetailsFields(
             }
         }
         Text(
-            text = "Used when you add this exercise to a routine, or to a workout before you've logged it.",
+            text = stringResource(R.string.workout_defaults_help),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

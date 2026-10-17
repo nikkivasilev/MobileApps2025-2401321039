@@ -18,10 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.Confidence
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.theme.AppTheme
@@ -52,7 +55,7 @@ fun DraftItemCard(
                 )
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                     Text(
-                        text = "${total.kcal.whole()} kcal",
+                        text = stringResource(R.string.amount_kcal, total.kcal.whole()),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -60,13 +63,13 @@ fun DraftItemCard(
                     MacroDots(total)
                 }
                 if (draft.confidence == Confidence.LOW) {
-                    Tag("Low confidence · worth a check", MaterialTheme.colorScheme.error, Modifier.padding(top = 6.dp))
+                    Tag(stringResource(R.string.review_low_confidence), MaterialTheme.colorScheme.error, Modifier.padding(top = 6.dp))
                 }
             }
             IconButton(onClick = onRemove) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = "Remove ${draft.item.name}",
+                    contentDescription = stringResource(R.string.review_remove_item, draft.item.name),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -78,7 +81,8 @@ fun DraftItemCard(
         ) {
             if (servings != null && onServingsStep != null) {
                 AmountStepper(
-                    text = "${servings.compact()} ${if (servings == 1.0) "serving" else "servings"}",
+                    // Fractions such as 1.5 take the plural, so only exactly one counts as "one".
+                    text = pluralStringResource(R.plurals.review_servings, if (servings == 1.0) 1 else 2, servings.compact()),
                     onMinus = { onServingsStep(-SERVINGS_STEP) },
                     onPlus = { onServingsStep(SERVINGS_STEP) },
                     minusEnabled = servings > SERVINGS_STEP,
@@ -86,7 +90,7 @@ fun DraftItemCard(
                 )
             }
             AmountStepper(
-                text = "${draft.item.grams.compact()} g",
+                text = stringResource(R.string.amount_g, draft.item.grams.compact()),
                 onMinus = { onGramsStep(-GRAMS_STEP) },
                 onPlus = { onGramsStep(GRAMS_STEP) },
                 modifier = Modifier.weight(1f),

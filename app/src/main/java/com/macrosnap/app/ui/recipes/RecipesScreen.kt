@@ -23,10 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.R
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.ui.RecipeEditorRoute
 import com.macrosnap.app.ui.ReviewRoute
@@ -47,14 +50,14 @@ fun RecipesScreen(
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Recipes") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_recipes)) }) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 onClick = { onOpenEditor(RecipeEditorRoute()) },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New recipe") },
+                text = { Text(stringResource(R.string.recipes_new)) },
             )
         },
     ) { padding ->
@@ -68,11 +71,9 @@ fun RecipesScreen(
             if (recipes.isEmpty()) {
                 item(key = "empty") {
                     AppCard {
-                        CardHeader(title = "No recipes yet", icon = AppIcons.Restaurant, tint = MaterialTheme.colorScheme.onSurface)
+                        CardHeader(title = stringResource(R.string.recipes_empty_title), icon = AppIcons.Restaurant, tint = MaterialTheme.colorScheme.onSurface)
                         Text(
-                            text = "Save the dishes you cook. Add ingredients by describing them " +
-                                "(\"500 g chicken thighs, 2 tbsp oil…\"), weigh the finished pot, " +
-                                "and log a serving whenever you eat it.",
+                            text = stringResource(R.string.recipes_empty_body),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 12.dp),
@@ -97,20 +98,25 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, onLog: () -> Unit) {
         Column(Modifier.padding(start = 16.dp, top = 14.dp, end = 12.dp, bottom = 12.dp)) {
             Text(recipe.name, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = "${recipe.ingredients.size} ${if (recipe.ingredients.size == 1) "ingredient" else "ingredients"} · ${recipe.per100g.kcal.whole()} kcal per 100 g",
+                text = pluralStringResource(
+                    R.plurals.recipes_card_summary,
+                    recipe.ingredients.size,
+                    recipe.ingredients.size,
+                    recipe.per100g.kcal.whole(),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = "Serving ${recipe.servingGrams.whole()} g · ${recipe.perServing.kcal.whole()} kcal",
+                        text = stringResource(R.string.recipes_card_serving, recipe.servingGrams.whole(), recipe.perServing.kcal.whole()),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                     )
                     MacroDots(recipe.perServing, Modifier.padding(top = 2.dp))
                 }
-                FilledTonalButton(onClick = onLog) { Text("Log today") }
+                FilledTonalButton(onClick = onLog) { Text(stringResource(R.string.recipes_log_today)) }
             }
         }
     }

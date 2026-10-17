@@ -49,6 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -56,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.macrosnap.app.R
 import com.macrosnap.app.model.DataError
 import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.components.CardHeader
@@ -68,6 +72,8 @@ import com.macrosnap.app.ui.components.MacroDots
 import com.macrosnap.app.ui.components.MealTypeChips
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
+import com.macrosnap.app.ui.UiText
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.userMessage
 import com.macrosnap.app.ui.whole
 import java.io.File
@@ -81,13 +87,14 @@ fun ReviewScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
                     ReviewEffect.Saved -> onClose()
-                    is ReviewEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                    is ReviewEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -109,10 +116,10 @@ private fun ReviewContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Review meal") },
+                title = { Text(stringResource(R.string.review_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -132,7 +139,7 @@ private fun ReviewContent(
                 item(key = "photo") {
                     AsyncImage(
                         model = File(path),
-                        contentDescription = "Meal photo",
+                        contentDescription = stringResource(R.string.review_photo_description),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -153,10 +160,11 @@ private fun ReviewContent(
             }
 
             when (val status = uiState.status) {
-                is ReviewStatus.Loading -> item(key = "loading") { LoadingRow(status.label) }
+                is ReviewStatus.Loading -> item(key = "loading") { LoadingRow(status.label.asString()) }
                 is ReviewStatus.Failed -> item(key = "error") {
                     ErrorCard(
                         error = status.error,
+                        message = status.message.asString(),
                         canRetry = uiState.canReanalyze,
                         onRetry = actions::onReanalyze,
                         onOpenSettings = onOpenSettings,
@@ -167,14 +175,23 @@ private fun ReviewContent(
                 ReviewStatus.Ready -> Unit
             }
 
-            uiState.notes?.let { notes ->
-                item(key = "notes") {
-                    Text(
-                        text = "Note: $notes",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            uiState.recipeServing?.let { serving ->
+                item(key = "recipe-note") {
+                    NoteText(
+                        pluralStringResource(
+                            R.plurals.review_recipe_note,
+                            serving.servings,
+                            serving.name,
+                            serving.servingGrams.whole(),
+                            serving.totalGrams.whole(),
+                            serving.servings,
+                        ),
                     )
                 }
+            }
+
+            uiState.notes?.let { notes ->
+                item(key = "notes") { NoteText(notes) }
             }
 
             if (uiState.labelWarnings.isNotEmpty()) {
@@ -185,7 +202,7 @@ private fun ReviewContent(
                 item(key = "micros-note") {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (uiState.isEstimatingMicros) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                        Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(note.text(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -207,7 +224,7 @@ private fun ReviewContent(
                         onValueChange = actions::onDescribeChange,
                         onSubmit = actions::onDescribeSubmit,
                         status = uiState.describeStatus,
-                        label = "Describe what to add",
+                        label = stringResource(R.string.review_describe_label),
                         suggestions = uiState.describeSuggestions,
                         onSuggestionClick = actions::onSuggestionClick,
                     )
@@ -216,7 +233,7 @@ private fun ReviewContent(
                     OutlinedButton(onClick = actions::onAddItemClick, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Add an item manually")
+                        Text(stringResource(R.string.review_add_manually))
                     }
                 }
             }
@@ -227,12 +244,12 @@ private fun ReviewContent(
                         OutlinedTextField(
                             value = uiState.hint,
                             onValueChange = actions::onHintChange,
-                            label = { Text("Wrong guess? Give the AI a hint") },
-                            placeholder = { Text("e.g. turkey mince, cooked in butter, 3 eggs") },
+                            label = { Text(stringResource(R.string.review_hint_label)) },
+                            placeholder = { Text(stringResource(R.string.review_hint_placeholder)) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                         TextButton(onClick = actions::onReanalyze, enabled = uiState.canReanalyze) {
-                            Text("Analyze again")
+                            Text(stringResource(R.string.review_analyze_again))
                         }
                     }
                 }
@@ -242,7 +259,7 @@ private fun ReviewContent(
 
     uiState.editor?.let { target ->
         ItemEditorSheet(
-            title = if (target is EditorTarget.Existing) "Edit item" else "Add item",
+            title = stringResource(if (target is EditorTarget.Existing) R.string.review_edit_item else R.string.review_add_item),
             initial = (target as? EditorTarget.Existing)?.draft?.item,
             initialMealType = null,
             onSave = { item, _ -> actions.onEditorSave(item) },
@@ -260,21 +277,21 @@ private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAn
     AppCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CardHeader(
-                title = "What's on the plate?",
+                title = stringResource(R.string.review_first_title),
                 icon = AppIcons.Sparkle,
                 tint = MaterialTheme.colorScheme.onSurface,
-                subtitle = "Optional, but a few words help the AI a lot",
+                subtitle = stringResource(R.string.review_first_subtitle),
             )
             Text(
-                text = "The dish, how it was cooked, anything hidden (oil, sauce, sugar). Leave it empty to let it guess.",
+                text = stringResource(R.string.review_first_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             OutlinedTextField(
                 value = hint,
                 onValueChange = onHintChange,
-                label = { Text("Hint for the AI (optional)") },
-                placeholder = { Text("e.g. chicken curry with basmati rice, cooked in ghee") },
+                label = { Text(stringResource(R.string.review_first_hint_label)) },
+                placeholder = { Text(stringResource(R.string.review_first_hint_placeholder)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
@@ -287,7 +304,7 @@ private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAn
             ) {
                 Icon(AppIcons.Sparkle, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(if (hint.isBlank()) "Analyze photo" else "Analyze with hint")
+                Text(stringResource(if (hint.isBlank()) R.string.review_analyze_photo else R.string.review_analyze_with_hint))
             }
         }
     }
@@ -314,6 +331,7 @@ private fun LoadingRow(label: String) {
 @Composable
 private fun ErrorCard(
     error: DataError,
+    message: String,
     canRetry: Boolean,
     onRetry: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -328,19 +346,19 @@ private fun ErrorCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(error.userMessage(), style = MaterialTheme.typography.bodyLarge)
+            Text(message, style = MaterialTheme.typography.bodyLarge)
             if (savedForLater) {
                 Text(
-                    text = "The photo is saved under \"Waiting to analyze\" on Today, so you can resubmit it later.",
+                    text = stringResource(R.string.review_saved_for_later),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (needsSettings) {
-                    Button(onClick = onOpenSettings) { Text("Open Settings") }
+                    Button(onClick = onOpenSettings) { Text(stringResource(R.string.review_open_settings)) }
                 }
                 if (canRetry && !needsSettings) {
-                    Button(onClick = onRetry) { Text("Try again") }
+                    Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
                 }
                 if (savedForLater) {
                     // On the error container, so it takes that surface's text colour rather than the theme outline.
@@ -348,7 +366,7 @@ private fun ErrorCard(
                         onClick = onDone,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalContentColor.current),
                         border = BorderStroke(1.dp, LocalContentColor.current.copy(alpha = 0.5f)),
-                    ) { Text("Resubmit later") }
+                    ) { Text(stringResource(R.string.review_resubmit_later)) }
                 }
             }
         }
@@ -357,7 +375,7 @@ private fun ErrorCard(
 
 /** Crowd-sourced listings can be wrong; say what looked off rather than log it silently. */
 @Composable
-private fun LabelWarningsCard(warnings: List<String>) {
+private fun LabelWarningsCard(warnings: List<UiText>) {
     Surface(
         color = MaterialTheme.colorScheme.tertiaryContainer,
         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -365,9 +383,9 @@ private fun LabelWarningsCard(warnings: List<String>) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Check this against the label", style = MaterialTheme.typography.titleSmall)
-            warnings.forEach { Text("• $it", style = MaterialTheme.typography.bodyMedium) }
-            Text("Tap the item to correct any value.", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.review_label_warnings_title), style = MaterialTheme.typography.titleSmall)
+            warnings.forEach { Text("• ${it.asString()}", style = MaterialTheme.typography.bodyMedium) }
+            Text(stringResource(R.string.review_label_warnings_footer), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -385,7 +403,7 @@ private fun SaveBar(uiState: ReviewUiState, onSave: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("${uiState.totals.kcal.whole()} kcal", style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.amount_kcal, uiState.totals.kcal.whole()), style = MaterialTheme.typography.titleLarge)
                     MacroDots(uiState.totals, Modifier.padding(top = 2.dp))
                 }
                 Button(
@@ -394,9 +412,32 @@ private fun SaveBar(uiState: ReviewUiState, onSave: () -> Unit) {
                     contentPadding = PaddingValues(horizontal = 28.dp),
                     modifier = Modifier.height(52.dp),
                 ) {
-                    Text(if (uiState.items.size > 1) "Log ${uiState.items.size} items" else "Log it")
+                    val count = uiState.items.size
+                    Text(if (count > 1) pluralStringResource(R.plurals.review_log_items, count, count) else stringResource(R.string.review_log_it))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NoteText(note: String) {
+    Text(
+        text = stringResource(R.string.review_note, note),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun MicrosNote.text(): String = when (this) {
+    MicrosNote.Estimating -> stringResource(R.string.review_micros_estimating)
+    MicrosNote.FromLabelAndGemini -> stringResource(R.string.review_micros_label_and_gemini)
+    MicrosNote.FromGemini -> stringResource(R.string.review_micros_gemini)
+    MicrosNote.NoProductName -> stringResource(R.string.review_micros_no_name)
+    is MicrosNote.Failed -> if (error == DataError.NoApiKey) {
+        stringResource(R.string.review_micros_no_key)
+    } else {
+        stringResource(R.string.review_micros_failed, error.userMessage())
     }
 }

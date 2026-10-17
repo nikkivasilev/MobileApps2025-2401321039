@@ -1,5 +1,8 @@
 package com.macrosnap.app.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.macrosnap.app.R
 import com.macrosnap.app.model.DataError
 import com.macrosnap.app.model.Macros
 import java.util.Locale
@@ -16,21 +19,21 @@ fun Double.compact(): String {
 /** Accepts both "12.5" and "12,5" — many locales' numeric keyboards only offer a comma. */
 fun String.toAmountOrNull(): Double? = trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
 
-fun Macros.summary(): String = "P ${protein.whole()} · C ${carbs.whole()} · F ${fat.whole()} g"
+@Composable
+fun Macros.summary(): String = stringResource(R.string.macros_summary, protein.whole(), carbs.whole(), fat.whole())
 
-fun DataError.userMessage(): String = when (this) {
-    DataError.NoApiKey -> "Add your free Gemini API key in Settings to analyze photos."
-    DataError.InvalidApiKey -> "The Gemini API key was rejected. Check it in Settings."
-    DataError.Network -> "No connection. Check your internet and try again."
-    is DataError.RateLimited -> if (daily) {
-        "Today's free quota is used up on every configured model. Try again later or log this one manually."
-    } else {
-        "Gemini's free tier is busy (per-minute limit). Wait a minute and try again, or log this one manually."
-    }
-    DataError.ModelUnavailable -> "None of the configured Gemini models are available. Check the model list in Settings."
-    DataError.Server -> "Gemini is having trouble right now. Try again in a moment."
-    DataError.BadImage -> "That photo couldn't be read. Try taking it again."
-    DataError.NotFood -> "No food was recognized. Try a different photo or wording, or add the items manually."
-    DataError.ProductNotFound -> "That barcode isn't in Open Food Facts. Add the item manually instead."
-    is DataError.Unexpected -> detail?.takeIf { it.isNotBlank() } ?: "Something went wrong. Try again."
+fun DataError.userText(): UiText = when (this) {
+    DataError.NoApiKey -> uiText(R.string.error_no_api_key)
+    DataError.InvalidApiKey -> uiText(R.string.error_invalid_api_key)
+    DataError.Network -> uiText(R.string.error_network)
+    is DataError.RateLimited -> uiText(if (daily) R.string.error_rate_limited_daily else R.string.error_rate_limited)
+    DataError.ModelUnavailable -> uiText(R.string.error_model_unavailable)
+    DataError.Server -> uiText(R.string.error_server)
+    DataError.BadImage -> uiText(R.string.error_bad_image)
+    DataError.NotFood -> uiText(R.string.error_not_food)
+    DataError.ProductNotFound -> uiText(R.string.error_product_not_found)
+    is DataError.Unexpected -> detail?.takeIf { it.isNotBlank() }?.let(UiText::Raw) ?: uiText(R.string.error_unexpected)
 }
+
+@Composable
+fun DataError.userMessage(): String = userText().asString()

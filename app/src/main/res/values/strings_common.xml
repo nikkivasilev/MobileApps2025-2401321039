@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings shared by several screens. Screen-specific strings live in strings_<area>.xml. -->
+<resources>
+    <!-- Language picker -->
+    <string name="language_title">Language</string>
+    <string name="language_system">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_bulgarian">Български</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_today">Today</string>
+    <string name="nav_gym">Gym</string>
+    <string name="nav_recipes">Recipes</string>
+    <string name="nav_progress">Progress</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_add">Add</string>
+    <string name="action_back">Back</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_ok">OK</string>
+
+    <!-- Macros and units -->
+    <string name="calories">Calories</string>
+    <string name="protein">Protein</string>
+    <string name="carbs">Carbs</string>
+    <string name="fat">Fat</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_g">g</string>
+    <string name="unit_mg">mg</string>
+    <string name="unit_ug">µg</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_min">min</string>
+    <string name="unit_km">km</string>
+    <!-- Grams with a number, e.g. "120 g" -->
+    <string name="amount_g">%1$s g</string>
+    <string name="amount_kcal">%1$s kcal</string>
+    <string name="amount_kg">%1$s kg</string>
+    <string name="amount_ml">%1$s ml</string>
+    <!-- Protein, carbs and fat in grams -->
+    <string name="macros_summary">P %1$s · C %2$s · F %3$s g</string>
+
+    <!-- Meals -->
+    <string name="meal_breakfast">Breakfast</string>
+    <string name="meal_lunch">Lunch</string>
+    <string name="meal_dinner">Dinner</string>
+    <string name="meal_snack">Snack</string>
+
+    <!-- Profile -->
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+    <string name="activity_sedentary">Sedentary</string>
+    <string name="activity_light">Light (1–3 days/wk)</string>
+    <string name="activity_moderate">Moderate (3–5 days/wk)</string>
+    <string name="activity_active">Active (6–7 days/wk)</string>
+    <string name="activity_very_active">Very active / physical job</string>
+    <string name="goal_lose">Lose fat</string>
+    <string name="goal_maintain">Maintain</string>
+    <string name="goal_gain">Build muscle</string>
+
+    <!-- Muscle groups -->
+    <string name="muscle_chest">Chest</string>
+    <string name="muscle_back">Back</string>
+    <string name="muscle_shoulders">Shoulders</string>
+    <string name="muscle_biceps">Biceps</string>
+    <string name="muscle_triceps">Triceps</string>
+    <string name="muscle_legs">Legs</string>
+    <string name="muscle_glutes">Glutes</string>
+    <string name="muscle_core">Core</string>
+    <string name="muscle_cardio">Cardio</string>
+    <string name="muscle_other">Other</string>
+
+    <!-- Nutrients -->
+    <string name="nutrient_vitamin_d">Vitamin D</string>
+    <string name="nutrient_vitamin_b12">Vitamin B12</string>
+    <string name="nutrient_vitamin_b6">Vitamin B6</string>
+    <string name="nutrient_vitamin_b3">Vitamin B3</string>
+    <string name="nutrient_vitamin_b5">Vitamin B5</string>
+    <string name="nutrient_vitamin_c">Vitamin C</string>
+    <string name="nutrient_vitamin_a">Vitamin A</string>
+    <string name="nutrient_iron">Iron</string>
+    <string name="nutrient_magnesium">Magnesium</string>
+    <string name="nutrient_zinc">Zinc</string>
+    <string name="nutrient_calcium">Calcium</string>
+    <string name="nutrient_potassium">Potassium</string>
+    <string name="nutrient_omega_3">Omega-3</string>
+    <string name="nutrient_creatine">Creatine</string>
+    <string name="nutrient_caffeine">Caffeine</string>
+
+    <!-- Errors -->
+    <string name="save_failed">Couldn\'t save. Try again.</string>
+    <string name="error_no_api_key">Add your free Gemini API key in Settings to analyze photos.</string>
+    <string name="error_invalid_api_key">The Gemini API key was rejected. Check it in Settings.</string>
+    <string name="error_network">No connection. Check your internet and try again.</string>
+    <string name="error_rate_limited_daily">Today\'s free quota is used up on every configured model. Try again later or log this one manually.</string>
+    <string name="error_rate_limited">Gemini\'s free tier is busy (per-minute limit). Wait a minute and try again, or log this one manually.</string>
+    <string name="error_model_unavailable">None of the configured Gemini models are available. Check the model list in Settings.</string>
+    <string name="error_server">Gemini is having trouble right now. Try again in a moment.</string>
+    <string name="error_bad_image">That photo couldn\'t be read. Try taking it again.</string>
+    <string name="error_not_food">No food was recognized. Try a different photo or wording, or add the items manually.</string>
+    <string name="error_product_not_found">That barcode isn\'t in Open Food Facts. Add the item manually instead.</string>
+    <string name="error_unexpected">Something went wrong. Try again.</string>
+</resources>

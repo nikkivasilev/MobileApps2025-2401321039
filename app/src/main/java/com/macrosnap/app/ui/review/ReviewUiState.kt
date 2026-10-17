@@ -6,9 +6,12 @@ import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.suggestionsFor
 import com.macrosnap.app.model.sum
+import com.macrosnap.app.ui.UiText
+import com.macrosnap.app.ui.userText
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
+import kotlinx.serialization.Serializable
 
 data class ReviewUiState(
     val hint: String = "",
@@ -16,11 +19,14 @@ data class ReviewUiState(
     val mealType: MealType,
     val items: List<DraftItem> = emptyList(),
     val photoPath: String? = null,
+    /** The AI's own remark, shown as it came. */
     val notes: String? = null,
+    /** Set when logging a recipe, to explain how its serving was worked out. */
+    val recipeServing: RecipeServing? = null,
     /** Problems spotted in a barcode's database listing, shown so the user checks the label. */
-    val labelWarnings: List<String> = emptyList(),
+    val labelWarnings: List<UiText> = emptyList(),
     /** Where a scanned product's vitamins and minerals came from, or why they're missing. */
-    val microsNote: String? = null,
+    val microsNote: MicrosNote? = null,
     val isEstimatingMicros: Boolean = false,
     val pastFoods: List<PastFood> = emptyList(),
     val status: ReviewStatus = ReviewStatus.Ready,
@@ -41,13 +47,26 @@ data class ReviewUiState(
     val describeSuggestions: List<PastFood> get() = pastFoods.suggestionsFor(describeInput)
 }
 
+/** Plain numbers rather than a sentence, so the note is worded in the UI language and survives a restore. */
+@Serializable
+data class RecipeServing(val name: String, val servingGrams: Double, val totalGrams: Double, val servings: Int)
+
+sealed interface MicrosNote {
+    data object Estimating : MicrosNote
+    data object FromLabelAndGemini : MicrosNote
+    data object FromGemini : MicrosNote
+    data object NoProductName : MicrosNote
+    data class Failed(val error: DataError) : MicrosNote
+}
+
 sealed interface ReviewStatus {
-    data class Loading(val label: String) : ReviewStatus
+    data class Loading(val label: UiText) : ReviewStatus
     data object Ready : ReviewStatus
-    data class Failed(val error: DataError) : ReviewStatus
+    /** [message] replaces the error's own text when the screen knows better what went wrong. */
+    data class Failed(val error: DataError, val message: UiText = error.userText()) : ReviewStatus
 }
 
 sealed interface ReviewEffect {
-    data class ShowMessage(val message: String) : ReviewEffect
+    data class ShowMessage(val message: UiText) : ReviewEffect
     data object Saved : ReviewEffect
 }

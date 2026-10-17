@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recipes list and recipe editor. -->
+<resources>
+    <!-- Recipes list -->
+    <string name="recipes_new">New recipe</string>
+    <string name="recipes_empty_title">No recipes yet</string>
+    <string name="recipes_empty_body">Save the dishes you cook. Add ingredients by describing them (\"500 g chicken thighs, 2 tbsp oil…\"), weigh the finished pot, and log a serving whenever you eat it.</string>
+    <!-- Ingredient count and kcal per 100 g, e.g. "4 ingredients · 180 kcal per 100 g" -->
+    <plurals name="recipes_card_summary">
+        <item quantity="one">%1$d ingredient · %2$s kcal per 100 g</item>
+        <item quantity="other">%1$d ingredients · %2$s kcal per 100 g</item>
+    </plurals>
+    <!-- Grams and kcal of one serving -->
+    <string name="recipes_card_serving">Serving %1$s g · %2$s kcal</string>
+    <string name="recipes_log_today">Log today</string>
+
+    <!-- Recipe editor -->
+    <string name="recipes_edit_title">Edit recipe</string>
+    <string name="recipes_delete">Delete recipe</string>
+    <string name="recipes_name">Recipe name</string>
+    <string name="recipes_servings">Servings</string>
+    <string name="recipes_cooked_weight">Cooked weight (g)</string>
+    <string name="recipes_cooked_weight_help">Weigh the finished dish if you can: rice and stews gain water, roasts lose it, so this is what makes the per-100 g values right. Leave it blank to use the ingredient total.</string>
+    <string name="recipes_ingredients">Ingredients</string>
+    <string name="recipes_describe_label">Describe ingredients to add</string>
+    <string name="recipes_add_manually">Add an ingredient manually</string>
+    <string name="recipes_edit_ingredient">Edit ingredient</string>
+    <string name="recipes_add_ingredient">Add ingredient</string>
+    <string name="recipes_delete_title">Delete this recipe?</string>
+    <string name="recipes_delete_body">Meals you already logged from it stay in your log.</string>
+    <string name="recipes_per_serving">Per serving: %1$s kcal</string>
+    <!-- Grams of one serving, then its macros summary -->
+    <string name="recipes_serving_macros">%1$s g · %2$s</string>
+    <string name="recipes_whole">Whole recipe: %1$s g · %2$s kcal</string>
+</resources>

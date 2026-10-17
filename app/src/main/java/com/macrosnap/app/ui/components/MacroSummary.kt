@@ -30,8 +30,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.theme.HeroNumberStyle
@@ -106,7 +108,7 @@ fun CalorieHero(consumedKcal: Double, goalKcal: Int, burnedKcal: Int, burnAddedT
                     color = if (isOver) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = if (isOver) "Calories over" else "Calories left",
+                    text = stringResource(if (isOver) R.string.today_calories_over else R.string.today_calories_left),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -122,9 +124,9 @@ fun CalorieHero(consumedKcal: Double, goalKcal: Int, burnedKcal: Int, burnAddedT
         }
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HeroStat("Eaten", consumedKcal.whole(), Modifier.weight(1f))
-            HeroStat(if (burnAddedToGoal && burnedKcal > 0) "Goal + gym" else "Goal", goalKcal.toString(), Modifier.weight(1f))
-            HeroStat("Burned", if (burnedKcal > 0) "≈$burnedKcal" else "0", Modifier.weight(1f))
+            HeroStat(stringResource(R.string.today_eaten), consumedKcal.whole(), Modifier.weight(1f))
+            HeroStat(stringResource(if (burnAddedToGoal && burnedKcal > 0) R.string.today_goal_plus_gym else R.string.today_goal), goalKcal.toString(), Modifier.weight(1f))
+            HeroStat(stringResource(R.string.today_burned), if (burnedKcal > 0) "≈$burnedKcal" else "0", Modifier.weight(1f))
         }
     }
 }
@@ -148,7 +150,7 @@ fun MacroTile(label: String, color: Color, consumed: Double, goal: Int, modifier
         Row(verticalAlignment = Alignment.Bottom) {
             Text(consumed.whole(), style = MaterialTheme.typography.titleLarge)
             Text(
-                text = " / ${goal}g",
+                text = stringResource(R.string.today_macro_goal, goal.toString()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 3.dp),

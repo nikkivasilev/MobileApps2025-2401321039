@@ -18,12 +18,14 @@ import com.macrosnap.app.data.local.AppDatabase
 import com.macrosnap.app.data.remote.GeminiApi
 import com.macrosnap.app.data.remote.OpenFoodFactsApi
 import com.macrosnap.app.data.settings.SettingsStore
+import com.macrosnap.app.ui.AppLanguage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /** Hand-rolled DI: one single-module personal app doesn't earn a DI framework. */
@@ -61,7 +63,9 @@ class AppContainer(context: Context) {
     val supplementRepository = SupplementRepository(database.supplementDao())
     val wellnessRepository = WellnessRepository(database.wellnessDao())
     val workoutRepository = WorkoutRepository(database.workoutDao())
-    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore, ImageEncoder(io), json)
+    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore, ImageEncoder(io), json) {
+        AppLanguage.effectiveLocale().getDisplayLanguage(Locale.ENGLISH)
+    }
     val productRepository = ProductRepository(
         api = retrofit(OpenFoodFactsApi.BASE_URL).create(OpenFoodFactsApi::class.java),
         microsCache = database.productMicrosDao(),

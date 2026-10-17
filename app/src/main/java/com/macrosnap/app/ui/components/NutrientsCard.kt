@@ -19,10 +19,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.ui.compact
+import com.macrosnap.app.ui.label
+import com.macrosnap.app.ui.unitLabel
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
 
@@ -34,15 +38,15 @@ fun NutrientsCard(totals: Micros, targets: Micros, modifier: Modifier = Modifier
 
     AppCard(modifier) {
         CardHeader(
-            title = "Vitamins & minerals",
+            title = stringResource(R.string.today_nutrients_title),
             icon = AppIcons.Leaf,
             tint = AppTheme.colors.micros,
-            subtitle = "$onTrack of ${Nutrient.entries.size} on track · food + supplements",
+            subtitle = stringResource(R.string.today_nutrients_subtitle, onTrack, Nutrient.entries.size),
             modifier = Modifier.clickable { expanded = !expanded },
         ) {
             Icon(
                 imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = if (expanded) "Collapse" else "Expand",
+                contentDescription = stringResource(if (expanded) R.string.today_collapse else R.string.today_expand),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -55,8 +59,7 @@ fun NutrientsCard(totals: Micros, targets: Micros, modifier: Modifier = Modifier
                     NutrientRow(nutrient, totals[nutrient] ?: 0.0, targets[nutrient] ?: 0.0)
                 }
                 Text(
-                    text = "Caffeine is a daily limit; the others are targets. Photo-based values are rough " +
-                        "(think ±50%), so use these to spot what you're consistently missing.",
+                    text = stringResource(R.string.today_nutrients_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -78,7 +81,12 @@ private fun NutrientRow(nutrient: Nutrient, amount: Double, target: Double) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(nutrient.label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = "${amount.compact()} / ${target.compact()} ${nutrient.unit}" + if (nutrient.isLimit) " max" else "",
+                text = stringResource(
+                    if (nutrient.isLimit) R.string.today_nutrient_amount_max else R.string.today_nutrient_amount,
+                    amount.compact(),
+                    target.compact(),
+                    nutrient.unitLabel,
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 color = if (nutrient.isLimit && over) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )

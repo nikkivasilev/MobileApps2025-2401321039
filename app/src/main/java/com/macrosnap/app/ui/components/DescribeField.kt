@@ -18,11 +18,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.DataError
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.ui.userMessage
@@ -46,8 +48,8 @@ fun DescribeField(
     status: DescribeStatus,
     label: String,
     modifier: Modifier = Modifier,
-    placeholder: String = "e.g. 200 g chicken breast, 1 tbsp olive oil",
-    hint: String = "Gemini identifies each food and fills in the macros.",
+    placeholder: String = stringResource(R.string.today_describe_placeholder),
+    hint: String = stringResource(R.string.today_describe_hint),
     suggestions: List<PastFood> = emptyList(),
     onSuggestionClick: (PastFood) -> Unit = {},
 ) {
@@ -57,7 +59,7 @@ fun DescribeField(
         // Above the field: while typing, the keyboard covers whatever sits below it.
         if (suggestions.isNotEmpty() && !isLoading) {
             Text(
-                text = "From your foods (no AI needed)",
+                text = stringResource(R.string.today_describe_suggestions),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 2.dp),
@@ -72,7 +74,7 @@ fun DescribeField(
             supportingText = {
                 when (status) {
                     is DescribeStatus.Failed -> Text(status.error.userMessage(), color = MaterialTheme.colorScheme.error)
-                    DescribeStatus.Loading -> Text("Working out what that is…")
+                    DescribeStatus.Loading -> Text(stringResource(R.string.today_describe_loading))
                     DescribeStatus.Idle -> Text(hint)
                 }
             },
@@ -80,7 +82,7 @@ fun DescribeField(
                 if (isLoading) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    TextButton(onClick = onSubmit, enabled = canSubmit) { Text("Add") }
+                    TextButton(onClick = onSubmit, enabled = canSubmit) { Text(stringResource(R.string.action_add)) }
                 }
             },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
@@ -111,7 +113,7 @@ fun PastFoodRow(food: PastFood, onClick: () -> Unit, modifier: Modifier = Modifi
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
                 Text(
-                    text = "${food.item.grams.whole()} g · ${food.item.total.kcal.whole()} kcal",
+                    text = stringResource(R.string.today_past_food_amount, food.item.grams.whole(), food.item.total.kcal.whole()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

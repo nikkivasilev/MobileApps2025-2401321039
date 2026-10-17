@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.MacroSnap" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.MacroSnap" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Matches the Compose page colour so launch doesn't flash white. -->
         <item name="android:windowBackground">#F5F5F7</item>
     </style>

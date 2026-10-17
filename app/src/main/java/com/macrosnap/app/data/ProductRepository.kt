@@ -1,5 +1,6 @@
 package com.macrosnap.app.data
 
+import com.macrosnap.app.R
 import com.macrosnap.app.data.local.ProductMicrosDao
 import com.macrosnap.app.data.local.ProductMicrosEntity
 import com.macrosnap.app.data.remote.OffProduct
@@ -11,6 +12,8 @@ import com.macrosnap.app.model.Macros
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Outcome
+import com.macrosnap.app.ui.UiText
+import com.macrosnap.app.ui.uiText
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
@@ -26,7 +29,7 @@ data class ScannedProduct(
     val brand: String?,
     val quantity: String?,
     /** Plain-language problems with the listing, for the user to check against the label. */
-    val warnings: List<String>,
+    val warnings: List<UiText>,
     val missingMicros: Set<Nutrient>,
 )
 
@@ -73,7 +76,7 @@ class ProductRepository(
 
     private fun OffProduct.toScannedProduct(barcode: String): ScannedProduct? {
         val nutriments = nutriments ?: return null
-        val warnings = mutableListOf<String>()
+        val warnings = mutableListOf<UiText>()
 
         val protein = nutriments["proteins_100g"].asDouble()
         val carbs = nutriments["carbohydrates_100g"].asDouble()
@@ -84,7 +87,7 @@ class ProductRepository(
             when {
                 serving == null -> 100.0
                 serving > MAX_PLAUSIBLE_SERVING -> {
-                    warnings += "The listed serving of ${serving.whole()} g looks wrong, so 100 g is used instead. Set the amount you had."
+                    warnings += uiText(R.string.review_warning_serving, serving.whole())
                     100.0
                 }
                 else -> serving
@@ -95,7 +98,7 @@ class ProductRepository(
         if (kcalPerServing != null && grams != 100.0) {
             val implied = kcal * grams / 100
             if (abs(implied - kcalPerServing) > maxOf(20.0, kcalPerServing * 0.5)) {
-                warnings += "The listing says ${kcalPerServing.whole()} kcal per serving, but its per-100 g values give ${implied.whole()} kcal. Check the label."
+                warnings += uiText(R.string.review_warning_serving_kcal, kcalPerServing.whole(), implied.whole())
             }
         }
 
@@ -122,7 +125,7 @@ class ProductRepository(
      * Picks kcal per 100 g from a crowd-sourced listing, repairing the common kJ-typed-as-kcal slip
      * and flagging values the macros can't account for. Null when there's no energy at all.
      */
-    private fun checkedKcal(nutriments: JsonObject, protein: Double?, carbs: Double?, fat: Double?, warnings: MutableList<String>): Double? {
+    private fun checkedKcal(nutriments: JsonObject, protein: Double?, carbs: Double?, fat: Double?, warnings: MutableList<UiText>): Double? {
         // Open Food Facts normalises the generic energy field to kJ.
         val kj = (nutriments["energy-kj_100g"] ?: nutriments["energy_100g"]).asDouble()?.takeIf { it > 0 }
         val listed = nutriments["energy-kcal_100g"].asDouble()
@@ -132,15 +135,17 @@ class ProductRepository(
 
         var kcal = when {
             listed != null && kj != null && kj > 20 && abs(listed - kj) <= kj * 0.1 -> {
-                warnings += "The listing's calories were entered in kJ; converted ${kj.whole()} kJ to ${(kj / KJ_PER_KCAL).whole()} kcal per 100 g."
+                warnings += uiText(R.string.review_warning_kj, kj.whole(), (kj / KJ_PER_KCAL).whole())
                 kj / KJ_PER_KCAL
             }
             listed != null && kj != null && abs(listed - kj / KJ_PER_KCAL) > maxOf(20.0, kj / KJ_PER_KCAL * 0.5) -> {
                 // Two energy values that can't both be right: trust the one the macros back up.
                 val fromKj = kj / KJ_PER_KCAL
                 val pick = if (fromMacros != null && abs(fromKj - fromMacros) < abs(listed - fromMacros)) fromKj else listed
-                warnings += "The listing's ${listed.whole()} kcal and ${kj.whole()} kJ (${fromKj.whole()} kcal) per 100 g disagree; " +
-                    "used ${pick.whole()} kcal" + (if (fromMacros != null) ", which fits its macros better" else "") + ". Check the label."
+                warnings += uiText(
+                    if (fromMacros != null) R.string.review_warning_energy_conflict_macros else R.string.review_warning_energy_conflict,
+                    listed.whole(), kj.whole(), fromKj.whole(), pick.whole(),
+                )
                 pick
             }
             listed != null -> listed
@@ -148,12 +153,11 @@ class ProductRepository(
             else -> return null
         }
         if (kcal > MAX_KCAL_PER_100G) {
-            warnings += "The listing's ${kcal.whole()} kcal per 100 g is impossible. Check the label and edit the item."
+            warnings += uiText(R.string.review_warning_impossible_kcal, kcal.whole())
             kcal = fromMacros?.takeIf { it <= MAX_KCAL_PER_100G } ?: MAX_KCAL_PER_100G
         }
         if (fromMacros != null && warnings.size == warningsBefore && abs(kcal - fromMacros) > maxOf(MACRO_TOLERANCE_KCAL, fromMacros * 0.5)) {
-            warnings += "The listing says ${kcal.whole()} kcal per 100 g, but its protein, carbs and fat add up to about " +
-                "${fromMacros.whole()} kcal. Check the label."
+            warnings += uiText(R.string.review_warning_macros_mismatch, kcal.whole(), fromMacros.whole())
         }
         return kcal
     }

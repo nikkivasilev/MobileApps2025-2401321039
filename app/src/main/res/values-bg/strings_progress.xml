@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Progress screen. -->
+<resources>
+    <string name="progress_last_7_days">Последните 7 дни</string>
+
+    <!-- Calories -->
+    <string name="progress_calories_caption">средно на ден за дните със записи · %1$s г протеин</string>
+    <string name="progress_calories_empty">Запиши няколко хранения, за да видиш средното за седмицата.</string>
+    <string name="progress_calories_goal_line">Пунктир: целта ти от %1$d ккал · точка: ден в залата</string>
+
+    <!-- Strength -->
+    <string name="progress_strength_title">Сила</string>
+    <plurals name="progress_workouts_this_week">
+        <item quantity="one">%1$d тренировка тази седмица</item>
+        <item quantity="other">%1$d тренировки тази седмица</item>
+    </plurals>
+    <string name="progress_strength_empty">Завърши тренировка и всяко упражнение ще има графика тук: прогнозен 1ПМ за всяка тренировка, най-добра серия и обем.</string>
+    <string name="progress_exercise">Упражнение</string>
+    <plurals name="progress_1rm_caption">
+        <item quantity="one">Прогнозен 1ПМ по тренировки (%1$d тренировка)</item>
+        <item quantity="other">Прогнозен 1ПМ по тренировки (%1$d тренировки)</item>
+    </plurals>
+    <!-- Weight, reps, estimated one-rep max, date -->
+    <string name="progress_best_set">Най-добре: %1$s кг × %2$d (прогнозен 1ПМ %3$s кг) на %4$s</string>
+    <string name="progress_last_session">Последна тренировка: най-тежка серия %1$s кг, обем %2$s кг</string>
+    <!-- %3$s is the change in estimated one-rep max, in percent -->
+    <string name="progress_last_session_with_change">Последна тренировка: най-тежка серия %1$s кг, обем %2$s кг · 1ПМ %3$s%% спрямо първата</string>
+    <plurals name="progress_distance_caption">
+        <item quantity="one">Разстояние по тренировки (км), %1$d тренировка</item>
+        <item quantity="other">Разстояние по тренировки (км), %1$d тренировки</item>
+    </plurals>
+    <string name="progress_last_cardio">Последно: %1$s км за %2$d мин</string>
+
+    <!-- Sleep -->
+    <string name="progress_sleep_title">Сън</string>
+    <string name="progress_last_7_nights">Последните 7 нощи</string>
+    <!-- %1$d is the number of nights, %2$s the average quality out of 5 -->
+    <plurals name="progress_sleep_caption">
+        <item quantity="one">средно · качество %2$s/5 · %1$d записана нощ</item>
+        <item quantity="other">средно · качество %2$s/5 · %1$d записани нощи</item>
+    </plurals>
+    <string name="progress_sleep_empty">Запиши няколко нощи от екран Днес, за да видиш седмицата си.</string>
+    <string name="progress_sleep_goal_line">Пунктир: целта ти от %1$s ч</string>
+
+    <!-- Water -->
+    <string name="progress_water_title">Вода</string>
+    <string name="progress_amount_l">%1$s л</string>
+    <string name="progress_water_caption">средно за дните със записи</string>
+    <string name="progress_water_empty">Натискай бутоните за вода в Днес, за да се попълни.</string>
+
+    <!-- Body weight -->
+    <string name="progress_weight_title">Телесно тегло</string>
+    <!-- %1$s is a signed change, e.g. "-1.5" or "+2" -->
+    <string name="progress_weight_change">%1$s кг от началото</string>
+    <string name="progress_weight_latest">последно</string>
+    <string name="progress_weight_input">Тегло (кг)</string>
+    <string name="progress_log_weight">Запиши</string>
+    <string name="progress_weight_for_date">За %1$s</string>
+    <string name="progress_weight_for_today">За днес · смени датата</string>
+    <string name="progress_delete_weight">Изтрий теглото от %1$s</string>
+</resources>

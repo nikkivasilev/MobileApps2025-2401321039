@@ -19,7 +19,6 @@ import com.macrosnap.app.model.SetRecord
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutExercise
 import com.macrosnap.app.model.WorkoutSet
-import com.macrosnap.app.ui.compact
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -183,9 +182,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
                 val previousHeaviest = history.maxOfOrNull { it.weightKg } ?: 0.0
                 when {
                     best.estimated1Rm > previousBest && previousBest > 0 ->
-                        PersonalRecord(exercise.exercise, "${best.weightKg.compact()} kg × ${best.reps} (est. 1RM ${best.estimated1Rm.compact()} kg, was ${previousBest.compact()})")
+                        PersonalRecord.Estimated1Rm(exercise.exercise, best, previousBest)
                     heaviest > previousHeaviest && previousHeaviest > 0 ->
-                        PersonalRecord(exercise.exercise, "heaviest set ${heaviest.compact()} kg (was ${previousHeaviest.compact()})")
+                        PersonalRecord.HeaviestSet(exercise.exercise, heaviest, previousHeaviest)
                     else -> null
                 }
             }
@@ -193,7 +192,7 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
                 val longest = done.maxOf { it.distanceM }
                 val previousLongest = history.maxOfOrNull { it.distanceM } ?: 0.0
                 if (longest > previousLongest && previousLongest > 0) {
-                    PersonalRecord(exercise.exercise, "longest distance ${(longest / 1000).compact()} km (was ${(previousLongest / 1000).compact()})")
+                    PersonalRecord.LongestDistance(exercise.exercise, longest / 1000, previousLongest / 1000)
                 } else {
                     null
                 }

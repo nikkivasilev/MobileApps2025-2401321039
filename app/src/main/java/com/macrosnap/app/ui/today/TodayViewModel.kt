@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.macrosnap.app.R
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.FoodAnalyzer
 import com.macrosnap.app.data.FoodRepository
@@ -31,6 +32,7 @@ import com.macrosnap.app.model.Workout
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
 import com.macrosnap.app.ui.currentDates
 import com.macrosnap.app.ui.trySave
+import com.macrosnap.app.ui.uiText
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -237,7 +239,7 @@ class TodayViewModel(
                     photoPath = entry.photoPath,
                 )
             }
-            _effects.send(TodayEffect.ShowMessage(if (saved) "Logged ${entry.item.name} again" else SAVE_FAILED_MESSAGE))
+            _effects.send(TodayEffect.ShowMessage(if (saved) uiText(R.string.today_logged_again, entry.item.name) else SAVE_FAILED_MESSAGE))
             if (saved) selectedDate.value = today
         }
     }
@@ -245,7 +247,7 @@ class TodayViewModel(
     override fun onHidePastFood(food: PastFood) {
         viewModelScope.launch {
             foodRepository.hidePastFood(food.key)
-            _effects.send(TodayEffect.ShowMessage("${food.item.name} hidden from your foods until you log it again"))
+            _effects.send(TodayEffect.ShowMessage(uiText(R.string.today_food_hidden, food.item.name)))
         }
     }
 
@@ -314,14 +316,14 @@ class TodayViewModel(
                 if (file != null) {
                     TodayEffect.OpenPhotoReview(selectedDate.value.toEpochDay(), file.path)
                 } else {
-                    TodayEffect.ShowMessage("That image couldn't be opened.")
+                    TodayEffect.ShowMessage(uiText(R.string.today_image_open_failed))
                 },
             )
         }
     }
 
     fun onScanFailed() {
-        _effects.trySend(TodayEffect.ShowMessage("The barcode scanner isn't ready yet. Check your connection and try again in a minute."))
+        _effects.trySend(TodayEffect.ShowMessage(uiText(R.string.today_scanner_not_ready)))
     }
 
     companion object {

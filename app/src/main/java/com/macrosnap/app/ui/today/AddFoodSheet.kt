@@ -39,8 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.matching
 import com.macrosnap.app.ui.components.AppCard
@@ -82,7 +84,7 @@ internal fun AddFoodSheet(
         ) {
             item(key = "title") {
                 Text(
-                    text = "Add food",
+                    text = stringResource(R.string.today_add_food),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
                 )
@@ -92,7 +94,7 @@ internal fun AddFoodSheet(
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
-                        placeholder = { Text("Search your foods") },
+                        placeholder = { Text(stringResource(R.string.today_search_foods)) },
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                         singleLine = true,
                         shape = CircleShape,
@@ -112,9 +114,9 @@ internal fun AddFoodSheet(
                 item(key = "methods") { MethodGrid(onMethod) }
                 if (pastFoods.isNotEmpty()) {
                     item(key = "foods-title") {
-                        SectionTitle("Your foods", Modifier.padding(top = 8.dp, bottom = 4.dp)) {
+                        SectionTitle(stringResource(R.string.today_your_foods), Modifier.padding(top = 8.dp, bottom = 4.dp)) {
                             Text(
-                                text = "Long-press to hide",
+                                text = stringResource(R.string.today_long_press_hide),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -126,7 +128,7 @@ internal fun AddFoodSheet(
                 if (matches.isEmpty()) {
                     item(key = "no-match") {
                         Text(
-                            text = "Nothing called \"${query.trim()}\" in your foods yet.",
+                            text = stringResource(R.string.today_no_match, query.trim()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
@@ -142,9 +144,9 @@ internal fun AddFoodSheet(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconBadge(AppIcons.Sparkle, MaterialTheme.colorScheme.onSurface)
                             Column(Modifier.padding(start = 12.dp)) {
-                                Text("Describe \"${query.trim()}\"", style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(R.string.today_describe_query, query.trim()), style = MaterialTheme.typography.titleSmall)
                                 Text(
-                                    text = "Gemini works out the macros",
+                                    text = stringResource(R.string.today_gemini_macros),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -159,15 +161,15 @@ internal fun AddFoodSheet(
     hiding?.let { food ->
         AlertDialog(
             onDismissRequest = { hiding = null },
-            title = { Text("Hide ${food.item.name}?") },
-            text = { Text("It won't be suggested again unless you log it again. Your logged entries stay as they are.") },
+            title = { Text(stringResource(R.string.today_hide_title, food.item.name)) },
+            text = { Text(stringResource(R.string.today_hide_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     hiding = null
                     onHide(food)
-                }) { Text("Hide") }
+                }) { Text(stringResource(R.string.today_hide)) }
             },
-            dismissButton = { TextButton(onClick = { hiding = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { hiding = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -210,7 +212,7 @@ private fun MethodTile(method: AddMethod, modifier: Modifier = Modifier, onClick
                 Icon(method.icon, contentDescription = null, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(8.dp))
-            Text(method.label, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1)
+            Text(stringResource(method.labelRes), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1)
         }
     }
 }

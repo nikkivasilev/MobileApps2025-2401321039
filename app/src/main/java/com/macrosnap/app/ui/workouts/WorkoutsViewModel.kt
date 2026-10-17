@@ -58,9 +58,10 @@ class WorkoutsViewModel(
     private val _effects = Channel<WorkoutsEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
 
-    fun onStartEmpty() {
+    /** [name] comes from the screen so the stored name is in the language the workout was started in. */
+    fun onStartEmpty(name: String) {
         viewModelScope.launch {
-            val id = workoutRepository.startWorkout("Workout", null)
+            val id = workoutRepository.startWorkout(name, null)
             _effects.send(WorkoutsEffect.OpenWorkout(id))
         }
     }

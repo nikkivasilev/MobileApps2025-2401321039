@@ -2,6 +2,7 @@ package com.macrosnap.app.ui.supplements
 
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Supplement
+import com.macrosnap.app.ui.UiText
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.toMicros
 
@@ -23,6 +24,7 @@ data class SupplementEditorUiState(
     val isExisting: Boolean get() = id != 0L
     val timesPerDay: Int? get() = timesPerDayInput.trim().toIntOrNull()?.takeIf { it in 1..10 }
 
+    /** The supplement as entered; a blank dose label stays empty until [SupplementEditorActions.onSave] fills in the default. */
     val supplement: Supplement?
         get() {
             val timesPerDay = timesPerDay ?: return null
@@ -30,7 +32,7 @@ data class SupplementEditorUiState(
             return Supplement(
                 id = id,
                 name = name.trim(),
-                doseLabel = doseLabel.trim().ifEmpty { "1 dose" },
+                doseLabel = doseLabel.trim(),
                 timesPerDay = timesPerDay,
                 micros = nutrientInputs.toMicros().filterValues { it > 0 },
                 isActive = isActive,
@@ -41,6 +43,6 @@ data class SupplementEditorUiState(
 }
 
 sealed interface SupplementEditorEffect {
-    data class ShowMessage(val message: String) : SupplementEditorEffect
+    data class ShowMessage(val message: UiText) : SupplementEditorEffect
     data object Close : SupplementEditorEffect
 }

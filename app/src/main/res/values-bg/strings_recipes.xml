@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recipes list and recipe editor. -->
+<resources>
+    <!-- Recipes list -->
+    <string name="recipes_new">Нова рецепта</string>
+    <string name="recipes_empty_title">Още нямаш рецепти</string>
+    <string name="recipes_empty_body">Запази ястията, които готвиш. Добави съставките, като ги опишеш („500 г пилешки бутчета, 2 с.л. олио…“), претегли готовото ястие и записвай порция всеки път, когато ядеш от него.</string>
+    <!-- Ingredient count and kcal per 100 g, e.g. "4 ingredients · 180 kcal per 100 g" -->
+    <plurals name="recipes_card_summary">
+        <item quantity="one">%1$d съставка · %2$s ккал на 100 г</item>
+        <item quantity="other">%1$d съставки · %2$s ккал на 100 г</item>
+    </plurals>
+    <!-- Grams and kcal of one serving -->
+    <string name="recipes_card_serving">Порция %1$s г · %2$s ккал</string>
+    <string name="recipes_log_today">Запиши за днес</string>
+
+    <!-- Recipe editor -->
+    <string name="recipes_edit_title">Редактирай рецепта</string>
+    <string name="recipes_delete">Изтрий рецептата</string>
+    <string name="recipes_name">Име на рецептата</string>
+    <string name="recipes_servings">Порции</string>
+    <string name="recipes_cooked_weight">Тегло след готвене (г)</string>
+    <string name="recipes_cooked_weight_help">Претегли готовото ястие, ако можеш: оризът и яхниите поемат вода, а печеното губи, затова така стойностите на 100 г са точни. Остави празно, за да се ползва общото тегло на съставките.</string>
+    <string name="recipes_ingredients">Съставки</string>
+    <string name="recipes_describe_label">Опиши съставки за добавяне</string>
+    <string name="recipes_add_manually">Добави съставка ръчно</string>
+    <string name="recipes_edit_ingredient">Редактирай съставка</string>
+    <string name="recipes_add_ingredient">Добави съставка</string>
+    <string name="recipes_delete_title">Да изтрия ли рецептата?</string>
+    <string name="recipes_delete_body">Вече записаните от нея хранения остават в дневника ти.</string>
+    <string name="recipes_per_serving">На порция: %1$s ккал</string>
+    <!-- Grams of one serving, then its macros summary -->
+    <string name="recipes_serving_macros">%1$s г · %2$s</string>
+    <string name="recipes_whole">Цялата рецепта: %1$s г · %2$s ккал</string>
+</resources>

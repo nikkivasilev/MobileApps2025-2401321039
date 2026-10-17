@@ -17,10 +17,12 @@ import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutExercise
+import com.macrosnap.app.R
 import com.macrosnap.app.model.WorkoutSet
 import com.macrosnap.app.ui.WorkoutRoute
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.toAmountOrNull
+import com.macrosnap.app.ui.uiText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -220,7 +222,7 @@ class WorkoutViewModel(
     override fun onFinishClick() {
         val workout = _uiState.value.workout ?: return
         if (!_uiState.value.canFinish) {
-            _effects.trySend(WorkoutEffect.ShowMessage("Tick at least one set as done before finishing."))
+            _effects.trySend(WorkoutEffect.ShowMessage(uiText(R.string.workout_finish_needs_set)))
             return
         }
         _uiState.update { it.copy(isFinishing = true, restEndsAt = null) }

@@ -14,6 +14,7 @@ import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.add
 import com.macrosnap.app.model.sum
 import com.macrosnap.app.model.sumMicros
+import com.macrosnap.app.ui.UiText
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -55,5 +56,5 @@ fun weekStart(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previous
 
 sealed interface TodayEffect {
     data class OpenPhotoReview(val epochDay: Long, val photoPath: String) : TodayEffect
-    data class ShowMessage(val message: String) : TodayEffect
+    data class ShowMessage(val message: UiText) : TodayEffect
 }

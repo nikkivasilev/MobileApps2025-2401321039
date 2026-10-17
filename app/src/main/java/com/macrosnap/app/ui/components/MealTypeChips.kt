@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.MealType
+import com.macrosnap.app.ui.label
 
 @Composable
 fun MealTypeChips(selected: MealType, onSelect: (MealType) -> Unit, modifier: Modifier = Modifier) {

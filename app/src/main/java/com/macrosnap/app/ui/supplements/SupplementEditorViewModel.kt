@@ -35,7 +35,8 @@ interface SupplementEditorActions {
     fun onActiveChange(active: Boolean)
     fun onDescribeChange(text: String)
     fun onDescribeSubmit()
-    fun onSave()
+    /** [defaultDoseLabel] is stored when the dose field is left blank, in the language the user is seeing. */
+    fun onSave(defaultDoseLabel: String)
     fun onDeleteClick()
     fun onDeleteConfirm()
     fun onDeleteDismiss()
@@ -115,8 +116,10 @@ class SupplementEditorViewModel(
         }
     }
 
-    override fun onSave() {
-        val supplement = _uiState.value.takeIf { it.canSave }?.supplement ?: return
+    override fun onSave(defaultDoseLabel: String) {
+        val supplement = _uiState.value.takeIf { it.canSave }?.supplement
+            ?.let { it.copy(doseLabel = it.doseLabel.ifEmpty { defaultDoseLabel }) }
+            ?: return
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             if (trySave { supplementRepository.save(supplement) }) {

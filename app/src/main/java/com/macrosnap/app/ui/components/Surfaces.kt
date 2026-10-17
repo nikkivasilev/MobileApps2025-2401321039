@@ -26,9 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.Macros
 import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.theme.MacroColors
@@ -116,9 +118,9 @@ fun MacroDots(
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        MacroDot("P", macros.protein, MacroColors.Protein, style, color)
-        MacroDot("C", macros.carbs, MacroColors.Carbs, style, color)
-        MacroDot("F", macros.fat, MacroColors.Fat, style, color)
+        MacroDot(stringResource(R.string.today_letter_protein), macros.protein, MacroColors.Protein, style, color)
+        MacroDot(stringResource(R.string.today_letter_carbs), macros.carbs, MacroColors.Carbs, style, color)
+        MacroDot(stringResource(R.string.today_letter_fat), macros.fat, MacroColors.Fat, style, color)
     }
 }
 

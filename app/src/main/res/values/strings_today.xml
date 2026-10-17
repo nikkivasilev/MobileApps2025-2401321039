@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today screen, the add-food sheet and the cards and pieces they share with other screens. -->
+<resources>
+    <!-- Day header and week strip -->
+    <string name="today_today">Today</string>
+    <string name="today_yesterday">Yesterday</string>
+    <string name="today_previous_week">Previous week</string>
+    <string name="today_next_week">Next week</string>
+
+    <!-- Sections -->
+    <string name="today_add_food">Add food</string>
+    <string name="today_meals">Meals</string>
+    <plurals name="today_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <string name="today_habits">Habits</string>
+    <string name="today_edit_entry">Edit entry</string>
+
+    <!-- Photos waiting to be analyzed -->
+    <string name="today_pending_title">Waiting to analyze</string>
+    <plurals name="today_pending_subtitle">
+        <item quantity="one">Gemini couldn\'t take this photo earlier. Try again now.</item>
+        <item quantity="other">Gemini couldn\'t take these photos earlier. Try again now.</item>
+    </plurals>
+    <string name="today_no_hint">No hint</string>
+    <string name="today_discard_photo">Discard photo</string>
+    <string name="today_analyze">Analyze</string>
+    <string name="today_discard_title">Discard this photo?</string>
+    <string name="today_discard_text">It\'s deleted without being analyzed. Nothing was logged from it.</string>
+    <string name="today_discard">Discard</string>
+
+    <!-- Empty day -->
+    <string name="today_empty_today">Nothing logged yet</string>
+    <string name="today_empty_past">Nothing logged this day</string>
+    <string name="today_empty_text">Snap your plate, scan a barcode or just describe it. The AI works out the macros.</string>
+
+    <!-- Recipe picker -->
+    <string name="today_my_recipes">My recipes</string>
+    <string name="today_no_recipes">No recipes yet. Create one in the Recipes tab.</string>
+    <!-- Serving size in grams, then its calories -->
+    <string name="today_recipe_serving">%1$s g serving · %2$s kcal</string>
+
+    <!-- Supplements -->
+    <string name="today_supplements">Supplements</string>
+    <string name="today_supplements_all_taken">All taken today</string>
+    <string name="today_supplements_taken">%1$d of %2$d taken</string>
+    <string name="today_hide_taken">Hide taken</string>
+    <string name="today_show_taken">Show taken</string>
+    <!-- Dose label, e.g. "1 capsule", then how many times a day -->
+    <string name="today_dose_times_a_day">%1$s · %2$d× a day</string>
+    <string name="today_mark_taken">Mark %1$s taken</string>
+    <string name="today_mark_not_taken">Mark %1$s not taken</string>
+
+    <!-- Snackbars -->
+    <string name="today_logged_again">Logged %1$s again</string>
+    <string name="today_food_hidden">%1$s hidden from your foods until you log it again</string>
+    <string name="today_image_open_failed">That image couldn\'t be opened.</string>
+    <string name="today_scanner_not_ready">The barcode scanner isn\'t ready yet. Check your connection and try again in a minute.</string>
+
+    <!-- Ways to add food -->
+    <string name="today_method_camera">Snap</string>
+    <string name="today_method_describe">Describe</string>
+    <string name="today_method_barcode">Barcode</string>
+    <string name="today_method_gallery">Gallery</string>
+    <string name="today_method_recipe">Recipe</string>
+    <string name="today_method_manual">Manual</string>
+
+    <!-- Add food sheet -->
+    <string name="today_search_foods">Search your foods</string>
+    <string name="today_your_foods">Your foods</string>
+    <string name="today_long_press_hide">Long-press to hide</string>
+    <string name="today_no_match">Nothing called \"%1$s\" in your foods yet.</string>
+    <string name="today_describe_query">Describe \"%1$s\"</string>
+    <string name="today_gemini_macros">Gemini works out the macros</string>
+    <string name="today_hide_title">Hide %1$s?</string>
+    <string name="today_hide_text">It won\'t be suggested again unless you log it again. Your logged entries stay as they are.</string>
+    <string name="today_hide">Hide</string>
+
+    <!-- Calorie hero and macro tiles -->
+    <string name="today_calories_left">Calories left</string>
+    <string name="today_calories_over">Calories over</string>
+    <string name="today_eaten">Eaten</string>
+    <string name="today_goal">Goal</string>
+    <string name="today_goal_plus_gym">Goal + gym</string>
+    <string name="today_burned">Burned</string>
+    <!-- Follows the grams eaten: "84 / 150 g" -->
+    <string name="today_macro_goal">" / %1$s g"</string>
+    <!-- One-letter macro names next to coloured dots -->
+    <string name="today_letter_protein">P</string>
+    <string name="today_letter_carbs">C</string>
+    <string name="today_letter_fat">F</string>
+
+    <!-- Water -->
+    <string name="today_water">Water</string>
+    <string name="today_add_water">Add water</string>
+    <string name="today_millilitres">Millilitres</string>
+    <!-- Follows the litres drunk: "1.2 / 2.5 L" -->
+    <string name="today_water_goal">" / %1$s L"</string>
+    <string name="today_water_quick_add">+250 ml</string>
+
+    <!-- Sleep -->
+    <string name="today_sleep">Sleep</string>
+    <string name="today_sleep_empty">Tap to log last night</string>
+    <!-- Hours and two-digit minutes, short: "7h 05m" -->
+    <string name="today_sleep_short">%1$dh %2$sm</string>
+    <!-- Hours and two-digit minutes: "7 h 05 min" -->
+    <string name="today_sleep_duration">%1$d h %2$s min</string>
+    <string name="today_sleep_sheet_title">Sleep · night before %1$s</string>
+    <string name="today_bedtime">Bedtime</string>
+    <string name="today_woke_up_at">Woke up at</string>
+    <string name="today_bed_at">Bed %1$s</string>
+    <string name="today_up_at">Up %1$s</string>
+    <string name="today_slept">Slept %1$s</string>
+    <string name="today_sleep_quality">How did you sleep?</string>
+    <plurals name="today_stars">
+        <item quantity="one">%d star</item>
+        <item quantity="other">%d stars</item>
+    </plurals>
+
+    <!-- Vitamins and minerals -->
+    <string name="today_nutrients_title">Vitamins &amp; minerals</string>
+    <string name="today_nutrients_subtitle">%1$d of %2$d on track · food + supplements</string>
+    <string name="today_expand">Expand</string>
+    <string name="today_collapse">Collapse</string>
+    <string name="today_nutrients_note">Caffeine is a daily limit; the others are targets. Photo-based values are rough (think ±50%), so use these to spot what you\'re consistently missing.</string>
+    <!-- Amount / target unit, e.g. "120 / 400 mg" -->
+    <string name="today_nutrient_amount">%1$s / %2$s %3$s</string>
+    <string name="today_nutrient_amount_max">%1$s / %2$s %3$s max</string>
+
+    <!-- Describe field and remembered foods -->
+    <string name="today_describe_placeholder">e.g. 200 g chicken breast, 1 tbsp olive oil</string>
+    <string name="today_describe_hint">Gemini identifies each food and fills in the macros.</string>
+    <string name="today_describe_suggestions">From your foods (no AI needed)</string>
+    <string name="today_describe_loading">Working out what that is…</string>
+    <!-- Usual grams, then calories for that amount -->
+    <string name="today_past_food_amount">%1$s g · %2$s kcal</string>
+</resources>

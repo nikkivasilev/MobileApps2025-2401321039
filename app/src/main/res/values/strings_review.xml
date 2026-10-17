@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Review screen, the item editor, the entry detail sheet and barcode label warnings. -->
+<resources>
+    <!-- Review screen -->
+    <string name="review_title">Review meal</string>
+    <string name="review_photo_description">Meal photo</string>
+    <!-- A remark from the AI or about the recipe, e.g. "Note: the sauce is a guess" -->
+    <string name="review_note">Note: %1$s</string>
+    <string name="review_describe_label">Describe what to add</string>
+    <string name="review_add_manually">Add an item manually</string>
+    <string name="review_hint_label">Wrong guess? Give the AI a hint</string>
+    <string name="review_hint_placeholder">e.g. turkey mince, cooked in butter, 3 eggs</string>
+    <string name="review_analyze_again">Analyze again</string>
+    <string name="review_edit_item">Edit item</string>
+    <string name="review_add_item">Add item</string>
+    <string name="review_first_title">What\'s on the plate?</string>
+    <string name="review_first_subtitle">Optional, but a few words help the AI a lot</string>
+    <string name="review_first_body">The dish, how it was cooked, anything hidden (oil, sauce, sugar). Leave it empty to let it guess.</string>
+    <string name="review_first_hint_label">Hint for the AI (optional)</string>
+    <string name="review_first_hint_placeholder">e.g. chicken curry with basmati rice, cooked in ghee</string>
+    <string name="review_analyze_photo">Analyze photo</string>
+    <string name="review_analyze_with_hint">Analyze with hint</string>
+    <string name="review_saved_for_later">The photo is saved under \"Waiting to analyze\" on Today, so you can resubmit it later.</string>
+    <string name="review_open_settings">Open Settings</string>
+    <string name="review_resubmit_later">Resubmit later</string>
+    <string name="review_label_warnings_title">Check this against the label</string>
+    <string name="review_label_warnings_footer">Tap the item to correct any value.</string>
+    <string name="review_log_it">Log it</string>
+    <plurals name="review_log_items">
+        <item quantity="one">Log %1$d item</item>
+        <item quantity="other">Log %1$d items</item>
+    </plurals>
+
+    <!-- Progress labels -->
+    <string name="review_analyzing">Analyzing your meal…</string>
+    <string name="review_looking_up_barcode">Looking up barcode %1$s…</string>
+    <string name="review_loading_recipe">Loading recipe…</string>
+    <string name="review_loading">Loading…</string>
+    <string name="review_recipe_missing">That recipe no longer exists.</string>
+    <string name="review_food_missing">That food is no longer in your log.</string>
+    <!-- Recipe name, grams per serving, total grams and number of servings -->
+    <plurals name="review_recipe_note">
+        <item quantity="one">One serving of %1$s is %2$s g (%3$s g makes %4$d). Adjust the grams to what you ate.</item>
+        <item quantity="other">One serving of %1$s is %2$s g (%3$s g makes %4$d). Adjust the grams to what you ate.</item>
+    </plurals>
+
+    <!-- Where a scanned product's vitamins and minerals came from -->
+    <string name="review_micros_estimating">Estimating the vitamins and minerals the listing leaves out…</string>
+    <string name="review_micros_label_and_gemini">Vitamins and minerals: from the label where listed, the rest estimated by Gemini.</string>
+    <string name="review_micros_gemini">Vitamins and minerals estimated by Gemini; the listing doesn\'t include them.</string>
+    <string name="review_micros_no_key">Add your Gemini key in Settings to estimate the vitamins and minerals this listing leaves out.</string>
+    <string name="review_micros_no_name">The listing has no product name, so the vitamins and minerals it leaves out can\'t be estimated.</string>
+    <!-- The argument is the error message -->
+    <string name="review_micros_failed">Couldn\'t estimate the vitamins and minerals this listing leaves out: %1$s</string>
+
+    <!-- Problems spotted in an Open Food Facts listing -->
+    <string name="review_warning_serving">The listed serving of %1$s g looks wrong, so 100 g is used instead. Set the amount you had.</string>
+    <string name="review_warning_serving_kcal">The listing says %1$s kcal per serving, but its per-100 g values give %2$s kcal. Check the label.</string>
+    <string name="review_warning_kj">The listing\'s calories were entered in kJ; converted %1$s kJ to %2$s kcal per 100 g.</string>
+    <!-- Listed kcal, listed kJ, kJ in kcal, the kcal used -->
+    <string name="review_warning_energy_conflict">The listing\'s %1$s kcal and %2$s kJ (%3$s kcal) per 100 g disagree; used %4$s kcal. Check the label.</string>
+    <string name="review_warning_energy_conflict_macros">The listing\'s %1$s kcal and %2$s kJ (%3$s kcal) per 100 g disagree; used %4$s kcal, which fits its macros better. Check the label.</string>
+    <string name="review_warning_impossible_kcal">The listing\'s %1$s kcal per 100 g is impossible. Check the label and edit the item.</string>
+    <string name="review_warning_macros_mismatch">The listing says %1$s kcal per 100 g, but its protein, carbs and fat add up to about %2$s kcal. Check the label.</string>
+
+    <!-- Draft item card -->
+    <string name="review_low_confidence">Low confidence · worth a check</string>
+    <string name="review_remove_item">Remove %1$s</string>
+    <plurals name="review_servings">
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
+    </plurals>
+
+    <!-- Item editor -->
+    <string name="review_basis_per_100g">Per 100 g</string>
+    <string name="review_basis_portion">Whole portion</string>
+    <plurals name="review_editor_first_only">
+        <item quantity="one">Only the first of %1$d food was used; describe one food at a time here.</item>
+        <item quantity="other">Only the first of %1$d foods was used; describe one food at a time here.</item>
+    </plurals>
+    <string name="review_delete_entry_title">Delete this entry?</string>
+    <string name="review_delete_entry_body">It will be removed from the log.</string>
+    <string name="review_editor_describe_label">Describe it and let the AI fill this in</string>
+    <string name="review_editor_describe_placeholder">e.g. 150 g grilled chicken breast</string>
+    <string name="review_editor_describe_hint">Replaces the values below with the AI\'s estimate; you can still edit them.</string>
+    <string name="review_food_name">Food name</string>
+    <string name="review_amount_eaten">Amount eaten (g or ml)</string>
+    <string name="review_values_for">Nutrition values are for</string>
+    <string name="review_field_protein">Protein g</string>
+    <string name="review_field_carbs">Carbs g</string>
+    <string name="review_field_fat">Fat g</string>
+    <string name="review_hide_micros">Hide vitamins &amp; minerals</string>
+    <string name="review_show_micros">Vitamins &amp; minerals (optional)</string>
+    <!-- kcal and the macros summary of the portion being edited -->
+    <string name="review_this_portion">This portion: %1$s kcal · %2$s</string>
+    <string name="review_editor_incomplete">Enter a name, an amount and calories (or macros) to save.</string>
+
+    <!-- Entry detail sheet -->
+    <!-- Food name and its kcal -->
+    <string name="review_delete_entry_named">%1$s (%2$s kcal) will be removed from the log.</string>
+    <!-- kcal per 100 g and the macros summary per 100 g -->
+    <string name="review_per_100g">Per 100 g: %1$s kcal · %2$s</string>
+    <string name="review_micros_title">Vitamins &amp; minerals</string>
+    <string name="review_no_micros">No estimate for this entry. Entries logged before this feature, and manual entries without values, don\'t have one.</string>
+    <string name="review_log_today">Log today</string>
+    <string name="review_log_again">Log again</string>
+    <string name="review_source_photo">from photo</string>
+    <string name="review_source_barcode">from barcode</string>
+    <string name="review_source_manual">entered manually</string>
+    <string name="review_source_text">from description</string>
+    <string name="review_source_recipe">from recipe</string>
+    <string name="review_source_history">from your foods</string>
+</resources>

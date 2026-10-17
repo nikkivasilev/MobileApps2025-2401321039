@@ -1,3 +1,3 @@
 <resources>
-    <string name="app_name">MacroSnap</string>
+    <string name="app_name" translatable="false">MacroSnap</string>
 </resources>

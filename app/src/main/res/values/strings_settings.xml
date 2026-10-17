@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings screen. -->
+<resources>
+    <!-- Supplements -->
+    <string name="settings_supplements_title">Supplements</string>
+    <string name="settings_supplements_empty">Add what you take (creatine, vitamin D, fish oil…) and Today shows a checklist. Ticked doses count toward your vitamins &amp; minerals.</string>
+    <!-- After a supplement's dose, e.g. "1 capsule · 2× a day" -->
+    <string name="settings_supplement_times_per_day">%1$d× a day</string>
+    <string name="settings_supplement_paused">paused</string>
+    <string name="settings_add_supplement">Add supplement</string>
+
+    <!-- Water, sleep and gym -->
+    <string name="settings_wellness_title">Water, sleep &amp; gym</string>
+    <string name="settings_water_goal">Water goal (ml)</string>
+    <string name="settings_sleep_goal">Sleep goal (h)</string>
+    <string name="settings_rest_timer">Rest timer between sets (seconds)</string>
+    <string name="settings_workout_burn_title">Add workout calories to my daily goal</string>
+    <string name="settings_workout_burn_body">Estimates are rough (MET × body weight × time). Off keeps the goal fixed, since the calculator already assumes your activity level.</string>
+
+    <!-- Vitamin and mineral targets -->
+    <string name="settings_nutrients_title">Vitamin &amp; mineral targets</string>
+    <string name="settings_nutrients_body">Pre-filled with adult recommended daily intakes for your sex (from the goal calculator). Caffeine is a daily maximum. Tip: 1000 IU of vitamin D is 25 µg.</string>
+    <string name="settings_save_targets">Save targets</string>
+    <string name="settings_reset_defaults">Reset to defaults</string>
+
+    <!-- AI recognition -->
+    <string name="settings_ai_title">AI recognition</string>
+    <string name="settings_ai_body">MacroSnap uses Google\'s Gemini through its free tier. Create a key in Google AI Studio (a Google account is all it takes, no card), then paste it here. It stays on this phone.</string>
+    <string name="settings_get_key">Get a free key: aistudio.google.com/apikey</string>
+    <string name="settings_api_key">Gemini API key</string>
+    <string name="settings_show_key">Show</string>
+    <string name="settings_hide_key">Hide</string>
+    <string name="settings_models">Models, tried in order</string>
+    <string name="settings_models_hint">When one model\'s free daily quota runs out, the next one takes over.</string>
+    <string name="settings_save_and_test">Save and test</string>
+    <string name="settings_test_key">Test key</string>
+    <string name="settings_reset_models">Reset models</string>
+    <string name="settings_checking_key">Checking the key…</string>
+    <string name="settings_key_valid">Key works. You\'re ready to snap meals.</string>
+    <!-- %1$s is a comma-separated list of model names -->
+    <string name="settings_key_valid_skipped">Key works, but these models aren\'t available to it and will be skipped: %1$s</string>
+    <string name="settings_key_removed">API key removed. Photo and text analysis are off until you add one.</string>
+
+    <!-- Daily goals -->
+    <string name="settings_goals_title">Daily goals</string>
+    <string name="settings_goal_protein">Protein g</string>
+    <string name="settings_goal_carbs">Carbs g</string>
+    <string name="settings_goal_fat">Fat g</string>
+    <string name="settings_save_goals">Save goals</string>
+    <string name="settings_goals_saved">Goals saved</string>
+    <string name="settings_goals_updated">Goals updated to %1$d kcal</string>
+    <string name="settings_nutrient_targets_saved">Nutrient targets saved</string>
+    <string name="settings_wellness_saved">Wellness goals saved</string>
+
+    <!-- Goal calculator -->
+    <string name="settings_calculator_title">Goal calculator</string>
+    <string name="settings_calculator_body">Estimates your daily needs with the Mifflin-St Jeor formula. Treat it as a starting point and adjust after two weeks of tracking your weight.</string>
+    <string name="settings_age">Age</string>
+    <string name="settings_height">Height cm</string>
+    <string name="settings_weight">Weight kg</string>
+    <string name="settings_activity">Activity</string>
+    <string name="settings_goal">Goal</string>
+    <!-- Calories, then protein, carbs and fat in grams -->
+    <string name="settings_suggested">Suggested: %1$d kcal · P %2$d · C %3$d · F %4$d g</string>
+    <string name="settings_suggested_empty">Fill in age, height and weight to see a suggestion.</string>
+    <string name="settings_use_goals">Use these goals</string>
+</resources>
