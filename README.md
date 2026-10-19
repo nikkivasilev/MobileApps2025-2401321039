@@ -1,119 +1,230 @@
 # MacroSnap
 
-A personal Android macro tracker. Photograph a meal and an AI model estimates the items, portion
-weights and macros; you correct anything that's off and log it. Everything you log stays on the phone.
+Android приложение за проследяване на храненето: снимаш чинията си и AI модел (Google Gemini)
+разпознава храните, грамажа и макронутриентите; ти поправяш каквото не е точно и записваш.
+Освен храна следи витамини и минерали, добавки, вода, сън, тегло и тренировки във фитнеса.
+Всички данни се пазят локално на телефона.
 
-## Features
+## Идея
 
-- **Photo logging** - camera or gallery. Gemini (free tier) returns each food with grams and
-  per-100 g nutrition; you adjust grams with +/- or edit any value before saving. If Gemini is
-  overloaded, out of quota or unreachable, the photo is kept under **Waiting to analyze** on Today
-  with its meal and hint, so you can resubmit it later (or log it by hand, or discard it).
-- **Your foods** - everything you've logged before, most frequent first, at the top of the Add food
-  sheet with a search box. Tap one to log it again at your usual amount - no AI request. While you
-  describe a meal, matching past foods are suggested too, and any logged entry has a **Log again** button.
-- **Your meals** - foods you've eaten together more than once (say, the same lunch) show above Your
-  foods; one tap fills the review screen with the whole meal at your usual amounts. Any meal on Today
-  also has **Log again today** in its menu, for a one-off repeat.
-- **Barcode scanning** - label values for packaged food from Open Food Facts (no key needed). Listings
-  are crowd-sourced, so the app checks them: kJ typed as kcal is converted, calories that don't fit
-  the macros or a serving that can't be right are flagged for you to check against the label.
-  Vitamins and minerals a listing leaves out are estimated by Gemini once per barcode and remembered.
-- **Describe in words** - type "50 g olive oil, 2 eggs, a cup of cooked rice" and Gemini turns it into
-  items with weights and macros. English and Bulgarian both work. Available on the review screen and
-  in the recipe editor.
-- **Recipes** - build a dish from ingredients (described or typed), enter the cooked weight and number
-  of servings, then log a serving from the Today add-sheet or the Recipes tab.
-- **Manual entry** - per 100 g or "whole portion" values; calories auto-fill from macros.
-- **Vitamins & minerals** - vitamin D, B12, B6, B3 (niacin), B5, C, A, iron, magnesium, zinc, calcium,
-  potassium, omega-3, creatine and caffeine (a limit). Every AI analysis estimates them per 100 g;
-  barcode items get them from the label or a Gemini estimate. Today shows them against RDA-based
-  targets (editable in Settings).
-- **Supplements** - list what you take (dose, times per day, nutrient content per dose - or describe
-  it and let Gemini fill it in). Today shows a checklist; ticked doses count toward your nutrients,
-  and past days keep what each dose contained even if you later edit the supplement.
-- **Daily view** - calorie ring, protein/carbs/fat bars against your goals, entries grouped by meal.
-- **Water & sleep** - quick-add water against a daily goal; log bedtime, wake time and a 1-5 star rating.
-- **Gym** - start a workout (blank or from a saved routine), log sets as weight × reps (or time/distance
-  for cardio), rest timer between sets, personal-record detection on finish, and per-exercise progress
-  charts (estimated 1RM per session). Routines pre-fill sets with what you lifted last time.
-- **Exercises** - Gym tab > Exercises: add your own exercises and edit any exercise's muscle group,
-  type and default sets × reps, which routines and new workouts start from.
-- **Goal calculator** - Mifflin-St Jeor from sex, age, height, weight, activity and goal.
-- **Progress** - strength chart per exercise, 7-day calorie/sleep/water charts, body-weight trend
-  (weigh-ins can be logged for earlier days).
-- **English or Bulgarian** - Settings > Language (or the phone's per-app language setting on Android 13+).
-  Photos analyzed without a hint get item names in the app's language.
+Ръчното въвеждане на всяка храна в калориен дневник е бавно и затова повечето хора се отказват
+след няколко дни. MacroSnap съкращава записа до няколко секунди:
 
-## Install on your phone
+- **снимка** на храната → AI оценява продуктите, грамовете и хранителните стойности;
+- **баркод** на пакетирана храна → етикетът се взима от Open Food Facts;
+- **описание с думи** („50 г зехтин, 2 яйца, чаша варен ориз“) → AI го превръща в продукти;
+- **история** → храните и комбинациите, които ядеш често, се добавят с едно докосване, без AI заявка.
 
-1. On the phone: Settings > About phone > Software information > tap **Build number** 7 times,
-   then Settings > Developer options > enable **USB debugging**.
-2. Plug the phone into the computer and accept the "Allow USB debugging" prompt.
-3. Either open this folder in Android Studio and press **Run**, or from a terminal here:
+AI оценката никога не се записва директно: винаги минава през екран за преглед, където
+потребителят коригира количества и стойности. Приложението е на английски и български.
 
-   ```
-   gradlew.bat installDebug        # Windows
-   sh ./gradlew installDebug       # macOS / Linux
-   ```
+## Как работи
 
-   The APK is also left at `app/build/outputs/apk/debug/app-debug.apk` - you can copy it to the
-   phone and open it there instead (allow "install unknown apps" when asked).
+### Добавяне на храна
 
-**Updating from a different computer:** each computer signs debug builds with its own key, and Android
-refuses to update an app whose key changed. Don't uninstall to get around it - the app is excluded from
-backup, so uninstalling deletes your log. Either copy `~/.android/debug.keystore` (on Windows
-`C:\Users\<you>\.android\debug.keystore`) from the computer that installed it, or copy the app's data
-off the phone first (`adb exec-out run-as com.macrosnap.app tar cf - databases files > backup.tar`),
-reinstall, and put it back.
+1. На екран **Днес** бутонът „+“ отваря листа **Добави храна** с шест начина: Снимай, Опиши,
+   Баркод, Галерия, Рецепта и Ръчно, плюс списъци „Твоите хранения“ и „Твоите храни“.
+2. Всеки начин води до един и същ екран **Преглед** (`ReviewScreen`), който получава източника като
+   параметър на навигацията (`ReviewRoute`):
+   - **Снимка / галерия** – снимката се прави от системното приложение за камера
+     (`ActivityResultContracts.TakePicture`, Camera Intent) или се избира с Photo Picker. Преди
+     изпращане `ImageEncoder` я смалява до ≤ 1024 px. `GeminiFoodAnalyzer` изпраща снимката
+     и промпт към Gemini REST API и иска отговор в строго зададена JSON схема (structured output).
+     Отговорът се парсва с kotlinx.serialization, а стойностите се ограничават до физически
+     възможни граници (напр. ≤ 900 kcal/100 г).
+   - **Баркод** – Google Code Scanner (ML Kit) прочита EAN/UPC кода, а `ProductRepository` пита
+     Open Food Facts REST API. Данните от там са въведени от потребители, затова приложението ги
+     проверява: поправя kJ, въведени като kcal; когато енергията не съвпада с макросите, избира
+     стойността, която макросите потвърждават; маркира невъзможни стойности и порции и показва
+     предупреждения на екрана за преглед. Липсващите витамини се оценяват от Gemini веднъж за
+     всеки баркод и се кешират в таблица `product_micros`.
+   - **Описание** – текстът отива към Gemini по същия начин като снимката.
+   - **Ръчно / рецепта / история** – попълват се директно, без мрежова заявка.
+3. На екрана за преглед всеки продукт може да се редактира (име, грамове, kcal, протеин,
+   въглехидрати, мазнини, витамини), да се изтрие или да се добави нов. „Запиши“ записва всичко
+   в базата чрез `FoodRepository.addAll`.
 
-## One-time setup in the app
+### Модел на данните
 
-1. Settings tab > **Get a free key** > sign in to Google AI Studio > create an API key.
-2. Paste it into **Gemini API key** > **Save and test**. You should see "Key works".
-3. Set your goals, or fill in the goal calculator and tap **Use these goals**.
+- Храната (`FoodItem`) пази хранителните стойности **на 100 г** плюс изядените грамове, а
+  общите стойности се изчисляват. Така промяната на грамажа (най-честата грешка на AI) преизчислява
+  всичко коректно.
+- Витамините и минералите са `Map<Nutrient, Double>`. Липсващ ключ означава „неизвестно“, а не нула.
+- „Твоите храни“ и „Твоите хранения“ не се пазят отделно, а се извличат от историята в
+  `food_entries`: групират се по име, а подредбата е по честота с тежест за скорошност.
 
-The key is stored only in the app's private storage (and the app is excluded from cloud backup).
+### Съхранение
 
-## About the free tier
+- **Room** (SQLite) база `macrosnap.db`, версия 8, с 15 таблици: `food_entries`, `recipes`,
+  `recipe_ingredients`, `supplements`, `supplement_logs`, `water_logs`, `sleep_logs`,
+  `weight_entries`, `exercises`, `routines`, `routine_exercises`, `workouts`, `workout_sets`,
+  `pending_photos` и `product_micros`. Всяка промяна на схемата има ръчно написана `Migration`,
+  така че данните оцеляват при обновяване на приложението.
+- **DataStore** пази настройките: API ключ, списък с модели, цели, профил, език.
+- Снимките се пазят в личната папка на приложението и се трият заедно с последния запис, който
+  ги използва.
 
-- Limits are per Google project and change over time; your live numbers are at
-  https://aistudio.google.com/rate-limit. At the time of writing the full Flash model allows only
-  a couple of dozen requests a day while Flash-Lite allows hundreds, so the app tries the models
-  in the order listed in Settings and falls through when one runs out of quota. The error message
-  tells you whether you hit the daily quota or only a per-minute limit, and the photo waits on
-  Today until you resubmit it.
-- Reusing past foods costs no requests, and barcode vitamin estimates are cached per product, so
-  the quota mostly goes to new photos and descriptions.
-- On the free tier Google may use submitted content to improve its products. Meal photos, text you
-  ask Gemini to analyze, and the names of scanned products it fills in are sent to Google; barcodes are
-  looked up on Open Food Facts. Nothing else leaves the phone.
-- Photo estimates are estimates. Identification is usually good; portion weight is the weak spot
-  (expect +/-20-30%), which is why every scan lands on an edit screen first. For packaged food,
-  scan the barcode instead.
+### Пълен CRUD през интерфейса
 
-## Development
+| Обект | Създаване | Четене | Редакция | Изтриване |
+|---|---|---|---|---|
+| Хранене | Добави храна → Преглед → Запиши | Днес, Прогрес | Докосни запис → Редактирай | Докосни запис → Изтрий |
+| Рецепта | Рецепти → Нова рецепта | Рецепти | Отвори рецепта | Рецепта → Изтрий |
+| Добавка | Настройки → Добавки | Днес (чеклист) | Отвори добавка | Отвори добавка → Изтрий |
+| Тренировка | Зала → Започни тренировка | Зала → История, Прогрес | Отвори тренировка | Тренировка → Изтрий |
+| Програма | Зала → Нова програма | Зала | Отвори програма | Програма → Изтрий |
+| Упражнение | Зала → Упражнения → Добави | Зала → Упражнения | Отвори упражнение | Отвори упражнение → Изтрий |
+| Вода, сън, тегло | Днес / Прогрес | Днес / Прогрес | Сън, тегло | Вода (отмяна), сън, тегло |
 
-```
-sh ./gradlew :app:assembleDebug        # build
-sh ./gradlew :app:testDebugUnitTest    # JVM unit tests (app/src/test)
-```
+### Грешки и работа без интернет
 
-See `CLAUDE.md` for architecture notes and conventions.
+- Всичко освен AI анализа и търсенето по баркод работи без интернет.
+- Мрежовите грешки се превръщат в `DataError` (няма ключ, грешен ключ, лимит за минута/ден,
+  сървърна грешка, няма мрежа) и потребителят вижда ясно съобщение.
+- Ако Gemini е претоварен или лимитът е изчерпан, снимката не се губи: остава в
+  „Чакат анализ“ на екран Днес и може да се изпрати отново по-късно.
+- Приложението пробва моделите от настройките по ред и минава към следващия само при
+  изчерпан лимит, недостъпен модел или сървърна грешка.
 
-## Project layout
+### Разрешения
 
-```
-app/src/main/java/com/macrosnap/app/
-  model/      plain domain types (FoodItem stores nutrition per 100 g + grams eaten),
-              past-food history and matching
-  domain/     GoalCalculator, CalorieBurnEstimator
-  data/       Room database (v8, migrations in AppDatabase), DataStore settings,
-              Gemini + Open Food Facts clients, repositories
-              FoodAnalyzer is the seam for swapping the recognition backend
-  ui/         Compose screens: today, workouts, review, recipes, supplements, progress, settings (+ shared components)
-  AppContainer.kt   manual dependency wiring
+Приложението иска само `INTERNET`. Камерата се ползва чрез системното приложение за камера
+(Camera Intent), баркодът чрез Google Code Scanner, а галерията чрез Photo Picker. Затова не са
+нужни разрешения за камера или за файлове.
+
+## Архитектура
+
+**MVVM + Repository слой + ръчно DI**, един модул `:app`, Kotlin и Jetpack Compose (Material 3).
+
+```mermaid
+flowchart LR
+    UI["Compose екран<br/>(XxxContent)"] -- "действия (XxxActions)" --> VM["ViewModel"]
+    VM -- "StateFlow&lt;XxxUiState&gt;" --> UI
+    VM -- "еднократни ефекти (Channel)" --> UI
+    VM --> R["Repository"]
+    R --> DAO["Room DAO"]
+    R --> DS["DataStore"]
+    R --> API["Retrofit API<br/>(Gemini, Open Food Facts)"]
+    C["AppContainer<br/>(ръчно DI)"] -. "създава" .-> R
 ```
 
-Stack: Kotlin 2.4, Jetpack Compose (Material 3), Room, DataStore, Retrofit + kotlinx.serialization,
-Coil, Google code scanner. Min SDK 26.
+- **Слоеве** (`app/src/main/java/com/macrosnap/app/`):
+  - `model/` – чисти Kotlin типове и логика (`FoodItem`, `Macros`, `Nutrient`, история на храните);
+  - `domain/` – изчисления (`GoalCalculator` по Mifflin-St Jeor, `CalorieBurnEstimator` по MET);
+  - `data/` – Room (`local/`), Retrofit клиенти (`remote/`), DataStore (`settings/`) и
+    репозиториите, които ги обединяват;
+  - `ui/` – екраните, разделени по област (`today`, `review`, `recipes`, `workouts`, `progress`,
+    `settings`, `supplements`) и споделени компоненти и тема.
+- **DI** – `AppContainer` създава базата, DataStore, HTTP клиентите и репозиториите веднъж за
+  цялото приложение. ViewModel-ите ги получават чрез `ViewModelProvider.Factory`.
+- **Всеки екран** има `XxxUiState` (data class с изчислени стойности), интерфейс `XxxActions`,
+  който ViewModel-ът имплементира, еднократни `XxxEffect` (напр. snackbar) през `Channel` и
+  composable без собствено състояние `XxxContent(uiState, actions)`.
+- **Навигация** – Navigation Compose с типизирани `@Serializable` маршрути (`ui/Routes.kt`). Една
+  Activity (`MainActivity`) и 11 екрана. Долната лента се показва на петте основни екрана: Днес,
+  Зала, Рецепти, Прогрес и Настройки.
+- **Жизнен цикъл** – ефектите се събират с `repeatOnLifecycle(STARTED)`, а състоянието на
+  екрана за преглед се пази в `SavedStateHandle`, така че оцелява и ако системата убие процеса,
+  докато е отворена камерата. Датата „днес“ следи часовника, за да се смени в полунощ.
+- **AI като абстракция** – `FoodAnalyzer` е интерфейс; `GeminiFoodAnalyzer` е единствената
+  имплементация и може да се смени, без да се пипа UI.
+
+**Технологии:** Kotlin 2.4, Jetpack Compose + Material 3 (светла и тъмна тема), Navigation
+Compose, Room, DataStore, Retrofit + OkHttp + kotlinx.serialization, Coil, ML Kit Code Scanner,
+корутини и Flow.
+
+## Потребителски поток
+
+1. **Първо стартиране** – отваря се екран Днес. В **Настройки** потребителят поставя безплатен
+   Gemini API ключ („Вземи безплатен ключ“ → Google AI Studio) и натиска „Запази и провери“.
+   По желание попълва профила си и калкулаторът предлага цели за калории и макроси.
+2. **Записване на хранене** – Днес → „+“ → **Снимай** → снима чинията → по желание добавя
+   подсказка („пилешко, около 200 г“) → AI връща списък с продукти → потребителят поправя
+   грамажа → **Запиши**. Храненето се появява под съответното хранене (закуска, обяд…), а
+   калорийният пръстен и лентите за макроси се обновяват.
+3. **Баркод** – „+“ → **Баркод** → сканира опаковката → стойностите от етикета се зареждат.
+   Ако има съмнителни стойности, се показва предупреждение → **Запиши**.
+4. **Повторение** – „+“ → докосване на храна или хранене от „Твоите храни/хранения“ → записва се
+   с обичайното количество, без AI заявка.
+5. **Редакция и изтриване** – докосване на запис в Днес → **Редактирай** (промяна на грамове
+   или стойности) или **Изтрий** (с потвърждение).
+6. **Фитнес** – Зала → **Започни тренировка** → добавяне на упражнения и серии
+   (тежест × повторения) → таймер за почивка → **Завърши**. Показват се новите лични рекорди,
+   а изгорените калории се отчитат в Днес.
+7. **Прогрес** – графики за калории, сън, вода и тегло за 7 дни и графика на силата по
+   упражнение.
+
+## Стъпки за стартиране
+
+### Инсталиране на готовия APK
+
+1. Свали [`apk/app-release.apk`](apk/app-release.apk) на Android телефон (Android 7.0 или по-нов).
+2. Отвори файла и разреши „инсталиране от неизвестни източници“, когато бъдеш попитан.
+3. Стартирай MacroSnap и следвай „Тестови акаунти“ по-долу, за да включиш AI функциите.
+
+### Компилиране от кода
+
+Изисквания: Android Studio (последна стабилна версия) или JDK 17 и Android SDK 37.
+
+```bash
+git clone https://github.com/nikkivasilev/MobileApps2025-<ФН>.git
+cd MobileApps2025-<ФН>
+./gradlew :app:installDebug          # инсталира на свързано устройство или емулатор
+```
+
+От Android Studio: **File → Open** → папката на проекта → **Run ▶**.
+
+Release build: `./gradlew :app:assembleRelease`. Ако липсва `keystore.properties` (ключът за
+подписване не е в репото), build-ът се подписва с debug ключа, така че проектът се компилира
+навсякъде.
+
+### Тестове и качество на кода
+
+```bash
+./gradlew :app:testDebugUnitTest            # 245 unit теста (JVM)
+./gradlew :app:koverHtmlReportLogic         # покритие: app/build/reports/kover/htmlLogic/index.html
+./gradlew :app:connectedDebugAndroidTest    # UI тест (след теста Gradle деинсталира приложението)
+./gradlew :app:ktlintCheck :app:detekt      # стил на кода
+```
+
+- **Unit тестове** (`app/src/test`) – модели, изчисления на цели и изгорени калории, обработка
+  на отговорите на Gemini (вкл. превключване между модели и лимити), проверките на Open Food
+  Facts, личните рекорди в залата, запазване на чернова при убит процес и изчислените стойности
+  на екраните. Ползват ръчно написани fake-ове вместо Android класове. Покритие на логиката
+  (без composable функции и генериран код): **~40 % от редовете**.
+- **UI тест** (`app/src/androidTest/.../LogFoodFlowTest.kt`, Compose UI Test + Espresso) –
+  основният сценарий: ръчно добавяне на храна → проверка, че се вижда в Днес → промяна на
+  грамажа → изтриване. Тестът подменя базата с такава в паметта (`MacroSnapTestRunner`), така
+  че не пипа истинските данни и не изисква API ключ.
+- **ktlint и detekt** минават без грешки (конфигурация в `.editorconfig` и `config/detekt/detekt.yml`).
+
+## Тестови акаунти
+
+Приложението няма регистрация или вход: това е лично приложение за един потребител и всички
+данни са на устройството.
+
+За AI функциите (снимка, описание, оценка на витамини) е нужен **безплатен Gemini API ключ**:
+
+1. Настройки → **Вземи безплатен ключ** (отваря https://aistudio.google.com/apikey) → вход с
+   Google акаунт → **Create API key**.
+2. Постави ключа в полето **Gemini API ключ** → **Запази и провери** → трябва да се появи
+   „Ключът работи.“
+
+Без ключ работят: баркод скенерът (Open Food Facts не изисква ключ), ръчното въвеждане,
+рецептите, историята, водата, сънят, теглото, залата и прогресът. Безплатният лимит на Gemini
+е ограничен (обикновено десетки до стотици заявки на ден), затова повторното записване от
+историята не използва заявки.
+
+## Скрийншотове
+
+| Днес | Днес (тъмна тема) | Добави храна | Прогрес |
+|---|---|---|---|
+| ![Днес](screenshots/today.png) | ![Днес в тъмна тема](screenshots/today-dark.png) | ![Добави храна](screenshots/add-food.png) | ![Прогрес](screenshots/progress.png) |
+
+## APK
+
+- Файл: [`apk/app-release.apk`](apk/app-release.apk)
+- Размер: около 13 MB
+- Подписан с release ключ; minSdk 24 (Android 7.0), targetSdk 37.
+
+Подробно описание на английски: [docs/README.en.md](docs/README.en.md).

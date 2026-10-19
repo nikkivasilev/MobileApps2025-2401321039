@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MacroSnap is a single-user Android macro tracker: photograph a meal (or scan a barcode, describe it in words, reuse a past food) and Gemini estimates items, grams and nutrition; the user corrects it on a review screen and logs it. Also tracks vitamins/minerals, supplements, water, sleep, weight and gym workouts. Everything is stored on the phone; only photos/text sent for analysis leave it.
 
-Stack: Kotlin 2.4, Jetpack Compose (Material 3), Room, DataStore, Retrofit + kotlinx.serialization, Coil, ML Kit code scanner. Single `:app` module, minSdk 26, JDK 17.
+Stack: Kotlin 2.4, Jetpack Compose (Material 3), Room, DataStore, Retrofit + kotlinx.serialization, Coil, ML Kit code scanner. Single `:app` module, minSdk 24 (core library desugaring for `java.time`), targetSdk 37, JDK 17.
 
 ## Commands
 
@@ -17,13 +17,22 @@ sh ./gradlew :app:testDebugUnitTest         # all JVM unit tests
 sh ./gradlew :app:testDebugUnitTest --tests "com.macrosnap.app.model.FoodHistoryTest"
 sh ./gradlew :app:testDebugUnitTest --tests "*FoodHistoryTest.hidden*"   # one test (names use backticks with spaces)
 sh ./gradlew :app:lintDebug
+sh ./gradlew :app:ktlintCheck :app:detekt     # style; ktlintFormat fixes most of ktlint's findings
+sh ./gradlew :app:koverLogLogic              # unit-test line coverage of non-Compose code
 ```
 
-There is no CI and no instrumented (androidTest) suite. Unit tests live in `app/src/test` and must stay free of Android framework classes: test pure logic in `model/` and repositories through fakes of their interfaces (see `ProductRepositoryTest`, which fakes `OpenFoodFactsApi`, `ProductMicrosDao` and `FoodAnalyzer`).
+There is no CI. Unit tests live in `app/src/test` and must stay free of Android framework classes: test pure logic in `model/` and repositories through fakes of their interfaces (see `ProductRepositoryTest`, which fakes `OpenFoodFactsApi`, `ProductMicrosDao` and `FoodAnalyzer`; `WorkoutRepositoryTest` fakes `WorkoutDao`).
+
+`app/src/androidTest` holds one Compose UI test, `LogFoodFlowTest`. `MacroSnapTestRunner` swaps in `TestMacroSnapApp`, whose `AppContainer` uses an in-memory Room database. `connectedDebugAndroidTest` uninstalls the app afterwards (losing its data), so on a device with a real log install `app-debug.apk` and `app-debug-androidTest.apk` with `adb install -r` and run `adb shell am instrument -w -e class com.macrosnap.app.LogFoodFlowTest com.macrosnap.app.test/com.macrosnap.app.MacroSnapTestRunner` instead.
+
+Style: ktlint (`android_studio` style, 120 columns, trailing commas, `.editorconfig`) and detekt (`config/detekt/detekt.yml`, Compose-friendly overrides) must both pass. Constants for unit conversions live in `model/Units.kt`.
 
 `adb` and the emulator are not on PATH here: `~/Library/Android/sdk/platform-tools/adb`, `~/Library/Android/sdk/emulator/emulator -avd firepaw_shots`. `adb shell uiautomator dump` + `input tap` is how UI flows have been verified.
 
 ### Installing on the user's phone
+
+This project is also a university course project: `README.md` is in Bulgarian and follows the course's template, `apk/app-release.apk` is the graded build (rebuild with `assembleRelease` and copy it there after changes), and release signing reads `keystore.properties` + `keystore/`, both git-ignored. The English user guide is `docs/README.en.md`.
+
 
 `adb install -r` fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE` when the APK is signed with a different debug keystore than the installed app. **Never uninstall to get past this without backing up first**: the manifest sets `allowBackup="false"`, so uninstalling destroys the user's log. The app is debuggable, so its data can be copied with `adb exec-out run-as com.macrosnap.app tar cf - databases files` and pushed back with `... | adb shell run-as com.macrosnap.app tar xf -` after reinstalling (create the tar with `COPYFILE_DISABLE=1` on macOS, or `._*` files end up in the app's storage).
 
