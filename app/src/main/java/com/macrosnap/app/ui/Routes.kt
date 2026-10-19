@@ -49,6 +49,11 @@ data class ReviewRoute(
     val describe: Boolean = false,
     /** A food from "Your foods", by [com.macrosnap.app.model.foodKey]. */
     val pastFoodKey: String? = null,
+    /** A meal from "Your meals", by [com.macrosnap.app.model.mealKey]. */
+    val pastMealKey: String? = null,
+    /** Copies what was logged under [copyMealType] (a [com.macrosnap.app.model.MealType] name) on this day. */
+    val copyMealEpochDay: Long? = null,
+    val copyMealType: String? = null,
     val describeText: String? = null,
     /** [photoPath] was kept after a failed analysis; send it again straight away with its saved hint. */
     val resumePending: Boolean = false,

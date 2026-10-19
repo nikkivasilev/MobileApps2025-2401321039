@@ -38,6 +38,7 @@
     <string name="review_loading">Зареждане…</string>
     <string name="review_recipe_missing">Тази рецепта вече не съществува.</string>
     <string name="review_food_missing">Тази храна вече не е в дневника ти.</string>
+    <string name="review_meal_missing">Това хранене вече не е в дневника ти.</string>
     <!-- Recipe name, grams per serving, total grams and number of servings -->
     <plurals name="review_recipe_note">
         <item quantity="one">Една порция %1$s е %2$s г (%3$s г са %4$d порция). Коригирай грамовете спрямо изяденото.</item>

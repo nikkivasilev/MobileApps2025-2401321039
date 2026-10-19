@@ -33,9 +33,12 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -62,10 +65,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,6 +86,7 @@ import com.macrosnap.app.R
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
+import com.macrosnap.app.model.PastMeal
 import com.macrosnap.app.model.PendingPhoto
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.SupplementStatus
@@ -192,6 +196,13 @@ fun TodayScreen(
         snackbarHostState = snackbarHostState,
         onAdd = ::onAdd,
         onPastFood = { onOpenReview(ReviewRoute(epochDay, pastFoodKey = it.key)) },
+        onPastMeal = { onOpenReview(ReviewRoute(epochDay, pastMealKey = it.key)) },
+        // A meal eaten again is eaten now, whichever day it was copied from; Today follows, so the
+        // copy is in view when the review screen closes.
+        onCopyMeal = { mealType ->
+            viewModel.onJumpToToday()
+            onOpenReview(ReviewRoute(LocalDate.now().toEpochDay(), copyMealEpochDay = epochDay, copyMealType = mealType.name))
+        },
         onResumePending = { onOpenReview(ReviewRoute(it.date.toEpochDay(), photoPath = it.photoPath, resumePending = true)) },
         onDescribe = { onOpenReview(ReviewRoute(epochDay, describe = true, describeText = it)) },
     )
@@ -217,6 +228,8 @@ private fun TodayContent(
     snackbarHostState: SnackbarHostState,
     onAdd: (AddMethod) -> Unit,
     onPastFood: (PastFood) -> Unit,
+    onPastMeal: (PastMeal) -> Unit,
+    onCopyMeal: (MealType) -> Unit,
     onResumePending: (PendingPhoto) -> Unit,
     onDescribe: (String) -> Unit,
 ) {
@@ -296,7 +309,13 @@ private fun TodayContent(
             }
             uiState.entriesByMeal.forEach { (mealType, entries) ->
                 item(key = "meal-${mealType.name}") {
-                    MealCard(mealType, entries, onEntryClick = actions::onEntryClick)
+                    MealCard(
+                        mealType = mealType,
+                        entries = entries,
+                        isToday = uiState.isToday,
+                        onEntryClick = actions::onEntryClick,
+                        onLogAgain = { onCopyMeal(mealType) },
+                    )
                 }
             }
 
@@ -342,6 +361,7 @@ private fun TodayContent(
     if (showAddSheet) {
         AddFoodSheet(
             pastFoods = uiState.pastFoods,
+            pastMeals = uiState.pastMeals,
             onMethod = {
                 showAddSheet = false
                 onAdd(it)
@@ -350,11 +370,16 @@ private fun TodayContent(
                 showAddSheet = false
                 onPastFood(it)
             },
+            onPastMeal = {
+                showAddSheet = false
+                onPastMeal(it)
+            },
             onDescribe = {
                 showAddSheet = false
                 onDescribe(it)
             },
             onHide = actions::onHidePastFood,
+            onHideMeal = actions::onHidePastMeal,
             onDismiss = { showAddSheet = false },
         )
     }
@@ -581,13 +606,20 @@ private fun EmptyMealsCard(isToday: Boolean, onAdd: () -> Unit) {
 
 /** One meal: a header with its calories, then each entry with its photo (or a placeholder). */
 @Composable
-private fun MealCard(mealType: MealType, entries: List<FoodEntry>, onEntryClick: (FoodEntry) -> Unit) {
+private fun MealCard(
+    mealType: MealType,
+    entries: List<FoodEntry>,
+    isToday: Boolean,
+    onEntryClick: (FoodEntry) -> Unit,
+    onLogAgain: () -> Unit,
+) {
     val subtotal = entries.map { it.item.total }.sum()
+    var showMenu by remember { mutableStateOf(false) }
     AppCard(contentPadding = PaddingValues(vertical = 8.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(mealType.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -596,6 +628,24 @@ private fun MealCard(mealType: MealType, entries: List<FoodEntry>, onEntryClick:
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        Icons.Filled.MoreVert,
+                        contentDescription = stringResource(R.string.today_meal_options, mealType.label),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (isToday) R.string.today_log_meal_again else R.string.today_log_meal_again_today)) },
+                        onClick = {
+                            showMenu = false
+                            onLogAgain()
+                        },
+                    )
+                }
+            }
         }
         entries.forEachIndexed { index, entry ->
             if (index > 0) HorizontalDivider(Modifier.padding(start = 82.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)

@@ -135,4 +135,18 @@
     <string name="today_describe_loading">Working out what that is…</string>
     <!-- Usual grams, then calories for that amount -->
     <string name="today_past_food_amount">%1$s g · %2$s kcal</string>
+
+    <!-- Meals eaten more than once -->
+    <string name="today_your_meals">Your meals</string>
+    <!-- Number of foods in a meal, then its calories -->
+    <plurals name="today_past_meal_amount">
+        <item quantity="one">%1$d food · %2$s kcal</item>
+        <item quantity="other">%1$d foods · %2$s kcal</item>
+    </plurals>
+    <string name="today_hide_meal_title">Hide this meal?</string>
+    <string name="today_hide_meal_text">This meal (%1$s) won\'t be suggested until you eat it again. Your logged entries stay as they are.</string>
+    <string name="today_meal_hidden">Hidden from your meals until you eat it again: %1$s</string>
+    <string name="today_meal_options">%1$s options</string>
+    <string name="today_log_meal_again">Log again</string>
+    <string name="today_log_meal_again_today">Log again today</string>
 </resources>

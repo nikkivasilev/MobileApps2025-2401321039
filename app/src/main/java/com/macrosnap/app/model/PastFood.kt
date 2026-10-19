@@ -19,14 +19,6 @@ fun foodKey(name: String): String = name.trim().lowercase(Locale.ROOT).replace(W
 
 object FoodHistory {
 
-    /** How many recent entries decide the usual amount. */
-    private const val USUAL_GRAMS_WINDOW = 10
-
-    /** An entry's weight in the ranking halves every this many days. */
-    private const val HALF_LIFE_DAYS = 30.0
-
-    private const val DAY_MILLIS = 24 * 60 * 60 * 1000.0
-
     /**
      * Collapses the log into one [PastFood] per name, most useful first: often and recently logged
      * foods lead. [hidden] maps keys to when the user hid them; a food logged again since comes back.
@@ -38,24 +30,36 @@ object FoodHistory {
                 val newestFirst = group.sortedWith(compareByDescending<FoodEntry> { it.createdAt }.thenByDescending { it.id })
                 val latest = newestFirst.first()
                 if ((hidden[key] ?: Long.MIN_VALUE) >= latest.createdAt) return@mapNotNull null
-                val score = group.sumOf { 0.5.pow(((now - it.createdAt) / DAY_MILLIS).coerceAtLeast(0.0) / HALF_LIFE_DAYS) }
+                val score = group.sumOf { recencyWeight(it.createdAt, now) }
                 score to PastFood(
                     key = key,
-                    item = latest.item.copy(grams = usualGrams(newestFirst)),
+                    item = latest.item.copy(grams = usualGrams(newestFirst.map { it.item.grams })),
                     timesLogged = group.size,
                     lastLoggedAt = latest.createdAt,
                 )
             }
             .sortedByDescending { it.first }
             .map { it.second }
+}
 
-    /** The most common recent amount, so a one-off double portion doesn't become the default. Ties go to the newest. */
-    private fun usualGrams(newestFirst: List<FoodEntry>): Double {
-        val recent = newestFirst.take(USUAL_GRAMS_WINDOW).map { Math.round(it.item.grams).toDouble() }
-        val counts = recent.groupingBy { it }.eachCount()
-        val best = counts.values.max()
-        return recent.first { counts.getValue(it) == best }
-    }
+/** How many recent amounts decide the usual one. */
+private const val USUAL_GRAMS_WINDOW = 10
+
+/** A log's weight in the ranking halves every this many days. */
+private const val HALF_LIFE_DAYS = 30.0
+
+private const val DAY_MILLIS = 24 * 60 * 60 * 1000.0
+
+/** Ranking weight of something logged at [createdAt]: 1 now, halving every [HALF_LIFE_DAYS]. */
+internal fun recencyWeight(createdAt: Long, now: Long): Double =
+    0.5.pow(((now - createdAt) / DAY_MILLIS).coerceAtLeast(0.0) / HALF_LIFE_DAYS)
+
+/** The most common recent amount, so a one-off double portion doesn't become the default. Ties go to the newest. */
+internal fun usualGrams(newestFirst: List<Double>): Double {
+    val recent = newestFirst.take(USUAL_GRAMS_WINDOW).map { Math.round(it).toDouble() }
+    val counts = recent.groupingBy { it }.eachCount()
+    val best = counts.values.max()
+    return recent.first { counts.getValue(it) == best }
 }
 
 /**

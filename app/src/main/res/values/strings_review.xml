@@ -38,6 +38,7 @@
     <string name="review_loading">Loading…</string>
     <string name="review_recipe_missing">That recipe no longer exists.</string>
     <string name="review_food_missing">That food is no longer in your log.</string>
+    <string name="review_meal_missing">That meal is no longer in your log.</string>
     <!-- Recipe name, grams per serving, total grams and number of servings -->
     <plurals name="review_recipe_note">
         <item quantity="one">One serving of %1$s is %2$s g (%3$s g makes %4$d). Adjust the grams to what you ate.</item>

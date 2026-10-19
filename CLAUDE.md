@@ -48,6 +48,7 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
   - Today lists these photos under "Waiting to analyze". Resubmitting opens `ReviewRoute(resumePending = true)`, which sends the photo straight away.
   - `FoodRepository.addAll` removes the pending row when the photo is logged, and the orphan sweep counts pending photos as referenced.
 - "Your foods" (`model/PastFood.kt`) is derived from `food_entries`, not stored: grouped by `foodKey(name)`, nutrition from the newest entry, grams = most common of the last 10, ranked by recency-decayed frequency. Hidden foods are a key→timestamp map in DataStore and reappear once logged again. The same history feeds the describe-field suggestions and the Add food sheet.
+- "Your meals" (`model/PastMeal.kt`) is derived the same way: a meal is everything under one `MealType` on one day, keyed by its sorted food keys (`mealKey`). Only combinations eaten at least twice with exactly the same foods are listed; each food gets its usual amount within that meal. Hidden meals have their own DataStore map. Tapping one opens `ReviewRoute(pastMealKey)`; a meal card's "Log again" opens `ReviewRoute(copyMealEpochDay, copyMealType)` for today. Neither calls Gemini.
 
 ### Nutrition model
 

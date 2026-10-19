@@ -72,10 +72,14 @@ class SettingsStore(private val context: Context) {
         context.settingsDataStore.edit { it[Keys.ADD_WORKOUT_BURN] = enabled }
     }
 
-    suspend fun hideFood(key: String) {
+    suspend fun hideFood(key: String) = hide(Keys.HIDDEN_FOODS, key)
+
+    suspend fun hideMeal(key: String) = hide(Keys.HIDDEN_MEALS, key)
+
+    private suspend fun hide(preference: Preferences.Key<String>, key: String) {
         context.settingsDataStore.edit {
-            val hidden = decodeHidden(it[Keys.HIDDEN_FOODS]) + (key to System.currentTimeMillis())
-            it[Keys.HIDDEN_FOODS] = hiddenJson.encodeToString(hidden)
+            val hidden = decodeHidden(it[preference]) + (key to System.currentTimeMillis())
+            it[preference] = hiddenJson.encodeToString(hidden)
         }
     }
 
@@ -104,6 +108,7 @@ class SettingsStore(private val context: Context) {
             restSeconds = this[Keys.REST_SECONDS] ?: AppSettings.DEFAULT_REST_SECONDS,
             addWorkoutBurn = this[Keys.ADD_WORKOUT_BURN] ?: false,
             hiddenFoods = decodeHidden(this[Keys.HIDDEN_FOODS]),
+            hiddenMeals = decodeHidden(this[Keys.HIDDEN_MEALS]),
         )
     }
 
@@ -148,6 +153,7 @@ class SettingsStore(private val context: Context) {
         val REST_SECONDS = intPreferencesKey("rest_seconds")
         val ADD_WORKOUT_BURN = booleanPreferencesKey("add_workout_burn")
         val HIDDEN_FOODS = stringPreferencesKey("hidden_foods")
+        val HIDDEN_MEALS = stringPreferencesKey("hidden_meals")
     }
 
     private companion object {

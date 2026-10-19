@@ -125,4 +125,17 @@
     <string name="today_describe_suggestions">От твоите храни (без AI)</string>
     <string name="today_describe_loading">Разпознавам храната…</string>
     <string name="today_past_food_amount">%1$s г · %2$s ккал</string>
+
+    <!-- Meals eaten more than once -->
+    <string name="today_your_meals">Твоите хранения</string>
+    <plurals name="today_past_meal_amount">
+        <item quantity="one">%1$d храна · %2$s ккал</item>
+        <item quantity="other">%1$d храни · %2$s ккал</item>
+    </plurals>
+    <string name="today_hide_meal_title">Да скрия ли това хранене?</string>
+    <string name="today_hide_meal_text">Това хранене (%1$s) няма да се предлага, докато не го изядеш отново. Записаното в дневника остава.</string>
+    <string name="today_meal_hidden">Скрито от твоите хранения до следващия път: %1$s</string>
+    <string name="today_meal_options">Опции за %1$s</string>
+    <string name="today_log_meal_again">Запиши отново</string>
+    <string name="today_log_meal_again_today">Запиши отново за днес</string>
 </resources>
