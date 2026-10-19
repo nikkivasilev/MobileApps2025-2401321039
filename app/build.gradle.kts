@@ -13,8 +13,8 @@ android {
 
     defaultConfig {
         applicationId = "com.macrosnap.app"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = 24
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
     }
@@ -28,6 +28,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -63,6 +64,8 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.play.services.code.scanner)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
