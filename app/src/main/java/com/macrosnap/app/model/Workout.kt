@@ -109,7 +109,19 @@ data class SetRecord(
 sealed interface PersonalRecord {
     val exercise: Exercise
 
-    data class Estimated1Rm(override val exercise: Exercise, val set: WorkoutSet, val previous: Double) : PersonalRecord
-    data class HeaviestSet(override val exercise: Exercise, val weightKg: Double, val previous: Double) : PersonalRecord
-    data class LongestDistance(override val exercise: Exercise, val distanceKm: Double, val previousKm: Double) : PersonalRecord
+    data class Estimated1Rm(
+        override val exercise: Exercise,
+        val set: WorkoutSet,
+        val previous: Double,
+    ) : PersonalRecord
+    data class HeaviestSet(
+        override val exercise: Exercise,
+        val weightKg: Double,
+        val previous: Double,
+    ) : PersonalRecord
+    data class LongestDistance(
+        override val exercise: Exercise,
+        val distanceKm: Double,
+        val previousKm: Double,
+    ) : PersonalRecord
 }

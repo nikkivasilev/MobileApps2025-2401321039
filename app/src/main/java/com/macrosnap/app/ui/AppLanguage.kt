@@ -8,10 +8,14 @@ import com.macrosnap.app.R
 import java.util.Locale
 
 /** The languages the UI is translated into. [SYSTEM] follows the phone's language. */
-enum class AppLanguage(val tag: String, @StringRes val labelRes: Int) {
+enum class AppLanguage(
+    val tag: String,
+    @StringRes val labelRes: Int,
+) {
     SYSTEM("", R.string.language_system),
     ENGLISH("en", R.string.language_english),
-    BULGARIAN("bg", R.string.language_bulgarian);
+    BULGARIAN("bg", R.string.language_bulgarian),
+    ;
 
     companion object {
         /** The in-app choice, stored by AppCompat (not DataStore) so it applies before the first frame. */
@@ -23,7 +27,13 @@ enum class AppLanguage(val tag: String, @StringRes val labelRes: Int) {
         /** Recreates the activity in the new language. */
         fun set(language: AppLanguage) {
             AppCompatDelegate.setApplicationLocales(
-                if (language == SYSTEM) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(language.tag),
+                if (language == SYSTEM) {
+                    LocaleListCompat.getEmptyLocaleList()
+                } else {
+                    LocaleListCompat.forLanguageTags(
+                        language.tag,
+                    )
+                },
             )
         }
 

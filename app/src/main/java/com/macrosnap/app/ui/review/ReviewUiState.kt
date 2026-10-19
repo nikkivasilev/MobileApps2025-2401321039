@@ -7,10 +7,10 @@ import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.suggestionsFor
 import com.macrosnap.app.model.sum
 import com.macrosnap.app.ui.UiText
-import com.macrosnap.app.ui.userText
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
+import com.macrosnap.app.ui.userText
 import kotlinx.serialization.Serializable
 
 data class ReviewUiState(
@@ -49,7 +49,12 @@ data class ReviewUiState(
 
 /** Plain numbers rather than a sentence, so the note is worded in the UI language and survives a restore. */
 @Serializable
-data class RecipeServing(val name: String, val servingGrams: Double, val totalGrams: Double, val servings: Int)
+data class RecipeServing(
+    val name: String,
+    val servingGrams: Double,
+    val totalGrams: Double,
+    val servings: Int,
+)
 
 sealed interface MicrosNote {
     data object Estimating : MicrosNote
@@ -62,8 +67,12 @@ sealed interface MicrosNote {
 sealed interface ReviewStatus {
     data class Loading(val label: UiText) : ReviewStatus
     data object Ready : ReviewStatus
+
     /** [message] replaces the error's own text when the screen knows better what went wrong. */
-    data class Failed(val error: DataError, val message: UiText = error.userText()) : ReviewStatus
+    data class Failed(
+        val error: DataError,
+        val message: UiText = error.userText(),
+    ) : ReviewStatus
 }
 
 sealed interface ReviewEffect {

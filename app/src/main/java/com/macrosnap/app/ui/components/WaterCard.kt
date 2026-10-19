@@ -85,10 +85,11 @@ fun WaterCard(
                     enabled = custom != null,
                 ) { Text(stringResource(R.string.action_add)) }
             },
-            dismissButton = { TextButton(onClick = { showCustom = false }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { showCustom = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
-
 
     val tint = AppTheme.colors.water
     AppCard(modifier, onClick = { showCustom = true }) {

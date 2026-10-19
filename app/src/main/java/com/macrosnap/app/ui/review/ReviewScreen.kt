@@ -61,6 +61,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.macrosnap.app.R
 import com.macrosnap.app.model.DataError
+import com.macrosnap.app.ui.UiText
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.DescribeField
@@ -72,8 +74,6 @@ import com.macrosnap.app.ui.components.MacroDots
 import com.macrosnap.app.ui.components.MealTypeChips
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
-import com.macrosnap.app.ui.UiText
-import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.userMessage
 import com.macrosnap.app.ui.whole
 import java.io.File
@@ -100,7 +100,13 @@ fun ReviewScreen(
         }
     }
 
-    ReviewContent(uiState = uiState, actions = viewModel, snackbarHostState = snackbarHostState, onClose = onClose, onOpenSettings = onOpenSettings)
+    ReviewContent(
+        uiState = uiState,
+        actions = viewModel,
+        snackbarHostState = snackbarHostState,
+        onClose = onClose,
+        onOpenSettings = onOpenSettings,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,7 +125,10 @@ private fun ReviewContent(
                 title = { Text(stringResource(R.string.review_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -155,7 +164,11 @@ private fun ReviewContent(
 
             if (uiState.awaitingFirstAnalysis) {
                 item(key = "first-analysis") {
-                    FirstAnalysisCard(hint = uiState.hint, onHintChange = actions::onHintChange, onAnalyze = actions::onReanalyze)
+                    FirstAnalysisCard(
+                        hint = uiState.hint,
+                        onHintChange = actions::onHintChange,
+                        onAnalyze = actions::onReanalyze,
+                    )
                 }
             }
 
@@ -200,9 +213,21 @@ private fun ReviewContent(
 
             uiState.microsNote?.let { note ->
                 item(key = "micros-note") {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (uiState.isEstimatingMicros) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                        Text(note.text(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        if (uiState.isEstimatingMicros) {
+                            CircularProgressIndicator(
+                                Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                        Text(
+                            note.text(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
@@ -259,7 +284,9 @@ private fun ReviewContent(
 
     uiState.editor?.let { target ->
         ItemEditorSheet(
-            title = stringResource(if (target is EditorTarget.Existing) R.string.review_edit_item else R.string.review_add_item),
+            title = stringResource(
+                if (target is EditorTarget.Existing) R.string.review_edit_item else R.string.review_add_item,
+            ),
             initial = (target as? EditorTarget.Existing)?.draft?.item,
             initialMealType = null,
             onSave = { item, _ -> actions.onEditorSave(item) },
@@ -304,7 +331,11 @@ private fun FirstAnalysisCard(hint: String, onHintChange: (String) -> Unit, onAn
             ) {
                 Icon(AppIcons.Sparkle, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(if (hint.isBlank()) R.string.review_analyze_photo else R.string.review_analyze_with_hint))
+                Text(
+                    stringResource(
+                        if (hint.isBlank()) R.string.review_analyze_photo else R.string.review_analyze_with_hint,
+                    ),
+                )
             }
         }
     }
@@ -338,7 +369,9 @@ private fun ErrorCard(
     savedForLater: Boolean,
     onDone: () -> Unit,
 ) {
-    val needsSettings = error is DataError.NoApiKey || error is DataError.InvalidApiKey || error is DataError.ModelUnavailable
+    val needsSettings = error is DataError.NoApiKey ||
+        error is DataError.InvalidApiKey ||
+        error is DataError.ModelUnavailable
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -403,7 +436,10 @@ private fun SaveBar(uiState: ReviewUiState, onSave: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.amount_kcal, uiState.totals.kcal.whole()), style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        stringResource(R.string.amount_kcal, uiState.totals.kcal.whole()),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
                     MacroDots(uiState.totals, Modifier.padding(top = 2.dp))
                 }
                 Button(
@@ -413,7 +449,17 @@ private fun SaveBar(uiState: ReviewUiState, onSave: () -> Unit) {
                     modifier = Modifier.height(52.dp),
                 ) {
                     val count = uiState.items.size
-                    Text(if (count > 1) pluralStringResource(R.plurals.review_log_items, count, count) else stringResource(R.string.review_log_it))
+                    Text(
+                        if (count > 1) {
+                            pluralStringResource(
+                                R.plurals.review_log_items,
+                                count,
+                                count,
+                            )
+                        } else {
+                            stringResource(R.string.review_log_it)
+                        },
+                    )
                 }
             }
         }

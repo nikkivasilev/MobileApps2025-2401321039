@@ -75,26 +75,43 @@ fun RecipeEditorScreen(
             viewModel.effects.collect { effect ->
                 when (effect) {
                     RecipeEditorEffect.Close -> onClose()
-                    is RecipeEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
+                    is RecipeEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                        effect.message.asString(context),
+                    )
                 }
             }
         }
     }
 
-    RecipeEditorContent(uiState = uiState, actions = viewModel, snackbarHostState = snackbarHostState, onClose = onClose)
+    RecipeEditorContent(
+        uiState = uiState,
+        actions = viewModel,
+        snackbarHostState = snackbarHostState,
+        onClose = onClose,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState: SnackbarHostState, actions: RecipeEditorActions, onClose: () -> Unit) {
+private fun RecipeEditorContent(
+    uiState: RecipeEditorUiState,
+    snackbarHostState: SnackbarHostState,
+    actions: RecipeEditorActions,
+    onClose: () -> Unit,
+) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (uiState.isExisting) R.string.recipes_edit_title else R.string.recipes_new)) },
+                title = {
+                    Text(stringResource(if (uiState.isExisting) R.string.recipes_edit_title else R.string.recipes_new))
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
@@ -159,7 +176,11 @@ private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState:
             }
 
             item(key = "ingredients-title") {
-                Text(stringResource(R.string.recipes_ingredients), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    stringResource(R.string.recipes_ingredients),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
             item(key = "describe") {
                 DescribeField(
@@ -192,7 +213,13 @@ private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState:
 
     uiState.editor?.let { target ->
         ItemEditorSheet(
-            title = stringResource(if (target is EditorTarget.Existing) R.string.recipes_edit_ingredient else R.string.recipes_add_ingredient),
+            title = stringResource(
+                if (target is EditorTarget.Existing) {
+                    R.string.recipes_edit_ingredient
+                } else {
+                    R.string.recipes_add_ingredient
+                },
+            ),
             initial = (target as? EditorTarget.Existing)?.draft?.item,
             initialMealType = null,
             onSave = { item, _ -> actions.onEditorSave(item) },
@@ -212,7 +239,9 @@ private fun RecipeEditorContent(uiState: RecipeEditorUiState, snackbarHostState:
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }
@@ -235,12 +264,20 @@ private fun SaveBar(uiState: RecipeEditorUiState, onSave: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = stringResource(R.string.recipes_serving_macros, preview.servingGrams.whole(), preview.perServing.summary()),
+                    text = stringResource(
+                        R.string.recipes_serving_macros,
+                        preview.servingGrams.whole(),
+                        preview.perServing.summary(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = stringResource(R.string.recipes_whole, preview.totalWeight.whole(), preview.total.kcal.whole()),
+                    text = stringResource(
+                        R.string.recipes_whole,
+                        preview.totalWeight.whole(),
+                        preview.total.kcal.whole(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -68,10 +68,7 @@ import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.delay
 
 @Composable
-fun WorkoutScreen(
-    onClose: () -> Unit,
-    viewModel: WorkoutViewModel = viewModel(factory = WorkoutViewModel.Factory),
-) {
+fun WorkoutScreen(onClose: () -> Unit, viewModel: WorkoutViewModel = viewModel(factory = WorkoutViewModel.Factory)) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -121,21 +118,35 @@ private fun WorkoutContent(
                     Text(
                         text = when {
                             workout == null -> ""
-                            workout.isActive -> stringResource(R.string.workout_minutes, (now - workout.startedAt) / 60_000)
+                            workout.isActive -> stringResource(
+                                R.string.workout_minutes,
+                                (now - workout.startedAt) / 60_000,
+                            )
                             else -> workout.date.formatted(DatePatterns.SHORT)
                         },
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back)) }
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
                 },
                 actions = {
                     if (workout != null && workout.isActive) {
-                        Button(onClick = actions::onFinishClick, enabled = uiState.canFinish, modifier = Modifier.padding(end = 8.dp)) {
+                        Button(
+                            onClick = actions::onFinishClick,
+                            enabled = uiState.canFinish,
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) {
                             Text(stringResource(R.string.workout_finish))
                         }
                     } else if (workout != null) {
-                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.workout_delete_cd)) }
+                        IconButton(onClick = actions::onDeleteClick) {
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.workout_delete_cd))
+                        }
                     }
                 },
             )
@@ -151,7 +162,11 @@ private fun WorkoutContent(
                 .imePadding(),
         ) {
             if (restRemaining != null && restRemaining > 0) {
-                RestBar(remainingSeconds = restRemaining, onExtend = actions::onRestExtend, onSkip = actions::onRestSkip)
+                RestBar(
+                    remainingSeconds = restRemaining,
+                    onExtend = actions::onRestExtend,
+                    onSkip = actions::onRestSkip,
+                )
             }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -172,7 +187,12 @@ private fun WorkoutContent(
                         Text(
                             text = stringResource(
                                 R.string.workout_finished_note,
-                                workoutStats(workout.durationMinutes, workout.doneSets, workout.volumeKg, uiState.burnKcal),
+                                workoutStats(
+                                    workout.durationMinutes,
+                                    workout.doneSets,
+                                    workout.volumeKg,
+                                    uiState.burnKcal,
+                                ),
                             ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -227,30 +247,49 @@ private fun WorkoutContent(
                         Text(stringResource(R.string.workout_no_records))
                     } else {
                         Text(stringResource(R.string.workout_new_records), style = MaterialTheme.typography.titleSmall)
-                        summary.records.forEach { Text(stringResource(R.string.workout_record_line, it.exercise.displayName, it.description())) }
+                        summary.records.forEach {
+                            Text(
+                                stringResource(R.string.workout_record_line, it.exercise.displayName, it.description()),
+                            )
+                        }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = actions::onSummaryDismiss) { Text(stringResource(R.string.workout_summary_ok)) } },
+            confirmButton = {
+                TextButton(onClick = actions::onSummaryDismiss) { Text(stringResource(R.string.workout_summary_ok)) }
+            },
         )
     }
 
     if (uiState.showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = actions::onDeleteDismiss,
-            title = { Text(stringResource(if (uiState.isActive) R.string.workout_discard_title else R.string.workout_delete_title)) },
+            title = {
+                Text(
+                    stringResource(
+                        if (uiState.isActive) R.string.workout_discard_title else R.string.workout_delete_title,
+                    ),
+                )
+            },
             text = { Text(stringResource(R.string.workout_delete_body)) },
             confirmButton = {
-                TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = actions::onDeleteConfirm) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }
 
 @Composable
 private fun RestBar(remainingSeconds: Int, onExtend: () -> Unit, onSkip: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer) {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,27 +325,47 @@ private fun ExerciseCard(
                         text = if (lastSets.isEmpty()) {
                             exercise.muscleGroup.label
                         } else {
-                            stringResource(R.string.workout_last_time, lastSets.map { it.label(exercise.type) }.joinToString(", "))
+                            stringResource(
+                                R.string.workout_last_time,
+                                lastSets.map {
+                                    it.label(exercise.type)
+                                }.joinToString(", "),
+                            )
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 IconButton(onClick = { actions.onRemoveExercise(exercise.id) }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.workout_remove_exercise_cd, name))
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.workout_remove_exercise_cd, name),
+                    )
                 }
             }
             Row(Modifier.padding(end = 8.dp, top = 4.dp)) {
-                Text(stringResource(R.string.workout_col_set), style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(32.dp))
-                Text(stringResource(R.string.workout_col_last), style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
                 Text(
-                    text = stringResource(if (exercise.type == ExerciseType.STRENGTH) R.string.unit_kg else R.string.unit_min),
+                    stringResource(R.string.workout_col_set),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(32.dp),
+                )
+                Text(
+                    stringResource(R.string.workout_col_last),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(72.dp),
+                )
+                Text(
+                    text = stringResource(
+                        if (exercise.type == ExerciseType.STRENGTH) R.string.unit_kg else R.string.unit_min,
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = stringResource(if (exercise.type == ExerciseType.STRENGTH) R.string.workout_col_reps else R.string.unit_km),
+                    text = stringResource(
+                        if (exercise.type == ExerciseType.STRENGTH) R.string.workout_col_reps else R.string.unit_km,
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
@@ -325,8 +384,12 @@ private fun ExerciseCard(
                 )
             }
             Row {
-                TextButton(onClick = { actions.onAddSet(exercise.id) }) { Text(stringResource(R.string.workout_add_set)) }
-                TextButton(onClick = { actions.onRemoveLastSet(exercise.id) }) { Text(stringResource(R.string.workout_remove_set)) }
+                TextButton(onClick = {
+                    actions.onAddSet(exercise.id)
+                }) { Text(stringResource(R.string.workout_add_set)) }
+                TextButton(onClick = {
+                    actions.onRemoveLastSet(exercise.id)
+                }) { Text(stringResource(R.string.workout_remove_set)) }
             }
         }
     }
@@ -358,7 +421,9 @@ private fun SetRow(
         )
         if (type == ExerciseType.STRENGTH) {
             NumberField(inputs.weight, { onInputChange(inputs.copy(weight = it)) }, Modifier.weight(1f))
-            NumberField(inputs.reps, { onInputChange(inputs.copy(reps = it.filter(Char::isDigit).take(3))) }, Modifier.weight(1f))
+            NumberField(inputs.reps, {
+                onInputChange(inputs.copy(reps = it.filter(Char::isDigit).take(3)))
+            }, Modifier.weight(1f))
         } else {
             NumberField(inputs.minutes, { onInputChange(inputs.copy(minutes = it)) }, Modifier.weight(1f))
             NumberField(inputs.km, { onInputChange(inputs.copy(km = it)) }, Modifier.weight(1f))
@@ -386,9 +451,23 @@ private fun workoutStats(minutes: Long, sets: Int, volumeKg: Double, burnKcal: I
 @Composable
 private fun PersonalRecord.description(): String = when (this) {
     is PersonalRecord.Estimated1Rm ->
-        stringResource(R.string.workout_record_one_rep_max, set.weightKg.compact(), set.reps, set.estimated1Rm.compact(), previous.compact())
-    is PersonalRecord.HeaviestSet -> stringResource(R.string.workout_record_heaviest, weightKg.compact(), previous.compact())
-    is PersonalRecord.LongestDistance -> stringResource(R.string.workout_record_distance, distanceKm.compact(), previousKm.compact())
+        stringResource(
+            R.string.workout_record_one_rep_max,
+            set.weightKg.compact(),
+            set.reps,
+            set.estimated1Rm.compact(),
+            previous.compact(),
+        )
+    is PersonalRecord.HeaviestSet -> stringResource(
+        R.string.workout_record_heaviest,
+        weightKg.compact(),
+        previous.compact(),
+    )
+    is PersonalRecord.LongestDistance -> stringResource(
+        R.string.workout_record_distance,
+        distanceKm.compact(),
+        previousKm.compact(),
+    )
 }
 
 @Composable

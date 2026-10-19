@@ -66,28 +66,49 @@ fun SupplementEditorScreen(
             viewModel.effects.collect { effect ->
                 when (effect) {
                     SupplementEditorEffect.Close -> onClose()
-                    is SupplementEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
+                    is SupplementEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                        effect.message.asString(context),
+                    )
                 }
             }
         }
     }
 
-    SupplementEditorContent(uiState = uiState, actions = viewModel, snackbarHostState = snackbarHostState, onClose = onClose)
+    SupplementEditorContent(
+        uiState = uiState,
+        actions = viewModel,
+        snackbarHostState = snackbarHostState,
+        onClose = onClose,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHostState: SnackbarHostState, actions: SupplementEditorActions, onClose: () -> Unit) {
+private fun SupplementEditorContent(
+    uiState: SupplementEditorUiState,
+    snackbarHostState: SnackbarHostState,
+    actions: SupplementEditorActions,
+    onClose: () -> Unit,
+) {
     val defaultDoseLabel = stringResource(R.string.supplements_default_dose)
     val activeLabel = stringResource(R.string.supplements_active)
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (uiState.isExisting) R.string.supplements_edit_title else R.string.supplements_new)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (uiState.isExisting) R.string.supplements_edit_title else R.string.supplements_new,
+                        ),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
@@ -108,7 +129,9 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    Button(onClick = { actions.onSave(defaultDoseLabel) }, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        actions.onSave(defaultDoseLabel)
+                    }, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.action_save))
                     }
                 }
@@ -135,7 +158,11 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                 hint = stringResource(R.string.supplements_describe_hint),
             )
             uiState.notes?.let { notes ->
-                Text(stringResource(R.string.supplements_note, notes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(R.string.supplements_note, notes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             OutlinedTextField(
@@ -177,7 +204,11 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                 Switch(checked = uiState.isActive, onCheckedChange = actions::onActiveChange)
             }
 
-            Text(stringResource(R.string.supplements_dose_content), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                stringResource(R.string.supplements_dose_content),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
             Text(
                 text = stringResource(R.string.supplements_dose_content_hint),
                 style = MaterialTheme.typography.bodySmall,
@@ -197,7 +228,9 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }

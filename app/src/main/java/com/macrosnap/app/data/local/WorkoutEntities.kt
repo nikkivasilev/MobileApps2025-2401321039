@@ -30,8 +30,18 @@ data class RoutineEntity(
 @Entity(
     tableName = "routine_exercises",
     foreignKeys = [
-        ForeignKey(entity = RoutineEntity::class, parentColumns = ["id"], childColumns = ["routineId"], onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = ExerciseEntity::class, parentColumns = ["id"], childColumns = ["exerciseId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(
+            entity = RoutineEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["routineId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["exerciseId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [Index("routineId"), Index("exerciseId")],
 )
@@ -57,8 +67,18 @@ data class WorkoutEntity(
 @Entity(
     tableName = "workout_sets",
     foreignKeys = [
-        ForeignKey(entity = WorkoutEntity::class, parentColumns = ["id"], childColumns = ["workoutId"], onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = ExerciseEntity::class, parentColumns = ["id"], childColumns = ["exerciseId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(
+            entity = WorkoutEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["workoutId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["exerciseId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [Index("workoutId"), Index("exerciseId")],
 )

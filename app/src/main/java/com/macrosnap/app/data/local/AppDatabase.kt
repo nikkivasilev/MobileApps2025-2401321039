@@ -54,7 +54,10 @@ abstract class AppDatabase : RoomDatabase() {
                             "`carbsPer100` REAL NOT NULL, `fatPer100` REAL NOT NULL, " +
                             "FOREIGN KEY(`recipeId`) REFERENCES `recipes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
                     )
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_recipe_ingredients_recipeId` ON `recipe_ingredients` (`recipeId`)")
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_recipe_ingredients_recipeId` ON " +
+                            "`recipe_ingredients` (`recipeId`)",
+                    )
                 }
             },
             object : Migration(2, 3) {
@@ -71,13 +74,20 @@ abstract class AppDatabase : RoomDatabase() {
                         "CREATE TABLE IF NOT EXISTS `supplement_logs` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `supplementId` INTEGER NOT NULL, " +
                             "`epochDay` INTEGER NOT NULL, `takenAt` INTEGER NOT NULL, " +
-                            "FOREIGN KEY(`supplementId`) REFERENCES `supplements`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+                            "FOREIGN KEY(`supplementId`) REFERENCES `supplements`(`id`) ON UPDATE NO " +
+                            "ACTION ON DELETE CASCADE)",
                     )
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_supplement_logs_supplementId` ON `supplement_logs` (`supplementId`)")
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_supplement_logs_epochDay` ON `supplement_logs` (`epochDay`)")
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_supplement_logs_supplementId` ON " +
+                            "`supplement_logs` (`supplementId`)",
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_supplement_logs_epochDay` ON `supplement_logs` (`epochDay`)",
+                    )
                 }
             },
             object : Migration(3, 4) {
+                @Suppress("LongMethod") // The gym tables' CREATE statements, as Room generated them.
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `water_logs` (" +
@@ -97,18 +107,27 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `routines` (" +
-                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL)",
                     )
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `routine_exercises` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `routineId` INTEGER NOT NULL, " +
                             "`exerciseId` INTEGER NOT NULL, `position` INTEGER NOT NULL, " +
                             "`targetSets` INTEGER NOT NULL, `targetReps` INTEGER NOT NULL, " +
-                            "FOREIGN KEY(`routineId`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
-                            "FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+                            "FOREIGN KEY(`routineId`) REFERENCES `routines`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO " +
+                            "ACTION ON DELETE CASCADE)",
                     )
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_routine_exercises_routineId` ON `routine_exercises` (`routineId`)")
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_routine_exercises_exerciseId` ON `routine_exercises` (`exerciseId`)")
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_routine_exercises_routineId` ON " +
+                            "`routine_exercises` (`routineId`)",
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_routine_exercises_exerciseId` ON " +
+                            "`routine_exercises` (`exerciseId`)",
+                    )
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `workouts` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, " +
@@ -118,14 +137,21 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `workout_sets` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workoutId` INTEGER NOT NULL, " +
-                            "`exerciseId` INTEGER NOT NULL, `exerciseOrder` INTEGER NOT NULL, `setIndex` INTEGER NOT NULL, " +
+                            "`exerciseId` INTEGER NOT NULL, `exerciseOrder` INTEGER NOT NULL, " +
+                            "`setIndex` INTEGER NOT NULL, " +
                             "`weightKg` REAL NOT NULL, `reps` INTEGER NOT NULL, `durationSec` INTEGER NOT NULL, " +
                             "`distanceM` REAL NOT NULL, `isDone` INTEGER NOT NULL, " +
-                            "FOREIGN KEY(`workoutId`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
-                            "FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+                            "FOREIGN KEY(`workoutId`) REFERENCES `workouts`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO " +
+                            "ACTION ON DELETE CASCADE)",
                     )
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sets_workoutId` ON `workout_sets` (`workoutId`)")
-                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sets_exerciseId` ON `workout_sets` (`exerciseId`)")
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_workout_sets_workoutId` ON `workout_sets` (`workoutId`)",
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_workout_sets_exerciseId` ON `workout_sets` (`exerciseId`)",
+                    )
                 }
             },
             object : Migration(4, 5) {
@@ -134,7 +160,8 @@ abstract class AppDatabase : RoomDatabase() {
                     // Existing doses get the supplement's current content: the best record there is.
                     db.execSQL(
                         "UPDATE `supplement_logs` SET `micros` = " +
-                            "(SELECT `micros` FROM `supplements` WHERE `supplements`.`id` = `supplement_logs`.`supplementId`)",
+                            "(SELECT `micros` FROM `supplements` WHERE `supplements`.`id` = " +
+                            "`supplement_logs`.`supplementId`)",
                     )
                 }
             },
@@ -150,7 +177,8 @@ abstract class AppDatabase : RoomDatabase() {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `product_micros` (" +
-                            "`barcode` TEXT NOT NULL, `micros` TEXT, `estimatedAt` INTEGER NOT NULL, PRIMARY KEY(`barcode`))",
+                            "`barcode` TEXT NOT NULL, `micros` TEXT, `estimatedAt` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`barcode`))",
                     )
                 }
             },

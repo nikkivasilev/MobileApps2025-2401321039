@@ -45,6 +45,7 @@ data class TodayUiState(
 ) {
     /** Monday to Sunday of the week holding [date]. */
     val weekDays: List<LocalDate> get() = weekStart(date).let { start -> (0L..6L).map(start::plusDays) }
+
     /** The goal the ring and "left" number use; workouts extend it only when the user opted in. */
     val effectiveKcalGoal: Int get() = goals.kcal + if (addWorkoutBurn) workoutBurnKcal else 0
     val totals: Macros get() = entries.map { it.item.total }.sum()
@@ -57,6 +58,9 @@ data class TodayUiState(
 fun weekStart(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
 sealed interface TodayEffect {
-    data class OpenPhotoReview(val epochDay: Long, val photoPath: String) : TodayEffect
+    data class OpenPhotoReview(
+        val epochDay: Long,
+        val photoPath: String,
+    ) : TodayEffect
     data class ShowMessage(val message: UiText) : TodayEffect
 }

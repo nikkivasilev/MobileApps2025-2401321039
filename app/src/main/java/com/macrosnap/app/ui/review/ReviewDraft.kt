@@ -48,7 +48,10 @@ private data class SavedDraftItem(
 
 /** A label warning by a stable key: resource ids may change between builds, so they're never stored. */
 @Serializable
-private data class SavedWarning(val key: String, val args: List<String>)
+private data class SavedWarning(
+    val key: String,
+    val args: List<String>,
+)
 
 private val WARNING_KEYS = mapOf(
     R.string.review_warning_serving to "serving",
@@ -123,9 +126,9 @@ internal fun restoreReview(text: String?, photoPath: String?): ReviewUiState? {
     if (text == null) return null
     val saved = try {
         json.decodeFromString<SavedReview>(text)
-    } catch (e: SerializationException) {
+    } catch (ignored: SerializationException) {
         return null
-    } catch (e: IllegalArgumentException) {
+    } catch (ignored: IllegalArgumentException) {
         return null
     }
     return ReviewUiState(

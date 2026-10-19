@@ -24,7 +24,10 @@ data class SupplementEditorUiState(
     val isExisting: Boolean get() = id != 0L
     val timesPerDay: Int? get() = timesPerDayInput.trim().toIntOrNull()?.takeIf { it in 1..10 }
 
-    /** The supplement as entered; a blank dose label stays empty until [SupplementEditorActions.onSave] fills in the default. */
+    /**
+     * The supplement as entered; a blank dose label stays empty until [SupplementEditorActions.onSave]
+     * fills in the default.
+     */
     val supplement: Supplement?
         get() {
             val timesPerDay = timesPerDay ?: return null

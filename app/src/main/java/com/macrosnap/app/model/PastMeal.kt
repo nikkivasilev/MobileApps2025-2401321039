@@ -36,23 +36,26 @@ object MealHistory {
      * recently eaten lead. [hidden] maps keys to when the user hid them; eaten again since, a meal
      * comes back.
      */
-    fun build(entries: List<FoodEntry>, hidden: Map<String, Long> = emptyMap(), now: Long = System.currentTimeMillis()): List<PastMeal> =
-        entries
-            .groupBy { it.date to it.mealType }
-            .values
-            .map(::Occasion)
-            .filter { it.foods.size >= MIN_FOODS }
-            .groupBy { it.key }
-            .mapNotNull { (key, occasions) ->
-                if (occasions.size < MIN_TIMES) return@mapNotNull null
-                val newestFirst = occasions.sortedByDescending { it.loggedAt }
-                val lastLoggedAt = newestFirst.first().loggedAt
-                if ((hidden[key] ?: Long.MIN_VALUE) >= lastLoggedAt) return@mapNotNull null
-                val score = occasions.sumOf { recencyWeight(it.loggedAt, now) }
-                score to PastMeal(key, mealItems(newestFirst), occasions.size, lastLoggedAt)
-            }
-            .sortedByDescending { it.first }
-            .map { it.second }
+    fun build(
+        entries: List<FoodEntry>,
+        hidden: Map<String, Long> = emptyMap(),
+        now: Long = System.currentTimeMillis(),
+    ): List<PastMeal> = entries
+        .groupBy { it.date to it.mealType }
+        .values
+        .map(::Occasion)
+        .filter { it.foods.size >= MIN_FOODS }
+        .groupBy { it.key }
+        .mapNotNull { (key, occasions) ->
+            if (occasions.size < MIN_TIMES) return@mapNotNull null
+            val newestFirst = occasions.sortedByDescending { it.loggedAt }
+            val lastLoggedAt = newestFirst.first().loggedAt
+            if ((hidden[key] ?: Long.MIN_VALUE) >= lastLoggedAt) return@mapNotNull null
+            val score = occasions.sumOf { recencyWeight(it.loggedAt, now) }
+            score to PastMeal(key, mealItems(newestFirst), occasions.size, lastLoggedAt)
+        }
+        .sortedByDescending { it.first }
+        .map { it.second }
 
     /** The foods in the order they were last logged, at the amount usually eaten in this meal. */
     private fun mealItems(newestFirst: List<Occasion>): List<FoodItem> {
@@ -62,7 +65,11 @@ object MealHistory {
             .map { foodKey(it.item.name) }
             .distinct()
             .map { food ->
-                val newestEntry = latest.foods.getValue(food).maxWith(compareBy<FoodEntry> { it.createdAt }.thenBy { it.id })
+                val newestEntry = latest.foods.getValue(food).maxWith(
+                    compareBy<FoodEntry> {
+                        it.createdAt
+                    }.thenBy { it.id },
+                )
                 // A food logged twice in one meal (a second helping) counts as one larger amount.
                 val amounts = newestFirst.map { occasion -> occasion.foods.getValue(food).sumOf { it.item.grams } }
                 newestEntry.item.copy(grams = usualGrams(amounts))

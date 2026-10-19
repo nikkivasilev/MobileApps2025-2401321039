@@ -1,0 +1,48 @@
+# Overrides on top of detekt's default rules, following detekt's guidance for Jetpack Compose.
+
+naming:
+  MatchingDeclarationName:
+    # Kotlin conventions: a file holding functions as well as a helper type is named for its contents.
+    active: false
+  FunctionNaming:
+    # Composables are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+style:
+  DestructuringDeclarationWithTooManyEntries:
+    # combine() lambdas destructure up to five flows.
+    maxDestructuringEntries: 5
+  MagicNumber:
+    # Layout values (dp, sp, weights, alpha) live inline in composables.
+    ignoreAnnotated: ['Composable', 'Preview']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNumbers: ['-1', '0', '1', '2', '100']
+    ignoreEnums: true
+  MaxLineLength:
+    maxLineLength: 120
+  ReturnCount:
+    max: 4
+    excludeGuardClauses: true
+
+complexity:
+  LongMethod:
+    # A screen's layout reads top to bottom in one composable.
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+    ignoreSimpleWhenEntries: true
+  TooManyFunctions:
+    # Each screen exposes its user actions as one interface implemented by its ViewModel.
+    allowedFunctionsPerFile: 30
+    allowedFunctionsPerClass: 25
+    allowedFunctionsPerInterface: 25
+    allowedFunctionsPerObject: 15
+    ignorePrivate: true
+    # A ViewModel's overrides are its screen's Actions interface, already counted there.
+    ignoreOverridden: true

@@ -129,11 +129,15 @@ internal fun AddFoodSheet(
             if (query.isBlank()) {
                 item(key = "methods") { MethodGrid(onMethod) }
                 if (pastMeals.isNotEmpty()) {
-                    item(key = "meals-title") { HistoryTitle(stringResource(R.string.today_your_meals), showHint = true) }
+                    item(key = "meals-title") {
+                        HistoryTitle(stringResource(R.string.today_your_meals), showHint = true)
+                    }
                     pastMealItems(pastMeals.take(MAX_LISTED_MEALS), onPastMeal) { hidingMeal = it }
                 }
                 if (pastFoods.isNotEmpty()) {
-                    item(key = "foods-title") { HistoryTitle(stringResource(R.string.today_your_foods), showHint = pastMeals.isEmpty()) }
+                    item(key = "foods-title") {
+                        HistoryTitle(stringResource(R.string.today_your_foods), showHint = pastMeals.isEmpty())
+                    }
                     pastFoodItems(pastFoods.take(MAX_LISTED_FOODS), onPastFood) { hiding = it }
                 }
             } else {
@@ -156,7 +160,10 @@ internal fun AddFoodSheet(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconBadge(AppIcons.Sparkle, MaterialTheme.colorScheme.onSurface)
                             Column(Modifier.padding(start = 12.dp)) {
-                                Text(stringResource(R.string.today_describe_query, query.trim()), style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    stringResource(R.string.today_describe_query, query.trim()),
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
                                 Text(
                                     text = stringResource(R.string.today_gemini_macros),
                                     style = MaterialTheme.typography.bodySmall,
@@ -181,7 +188,9 @@ internal fun AddFoodSheet(
                     onHideMeal(meal)
                 }) { Text(stringResource(R.string.today_hide)) }
             },
-            dismissButton = { TextButton(onClick = { hidingMeal = null }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { hidingMeal = null }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 
@@ -196,7 +205,9 @@ internal fun AddFoodSheet(
                     onHide(food)
                 }) { Text(stringResource(R.string.today_hide)) }
             },
-            dismissButton = { TextButton(onClick = { hiding = null }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { hiding = null }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }
@@ -239,12 +250,21 @@ private fun MethodTile(method: AddMethod, modifier: Modifier = Modifier, onClick
                 Icon(method.icon, contentDescription = null, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(method.labelRes), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1)
+            Text(
+                stringResource(method.labelRes),
+                style = MaterialTheme.typography.labelLarge,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
         }
     }
 }
 
-private fun LazyListScope.pastFoodItems(foods: List<PastFood>, onClick: (PastFood) -> Unit, onLongClick: (PastFood) -> Unit) {
+private fun LazyListScope.pastFoodItems(
+    foods: List<PastFood>,
+    onClick: (PastFood) -> Unit,
+    onLongClick: (PastFood) -> Unit,
+) {
     itemsIndexed(foods, key = { _, food -> "food-${food.key}" }) { index, food ->
         Surface(
             color = AppTheme.colors.card,
@@ -273,7 +293,11 @@ private fun HistoryTitle(title: String, showHint: Boolean) {
     }
 }
 
-private fun LazyListScope.pastMealItems(meals: List<PastMeal>, onClick: (PastMeal) -> Unit, onLongClick: (PastMeal) -> Unit) {
+private fun LazyListScope.pastMealItems(
+    meals: List<PastMeal>,
+    onClick: (PastMeal) -> Unit,
+    onLongClick: (PastMeal) -> Unit,
+) {
     itemsIndexed(meals, key = { _, meal -> "meal-${meal.key}" }) { index, meal ->
         Surface(
             color = AppTheme.colors.card,
@@ -306,7 +330,12 @@ private fun PastMealRow(meal: PastMeal, onClick: () -> Unit, onLongClick: () -> 
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
                 Text(
-                    text = pluralStringResource(R.plurals.today_past_meal_amount, meal.items.size, meal.items.size, total.kcal.whole()),
+                    text = pluralStringResource(
+                        R.plurals.today_past_meal_amount,
+                        meal.items.size,
+                        meal.items.size,
+                        total.kcal.whole(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

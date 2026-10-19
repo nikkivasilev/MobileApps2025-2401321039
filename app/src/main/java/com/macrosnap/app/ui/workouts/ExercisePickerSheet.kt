@@ -29,8 +29,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.macrosnap.app.R
 import com.macrosnap.app.model.Exercise
@@ -60,7 +60,9 @@ fun ExercisePickerSheet(
     val filtered = exercises.filter { exercise ->
         (group == null || exercise.muscleGroup == group) && exercise.matches(trimmed, names[exercise.id].orEmpty())
     }.sortedByDisplayName(names)
-    val exactMatch = exercises.any { it.name.equals(trimmed, ignoreCase = true) || names[it.id].equals(trimmed, ignoreCase = true) }
+    val exactMatch = exercises.any {
+        it.name.equals(trimmed, ignoreCase = true) || names[it.id].equals(trimmed, ignoreCase = true)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -84,9 +86,21 @@ fun ExercisePickerSheet(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == null, onClick = { group = null }, label = { Text(stringResource(R.string.workout_filter_all)) })
+                FilterChip(
+                    selected = group == null,
+                    onClick = { group = null },
+                    label = { Text(stringResource(R.string.workout_filter_all)) },
+                    shape = CircleShape,
+                    colors = appChipColors(),
+                )
                 MuscleGroup.entries.forEach { option ->
-                    FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == option, onClick = { group = if (group == option) null else option }, label = { Text(option.label) })
+                    FilterChip(
+                        selected = group == option,
+                        onClick = { group = if (group == option) null else option },
+                        label = { Text(option.label) },
+                        shape = CircleShape,
+                        colors = appChipColors(),
+                    )
                 }
             }
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -94,7 +108,15 @@ fun ExercisePickerSheet(
                     ListItem(
                         headlineContent = { Text(names[exercise.id] ?: exercise.name) },
                         supportingContent = {
-                            Text(exercise.muscleGroup.label + if (exercise.isCustom) " · " + stringResource(R.string.workout_custom) else "")
+                            Text(
+                                exercise.muscleGroup.label + if (exercise.isCustom) {
+                                    " · " + stringResource(
+                                        R.string.workout_custom,
+                                    )
+                                } else {
+                                    ""
+                                },
+                            )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         modifier = Modifier.clickable { onSelect(exercise) },
@@ -104,12 +126,20 @@ fun ExercisePickerSheet(
                 if (trimmed.isNotEmpty() && !exactMatch) {
                     item(key = "create") {
                         if (!showCreate) {
-                            OutlinedButton(onClick = { showCreate = true }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            OutlinedButton(onClick = {
+                                showCreate = true
+                            }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                                 Text(stringResource(R.string.workout_add_as_new, trimmed))
                             }
                         } else {
                             val sets = parseDefaultSets(newSets)
-                            val reps = if (newType == ExerciseType.CARDIO) Exercise.DEFAULT_REPS else parseDefaultReps(newReps)
+                            val reps = if (newType == ExerciseType.CARDIO) {
+                                Exercise.DEFAULT_REPS
+                            } else {
+                                parseDefaultReps(
+                                    newReps,
+                                )
+                            }
                             CreateExerciseRow(
                                 name = trimmed,
                                 group = newGroup,
@@ -117,7 +147,9 @@ fun ExercisePickerSheet(
                                 type = newType,
                                 onTypeChange = {
                                     // Follow the type's usual set count unless the user already typed their own.
-                                    if (parseDefaultSets(newSets) == defaultSetsFor(newType)) newSets = defaultSetsFor(it).toString()
+                                    if (parseDefaultSets(newSets) == defaultSetsFor(newType)) {
+                                        newSets = defaultSetsFor(it).toString()
+                                    }
                                     newType = it
                                 },
                                 setsInput = newSets,
@@ -180,6 +212,8 @@ private fun CreateExerciseRow(
             repsInput = repsInput,
             onRepsChange = onRepsChange,
         )
-        Button(onClick = onCreate, enabled = canCreate, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_create_and_add)) }
+        Button(onClick = onCreate, enabled = canCreate, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.workout_create_and_add))
+        }
     }
 }

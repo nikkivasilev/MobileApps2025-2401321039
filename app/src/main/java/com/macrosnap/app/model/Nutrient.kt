@@ -18,6 +18,7 @@ enum class Nutrient(
     VITAMIN_D("µg", "vitamin_d_ug", "vitamin-d", 1e6, 15.0, 15.0),
     VITAMIN_B12("µg", "vitamin_b12_ug", "vitamin-b12", 1e6, 2.4, 2.4),
     VITAMIN_B6("mg", "vitamin_b6_mg", "vitamin-b6", 1e3, 1.3, 1.3),
+
     // Open Food Facts files niacin under its old name, vitamin PP.
     VITAMIN_B3("mg", "vitamin_b3_mg", "vitamin-pp", 1e3, 16.0, 14.0),
     VITAMIN_B5("mg", "vitamin_b5_mg", "pantothenic-acid", 1e3, 5.0, 5.0),

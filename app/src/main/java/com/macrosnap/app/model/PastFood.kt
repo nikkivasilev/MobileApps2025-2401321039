@@ -23,23 +23,30 @@ object FoodHistory {
      * Collapses the log into one [PastFood] per name, most useful first: often and recently logged
      * foods lead. [hidden] maps keys to when the user hid them; a food logged again since comes back.
      */
-    fun build(entries: List<FoodEntry>, hidden: Map<String, Long> = emptyMap(), now: Long = System.currentTimeMillis()): List<PastFood> =
-        entries
-            .groupBy { foodKey(it.item.name) }
-            .mapNotNull { (key, group) ->
-                val newestFirst = group.sortedWith(compareByDescending<FoodEntry> { it.createdAt }.thenByDescending { it.id })
-                val latest = newestFirst.first()
-                if ((hidden[key] ?: Long.MIN_VALUE) >= latest.createdAt) return@mapNotNull null
-                val score = group.sumOf { recencyWeight(it.createdAt, now) }
-                score to PastFood(
-                    key = key,
-                    item = latest.item.copy(grams = usualGrams(newestFirst.map { it.item.grams })),
-                    timesLogged = group.size,
-                    lastLoggedAt = latest.createdAt,
-                )
-            }
-            .sortedByDescending { it.first }
-            .map { it.second }
+    fun build(
+        entries: List<FoodEntry>,
+        hidden: Map<String, Long> = emptyMap(),
+        now: Long = System.currentTimeMillis(),
+    ): List<PastFood> = entries
+        .groupBy { foodKey(it.item.name) }
+        .mapNotNull { (key, group) ->
+            val newestFirst = group.sortedWith(
+                compareByDescending<FoodEntry> {
+                    it.createdAt
+                }.thenByDescending { it.id },
+            )
+            val latest = newestFirst.first()
+            if ((hidden[key] ?: Long.MIN_VALUE) >= latest.createdAt) return@mapNotNull null
+            val score = group.sumOf { recencyWeight(it.createdAt, now) }
+            score to PastFood(
+                key = key,
+                item = latest.item.copy(grams = usualGrams(newestFirst.map { it.item.grams })),
+                timesLogged = group.size,
+                lastLoggedAt = latest.createdAt,
+            )
+        }
+        .sortedByDescending { it.first }
+        .map { it.second }
 }
 
 /** How many recent amounts decide the usual one. */
@@ -47,6 +54,9 @@ private const val USUAL_GRAMS_WINDOW = 10
 
 /** A log's weight in the ranking halves every this many days. */
 private const val HALF_LIFE_DAYS = 30.0
+
+/** A larger amount typed into a describe box is a typo, not a portion. */
+private const val MAX_QUANTITY_GRAMS = 5000
 
 private const val DAY_MILLIS = 24 * 60 * 60 * 1000.0
 
@@ -82,10 +92,10 @@ fun parseQuantityGrams(text: String): Double? {
     val match = QUANTITY.find(text.lowercase(Locale.ROOT)) ?: return null
     val amount = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
     val grams = when (match.groupValues[2]) {
-        "kg", "кг", "l", "л" -> amount * 1000
+        "kg", "кг", "l", "л" -> amount * GRAMS_PER_KG
         else -> amount
     }
-    return grams.takeIf { it > 0 && it <= 5000 }
+    return grams.takeIf { it > 0 && it <= MAX_QUANTITY_GRAMS }
 }
 
 /** Up to [limit] matches for the food being typed in a describe box; none until it's two letters long. */
@@ -108,8 +118,7 @@ fun acceptSuggestion(describeInput: String, food: PastFood): Pair<FoodItem, Stri
 fun currentDescribeSegment(input: String): String = input.substringAfterLast(',').trim()
 
 /** [input] without its last segment, for when a suggestion has replaced what was being typed. */
-fun withoutCurrentSegment(input: String): String =
-    if (',' in input) input.substringBeforeLast(',').trim() else ""
+fun withoutCurrentSegment(input: String): String = if (',' in input) input.substringBeforeLast(',').trim() else ""
 
 private fun String.isQuantityWord(): Boolean = toDoubleOrNull() != null || QUANTITY.matches(this) || this in UNITS
 

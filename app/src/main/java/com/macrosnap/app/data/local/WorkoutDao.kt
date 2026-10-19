@@ -8,6 +8,7 @@ import androidx.room.Update
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions") // One function per query for workouts, sets and routines.
 @Dao
 interface WorkoutDao {
 
@@ -124,7 +125,8 @@ interface WorkoutDao {
         "SELECT w.epochDay AS epochDay, s.workoutId AS workoutId, s.weightKg AS weightKg, s.reps AS reps, " +
             "s.durationSec AS durationSec, s.distanceM AS distanceM " +
             "FROM workout_sets s JOIN workouts w ON w.id = s.workoutId " +
-            "WHERE s.exerciseId = :exerciseId AND s.isDone = 1 AND w.endedAt IS NOT NULL AND w.id != :excludingWorkoutId " +
+            "WHERE s.exerciseId = :exerciseId AND s.isDone = 1 " +
+            "AND w.endedAt IS NOT NULL AND w.id != :excludingWorkoutId " +
             "ORDER BY w.startedAt, s.setIndex",
     )
     suspend fun getRecords(exerciseId: Long, excludingWorkoutId: Long): List<SetRecordRow>
@@ -133,7 +135,8 @@ interface WorkoutDao {
     @Query(
         "SELECT * FROM workout_sets WHERE exerciseId = :exerciseId AND isDone = 1 AND workoutId = (" +
             "SELECT w.id FROM workouts w JOIN workout_sets s ON s.workoutId = w.id " +
-            "WHERE s.exerciseId = :exerciseId AND s.isDone = 1 AND w.endedAt IS NOT NULL AND w.id != :excludingWorkoutId " +
+            "WHERE s.exerciseId = :exerciseId AND s.isDone = 1 " +
+            "AND w.endedAt IS NOT NULL AND w.id != :excludingWorkoutId " +
             "ORDER BY w.startedAt DESC LIMIT 1) ORDER BY setIndex",
     )
     suspend fun getLastSets(exerciseId: Long, excludingWorkoutId: Long): List<WorkoutSetEntity>

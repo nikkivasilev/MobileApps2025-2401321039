@@ -67,11 +67,16 @@ fun EntryDetailSheet(
             title = { Text(stringResource(R.string.review_delete_entry_title)) },
             text = { Text(stringResource(R.string.review_delete_entry_named, item.name, total.kcal.whole())) },
             confirmButton = {
-                TextButton(onClick = { confirmDelete = false; onDelete() }) {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    onDelete()
+                }) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 
@@ -100,12 +105,18 @@ fun EntryDetailSheet(
             }
             Text(item.name, style = MaterialTheme.typography.titleLarge)
             Text(
-                text = "${stringResource(R.string.amount_g, item.grams.compact())} · ${entry.mealType.label} · ${stringResource(entry.source.labelRes)}",
+                text = "${stringResource(
+                    R.string.amount_g,
+                    item.grams.compact(),
+                )} · ${entry.mealType.label} · ${stringResource(entry.source.labelRes)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Text(stringResource(R.string.amount_kcal, total.kcal.whole()), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                stringResource(R.string.amount_kcal, total.kcal.whole()),
+                style = MaterialTheme.typography.headlineMedium,
+            )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MacroAmount(stringResource(R.string.protein), total.protein, MacroColors.Protein, Modifier.weight(1f))
                 MacroAmount(stringResource(R.string.carbs), total.carbs, MacroColors.Carbs, Modifier.weight(1f))
@@ -115,7 +126,12 @@ fun EntryDetailSheet(
                 text = stringResource(
                     R.string.review_per_100g,
                     item.per100g.kcal.whole(),
-                    stringResource(R.string.macros_summary, item.per100g.protein.compact(), item.per100g.carbs.compact(), item.per100g.fat.compact()),
+                    stringResource(
+                        R.string.macros_summary,
+                        item.per100g.protein.compact(),
+                        item.per100g.carbs.compact(),
+                        item.per100g.fat.compact(),
+                    ),
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -154,9 +170,15 @@ fun EntryDetailSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { confirmDelete = true }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
-                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_edit)) }
-                Button(onClick = onLogAgain, modifier = Modifier.weight(1f)) { Text(stringResource(if (logsToToday) R.string.review_log_today else R.string.review_log_again)) }
+                TextButton(onClick = {
+                    confirmDelete = true
+                }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+                OutlinedButton(onClick = onEdit, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.action_edit))
+                }
+                Button(onClick = onLogAgain, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(if (logsToToday) R.string.review_log_today else R.string.review_log_again))
+                }
             }
         }
     }
@@ -170,7 +192,11 @@ private fun MacroAmount(label: String, grams: Double, color: Color, modifier: Mo
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.amount_g, grams.whole()), style = MaterialTheme.typography.titleLarge, color = color)
+        Text(
+            stringResource(R.string.amount_g, grams.whole()),
+            style = MaterialTheme.typography.titleLarge,
+            color = color,
+        )
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

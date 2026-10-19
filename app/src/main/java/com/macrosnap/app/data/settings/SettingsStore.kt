@@ -16,12 +16,12 @@ import com.macrosnap.app.model.Goals
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Profile
 import com.macrosnap.app.model.Sex
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import java.io.IOException
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 
@@ -116,13 +116,14 @@ class SettingsStore(private val context: Context) {
         if (text.isNullOrBlank()) return emptyMap()
         return try {
             hiddenJson.decodeFromString<Map<String, Long>>(text)
-        } catch (e: SerializationException) {
+        } catch (ignored: SerializationException) {
             emptyMap()
-        } catch (e: IllegalArgumentException) {
+        } catch (ignored: IllegalArgumentException) {
             emptyMap()
         }
     }
 
+    @Suppress("ReturnCount") // No profile until every field has been filled in.
     private fun Preferences.toProfile(): Profile? {
         return Profile(
             sex = Sex.entries.firstOrNull { it.name == this[Keys.SEX] } ?: return null,

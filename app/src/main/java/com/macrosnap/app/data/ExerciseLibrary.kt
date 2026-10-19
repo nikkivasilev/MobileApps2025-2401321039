@@ -14,7 +14,12 @@ object ExerciseLibrary {
      * A default exercise. [name] is what gets stored (always English, so existing installs match),
      * [nameRes] is how it's shown in the UI language.
      */
-    data class Seed(val name: String, @StringRes val nameRes: Int, val group: MuscleGroup, val type: ExerciseType)
+    data class Seed(
+        val name: String,
+        @StringRes val nameRes: Int,
+        val group: MuscleGroup,
+        val type: ExerciseType,
+    )
 
     val SEEDS: List<Seed> = buildList {
         fun s(name: String, nameRes: Int, group: MuscleGroup) = add(Seed(name, nameRes, group, ExerciseType.STRENGTH))

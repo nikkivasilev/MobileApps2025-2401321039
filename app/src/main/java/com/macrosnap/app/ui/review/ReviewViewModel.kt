@@ -14,8 +14,8 @@ import com.macrosnap.app.data.FoodAnalyzer
 import com.macrosnap.app.data.FoodRepository
 import com.macrosnap.app.data.PhotoStore
 import com.macrosnap.app.data.ProductRepository
-import com.macrosnap.app.data.ScannedProduct
 import com.macrosnap.app.data.RecipeRepository
+import com.macrosnap.app.data.ScannedProduct
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.DataError
 import com.macrosnap.app.model.EntrySource
@@ -33,6 +33,8 @@ import com.macrosnap.app.ui.components.EditorTarget
 import com.macrosnap.app.ui.components.SERVINGS_STEP
 import com.macrosnap.app.ui.trySave
 import com.macrosnap.app.ui.uiText
+import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -43,8 +45,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.LocalDate
-import java.time.LocalTime
 
 @Stable
 interface ReviewActions {
@@ -72,7 +72,8 @@ class ReviewViewModel(
     private val recipeRepository: RecipeRepository,
     private val foodRepository: FoodRepository,
     private val photoStore: PhotoStore,
-) : ViewModel(), ReviewActions {
+) : ViewModel(),
+    ReviewActions {
 
     private val route = savedStateHandle.toRoute<ReviewRoute>()
     private var nextDraftId = 0L
@@ -91,7 +92,13 @@ class ReviewViewModel(
             editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
             // A resubmitted photo already has its hint; go straight to the request instead of asking again.
             hasAnalyzed = route.resumePending,
-            status = if (route.resumePending) ReviewStatus.Loading(uiText(R.string.review_analyzing)) else ReviewStatus.Ready,
+            status = if (route.resumePending) {
+                ReviewStatus.Loading(
+                    uiText(R.string.review_analyzing),
+                )
+            } else {
+                ReviewStatus.Ready
+            },
             savedForLater = route.resumePending,
         ),
     )
@@ -101,7 +108,12 @@ class ReviewViewModel(
     val effects = _effects.receiveAsFlow()
 
     private val ReviewRoute.isBlankManualEntry: Boolean
-        get() = photoPath == null && barcode == null && recipeId == null && pastFoodKey == null && !isPastMeal && !describe
+        get() = photoPath == null &&
+            barcode == null &&
+            recipeId == null &&
+            pastFoodKey == null &&
+            !isPastMeal &&
+            !describe
 
     private val ReviewRoute.isPastMeal: Boolean
         get() = pastMealKey != null || copyMealEpochDay != null
@@ -117,7 +129,10 @@ class ReviewViewModel(
                 route.recipeId != null -> loadRecipe(route.recipeId)
                 route.pastFoodKey != null -> loadPastFood(route.pastFoodKey)
                 route.pastMealKey != null -> loadPastMeal(route.pastMealKey)
-                route.copyMealEpochDay != null -> copyMeal(LocalDate.ofEpochDay(route.copyMealEpochDay), route.copyMealType)
+                route.copyMealEpochDay != null -> copyMeal(
+                    LocalDate.ofEpochDay(route.copyMealEpochDay),
+                    route.copyMealType,
+                )
             }
         }
         route.photoPath?.let { path ->
@@ -145,7 +160,9 @@ class ReviewViewModel(
 
     private fun analyzePhoto(photoPath: String) {
         lookupJob?.cancel()
-        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_analyzing)), hasAnalyzed = true) }
+        _uiState.update {
+            it.copy(status = ReviewStatus.Loading(uiText(R.string.review_analyzing)), hasAnalyzed = true)
+        }
         lookupJob = viewModelScope.launch {
             val hint = _uiState.value.hint.takeIf { it.isNotBlank() }
             when (val outcome = foodAnalyzer.analyzePhoto(photoPath, hint)) {
@@ -155,7 +172,9 @@ class ReviewViewModel(
                         notes = outcome.value.notes,
                         // Keep what the user added by hand or by describing; only the photo's own guesses are replaced.
                         items = state.items.filterNot { it.fromPhoto } +
-                            outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence, fromPhoto = true) },
+                            outcome.value.items.map {
+                                DraftItem(nextDraftId++, it.item, it.confidence, fromPhoto = true)
+                            },
                     )
                 }
                 is Outcome.Failure -> {
@@ -184,7 +203,9 @@ class ReviewViewModel(
             delay(PENDING_UPDATE_DELAY_MILLIS)
             if (photoKept) return@launch
             val state = _uiState.value
-            trySave { foodRepository.keepPendingPhoto(path, LocalDate.ofEpochDay(route.epochDay), state.mealType, state.hint) }
+            trySave {
+                foodRepository.keepPendingPhoto(path, LocalDate.ofEpochDay(route.epochDay), state.mealType, state.hint)
+            }
         }
     }
 
@@ -241,14 +262,32 @@ class ReviewViewModel(
         lookupJob = viewModelScope.launch {
             val recipe = recipeRepository.get(recipeId)
             if (recipe == null) {
-                _uiState.update { it.copy(status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_recipe_missing))) }
+                _uiState.update {
+                    it.copy(
+                        status = ReviewStatus.Failed(
+                            DataError.Unexpected(null),
+                            uiText(R.string.review_recipe_missing),
+                        ),
+                    )
+                }
                 return@launch
             }
             _uiState.update { state ->
                 state.copy(
                     status = ReviewStatus.Ready,
-                    items = listOf(DraftItem(nextDraftId++, recipe.portion(recipe.servingGrams), servingGrams = recipe.servingGrams)),
-                    recipeServing = RecipeServing(recipe.name, recipe.servingGrams, recipe.totalWeight, recipe.servings),
+                    items = listOf(
+                        DraftItem(
+                            nextDraftId++,
+                            recipe.portion(recipe.servingGrams),
+                            servingGrams = recipe.servingGrams,
+                        ),
+                    ),
+                    recipeServing = RecipeServing(
+                        recipe.name,
+                        recipe.servingGrams,
+                        recipe.totalWeight,
+                        recipe.servings,
+                    ),
                 )
             }
         }
@@ -260,7 +299,9 @@ class ReviewViewModel(
             val food = foodRepository.pastFood(key)
             _uiState.update { state ->
                 if (food == null) {
-                    state.copy(status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_food_missing)))
+                    state.copy(
+                        status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_food_missing)),
+                    )
                 } else {
                     state.copy(status = ReviewStatus.Ready, items = listOf(DraftItem(nextDraftId++, food.item)))
                 }
@@ -312,7 +353,10 @@ class ReviewViewModel(
     }
 
     override fun onDescribeChange(text: String) = _uiState.update {
-        it.copy(describeInput = text, describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus)
+        it.copy(
+            describeInput = text,
+            describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus,
+        )
     }
 
     override fun onDescribeSubmit() {
@@ -326,7 +370,9 @@ class ReviewViewModel(
                         describeInput = "",
                         describeStatus = DescribeStatus.Idle,
                         notes = outcome.value.notes ?: state.notes,
-                        items = state.items + outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence) },
+                        items = state.items + outcome.value.items.map {
+                            DraftItem(nextDraftId++, it.item, it.confidence)
+                        },
                         status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status,
                     )
                 }
@@ -356,7 +402,11 @@ class ReviewViewModel(
                 if (draft.id != draftId || servingGrams == null) return@map draft
                 // Snap to the step grid so 300 g + ½ serving reads "1.5 servings", not "1.49".
                 val current = draft.item.grams / servingGrams
-                val next = (Math.round((current + deltaServings) / SERVINGS_STEP) * SERVINGS_STEP).coerceAtLeast(SERVINGS_STEP)
+                val next = (
+                    Math.round(
+                        (current + deltaServings) / SERVINGS_STEP,
+                    ) * SERVINGS_STEP
+                    ).coerceAtLeast(SERVINGS_STEP)
                 draft.copy(item = draft.item.copy(grams = next * servingGrams))
             },
         )
@@ -376,7 +426,11 @@ class ReviewViewModel(
             EditorTarget.NewItem, null -> state.items + DraftItem(nextDraftId++, item)
         }
         // A manual item also clears a failed analysis: the user has moved on from it.
-        state.copy(items = items, editor = null, status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status)
+        state.copy(
+            items = items,
+            editor = null,
+            status = if (state.status is ReviewStatus.Failed) ReviewStatus.Ready else state.status,
+        )
     }
 
     override fun onEditorDismiss() = _uiState.update { it.copy(editor = null) }

@@ -11,6 +11,7 @@ import com.macrosnap.app.data.local.WorkoutSetEntity
 import com.macrosnap.app.data.local.WorkoutWithSets
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
+import com.macrosnap.app.model.METERS_PER_KM
 import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.model.PersonalRecord
 import com.macrosnap.app.model.Routine
@@ -19,10 +20,10 @@ import com.macrosnap.app.model.SetRecord
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutExercise
 import com.macrosnap.app.model.WorkoutSet
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import java.time.LocalDate
 
 class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
@@ -30,7 +31,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         if (workoutDao.countExercises() == 0) workoutDao.insertExercises(ExerciseLibrary.DEFAULTS)
     }
 
-    fun observeExercises(): Flow<List<Exercise>> = workoutDao.observeExercises().map { rows -> rows.map { it.toModel() } }
+    fun observeExercises(): Flow<List<Exercise>> = workoutDao.observeExercises().map { rows ->
+        rows.map { it.toModel() }
+    }
 
     /** Inserts a new exercise when [Exercise.id] is 0, otherwise updates it. Returns the saved exercise. */
     suspend fun saveExercise(exercise: Exercise): Exercise {
@@ -67,9 +70,20 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun saveRoutine(routine: Routine): Long {
         val existing = if (routine.id != 0L) workoutDao.getRoutine(routine.id) else null
-        val entity = RoutineEntity(id = routine.id, name = routine.name, createdAt = existing?.routine?.createdAt ?: System.currentTimeMillis())
-        val exercises = routine.exercises.mapIndexed { index, it ->
-            RoutineExerciseEntity(routineId = routine.id, exerciseId = it.exercise.id, position = index, targetSets = it.targetSets, targetReps = it.targetReps)
+        val entity =
+            RoutineEntity(
+                id = routine.id,
+                name = routine.name,
+                createdAt = existing?.routine?.createdAt ?: System.currentTimeMillis(),
+            )
+        val exercises = routine.exercises.mapIndexed { index, entry ->
+            RoutineExerciseEntity(
+                routineId = routine.id,
+                exerciseId = entry.exercise.id,
+                position = index,
+                targetSets = entry.targetSets,
+                targetReps = entry.targetReps,
+            )
         }
         return workoutDao.saveRoutine(entity, exercises)
     }
@@ -94,7 +108,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         }
 
     fun observeWorkoutDays(from: LocalDate, to: LocalDate): Flow<Set<LocalDate>> =
-        workoutDao.observeWorkoutsInRange(from.toEpochDay(), to.toEpochDay()).map { rows -> rows.map { LocalDate.ofEpochDay(it.epochDay) }.toSet() }
+        workoutDao.observeWorkoutsInRange(from.toEpochDay(), to.toEpochDay()).map { rows ->
+            rows.map { LocalDate.ofEpochDay(it.epochDay) }.toSet()
+        }
 
     suspend fun getWorkout(id: Long): Workout? {
         val byId = workoutDao.getExercises().associateBy { it.id }
@@ -103,7 +119,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun startWorkout(name: String, routine: Routine?): Long {
         val now = System.currentTimeMillis()
-        val workoutId = workoutDao.upsertWorkout(WorkoutEntity(name = name, epochDay = LocalDate.now().toEpochDay(), startedAt = now, endedAt = null))
+        val workoutId = workoutDao.upsertWorkout(
+            WorkoutEntity(name = name, epochDay = LocalDate.now().toEpochDay(), startedAt = now, endedAt = null),
+        )
         routine?.exercises?.forEachIndexed { order, planned ->
             // Pre-fill each set with what was lifted last time so the user only edits what changed.
             val last = workoutDao.getLastSets(planned.exercise.id, workoutId)
@@ -127,18 +145,34 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutId
     }
 
-    suspend fun renameWorkout(workout: Workout, name: String) =
-        workoutDao.upsertWorkout(WorkoutEntity(workout.id, name, workout.date.toEpochDay(), workout.startedAt, workout.endedAt))
+    suspend fun renameWorkout(workout: Workout, name: String) = workoutDao.upsertWorkout(
+        WorkoutEntity(workout.id, name, workout.date.toEpochDay(), workout.startedAt, workout.endedAt),
+    )
 
     suspend fun finishWorkout(workout: Workout): List<PersonalRecord> {
         val records = workout.exercises.mapNotNull { exercise -> personalRecordFor(exercise, workout.id) }
-        workoutDao.upsertWorkout(WorkoutEntity(workout.id, workout.name, workout.date.toEpochDay(), workout.startedAt, System.currentTimeMillis()))
+        workoutDao.upsertWorkout(
+            WorkoutEntity(
+                workout.id,
+                workout.name,
+                workout.date.toEpochDay(),
+                workout.startedAt,
+                System.currentTimeMillis(),
+            ),
+        )
         return records
     }
 
     suspend fun deleteWorkout(id: Long) = workoutDao.deleteWorkout(id)
 
-    suspend fun addSet(workoutId: Long, exercise: Exercise, exerciseOrder: Int, setIndex: Int, template: WorkoutSet?, reps: Int = 0): WorkoutSet {
+    suspend fun addSet(
+        workoutId: Long,
+        exercise: Exercise,
+        exerciseOrder: Int,
+        setIndex: Int,
+        template: WorkoutSet?,
+        reps: Int = 0,
+    ): WorkoutSet {
         val entity = WorkoutSetEntity(
             workoutId = workoutId,
             exerciseId = exercise.id,
@@ -155,12 +189,24 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 
     suspend fun updateSet(workoutId: Long, set: WorkoutSet) = workoutDao.updateSet(
-        WorkoutSetEntity(set.id, workoutId, set.exerciseId, set.exerciseOrder, set.setIndex, set.weightKg, set.reps, set.durationSec, set.distanceM, set.isDone),
+        WorkoutSetEntity(
+            set.id,
+            workoutId,
+            set.exerciseId,
+            set.exerciseOrder,
+            set.setIndex,
+            set.weightKg,
+            set.reps,
+            set.durationSec,
+            set.distanceM,
+            set.isDone,
+        ),
     )
 
     suspend fun deleteSet(id: Long) = workoutDao.deleteSet(id)
 
-    suspend fun removeExercise(workoutId: Long, exerciseId: Long) = workoutDao.deleteSetsForExercise(workoutId, exerciseId)
+    suspend fun removeExercise(workoutId: Long, exerciseId: Long) =
+        workoutDao.deleteSetsForExercise(workoutId, exerciseId)
 
     suspend fun lastSets(exerciseId: Long, excludingWorkoutId: Long): List<WorkoutSet> =
         workoutDao.getLastSets(exerciseId, excludingWorkoutId).map { it.toModel() }
@@ -192,7 +238,11 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
                 val longest = done.maxOf { it.distanceM }
                 val previousLongest = history.maxOfOrNull { it.distanceM } ?: 0.0
                 if (longest > previousLongest && previousLongest > 0) {
-                    PersonalRecord.LongestDistance(exercise.exercise, longest / 1000, previousLongest / 1000)
+                    PersonalRecord.LongestDistance(
+                        exercise.exercise,
+                        longest / METERS_PER_KM,
+                        previousLongest / METERS_PER_KM,
+                    )
                 } else {
                     null
                 }
@@ -201,7 +251,10 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 }
 
-data class ExerciseUsage(val workouts: Int, val routines: Int) {
+data class ExerciseUsage(
+    val workouts: Int,
+    val routines: Int,
+) {
     val isUsed: Boolean get() = workouts > 0 || routines > 0
 }
 
@@ -215,9 +268,11 @@ private fun ExerciseEntity.toModel() = Exercise(
     defaultReps = defaultReps,
 )
 
-private fun WorkoutSetEntity.toModel() = WorkoutSet(id, exerciseId, exerciseOrder, setIndex, weightKg, reps, durationSec, distanceM, isDone)
+private fun WorkoutSetEntity.toModel() =
+    WorkoutSet(id, exerciseId, exerciseOrder, setIndex, weightKg, reps, durationSec, distanceM, isDone)
 
-private fun SetRecordRow.toModel() = SetRecord(LocalDate.ofEpochDay(epochDay), workoutId, weightKg, reps, durationSec, distanceM)
+private fun SetRecordRow.toModel() =
+    SetRecord(LocalDate.ofEpochDay(epochDay), workoutId, weightKg, reps, durationSec, distanceM)
 
 private fun RoutineWithExercises.toModel(exercisesById: Map<Long, ExerciseEntity>) = Routine(
     id = routine.id,

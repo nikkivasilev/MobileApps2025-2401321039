@@ -8,16 +8,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.toRoute
+import com.macrosnap.app.R
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.WorkoutRepository
-import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.data.settings.SettingsStore
+import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
+import com.macrosnap.app.model.METERS_PER_KM
+import com.macrosnap.app.model.SECONDS_PER_MINUTE
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutExercise
-import com.macrosnap.app.R
 import com.macrosnap.app.model.WorkoutSet
 import com.macrosnap.app.ui.WorkoutRoute
 import com.macrosnap.app.ui.compact
@@ -60,7 +62,8 @@ class WorkoutViewModel(
     private val workoutRepository: WorkoutRepository,
     private val settingsStore: SettingsStore,
     weightRepository: WeightRepository,
-) : ViewModel(), WorkoutActions {
+) : ViewModel(),
+    WorkoutActions {
 
     private val route = savedStateHandle.toRoute<WorkoutRoute>()
 
@@ -78,7 +81,15 @@ class WorkoutViewModel(
                 return@launch
             }
             val restSeconds = settingsStore.settings.first().restSeconds
-            _uiState.update { it.copy(workout = workout, inputs = workout.allSets().associate { s -> s.id to s.toInputs() }, restSeconds = restSeconds) }
+            _uiState.update {
+                it.copy(
+                    workout = workout,
+                    inputs = workout.allSets().associate { s ->
+                        s.id to s.toInputs()
+                    },
+                    restSeconds = restSeconds,
+                )
+            }
             workout.exercises.forEach { loadLastSets(it.exercise.id) }
         }
         viewModelScope.launch {
@@ -124,7 +135,9 @@ class WorkoutViewModel(
             val last = workoutRepository.lastSets(exercise.id, workout.id)
             val order = workout.exercises.size
             val sets = if (last.isNotEmpty()) {
-                last.mapIndexed { index, previous -> workoutRepository.addSet(workout.id, exercise, order, index, previous) }
+                last.mapIndexed { index, previous ->
+                    workoutRepository.addSet(workout.id, exercise, order, index, previous)
+                }
             } else {
                 val reps = if (exercise.type == ExerciseType.STRENGTH) exercise.defaultReps else 0
                 (0 until exercise.defaultSets.coerceAtLeast(1)).map { index ->
@@ -133,7 +146,12 @@ class WorkoutViewModel(
             }
             updateWorkout { it.copy(exercises = it.exercises + WorkoutExercise(exercise, sets)) }
             _uiState.update { state ->
-                state.copy(inputs = state.inputs + sets.associate { it.id to it.toInputs() }, lastSets = state.lastSets + (exercise.id to last))
+                state.copy(
+                    inputs = state.inputs + sets.associate {
+                        it.id to it.toInputs()
+                    },
+                    lastSets = state.lastSets + (exercise.id to last),
+                )
             }
         }
     }
@@ -155,9 +173,19 @@ class WorkoutViewModel(
         val entry = workout.exercises.firstOrNull { it.exercise.id == exerciseId } ?: return
         val template = entry.sets.lastOrNull()
         viewModelScope.launch {
-            val set = workoutRepository.addSet(workout.id, entry.exercise, template?.exerciseOrder ?: workout.exercises.size, entry.sets.size, template)
+            val set = workoutRepository.addSet(
+                workout.id,
+                entry.exercise,
+                template?.exerciseOrder ?: workout.exercises.size,
+                entry.sets.size,
+                template,
+            )
             updateWorkout { w ->
-                w.copy(exercises = w.exercises.map { if (it.exercise.id == exerciseId) it.copy(sets = it.sets + set) else it })
+                w.copy(
+                    exercises = w.exercises.map {
+                        if (it.exercise.id == exerciseId) it.copy(sets = it.sets + set) else it
+                    },
+                )
             }
             _uiState.update { it.copy(inputs = it.inputs + (set.id to set.toInputs())) }
         }
@@ -172,7 +200,11 @@ class WorkoutViewModel(
             return
         }
         updateWorkout { w ->
-            w.copy(exercises = w.exercises.map { if (it.exercise.id == exerciseId) it.copy(sets = it.sets.dropLast(1)) else it })
+            w.copy(
+                exercises = w.exercises.map {
+                    if (it.exercise.id == exerciseId) it.copy(sets = it.sets.dropLast(1)) else it
+                },
+            )
         }
         _uiState.update { it.copy(inputs = it.inputs - last.id) }
         viewModelScope.launch { workoutRepository.deleteSet(last.id) }
@@ -202,7 +234,11 @@ class WorkoutViewModel(
         updateWorkout { w ->
             w.copy(
                 exercises = w.exercises.map { ex ->
-                    ex.copy(sets = ex.sets.map { set -> if (set.id == setId) transform(set).also { changed = it } else set })
+                    ex.copy(
+                        sets = ex.sets.map { set ->
+                            if (set.id == setId) transform(set).also { changed = it } else set
+                        },
+                    )
                 },
             )
         }
@@ -264,7 +300,14 @@ class WorkoutViewModel(
 
     companion object {
         val Factory = viewModelFactory {
-            initializer { WorkoutViewModel(createSavedStateHandle(), appContainer.workoutRepository, appContainer.settingsStore, appContainer.weightRepository) }
+            initializer {
+                WorkoutViewModel(
+                    createSavedStateHandle(),
+                    appContainer.workoutRepository,
+                    appContainer.settingsStore,
+                    appContainer.weightRepository,
+                )
+            }
         }
     }
 }
@@ -274,6 +317,6 @@ private fun Workout.allSets(): List<WorkoutSet> = exercises.flatMap { it.sets }
 private fun WorkoutSet.toInputs() = SetInputs(
     weight = weightKg.takeIf { it > 0 }?.compact().orEmpty(),
     reps = reps.takeIf { it > 0 }?.toString().orEmpty(),
-    minutes = durationSec.takeIf { it > 0 }?.let { (it / 60.0).compact() }.orEmpty(),
-    km = distanceM.takeIf { it > 0 }?.let { (it / 1000.0).compact() }.orEmpty(),
+    minutes = durationSec.takeIf { it > 0 }?.let { (it / SECONDS_PER_MINUTE).compact() }.orEmpty(),
+    km = distanceM.takeIf { it > 0 }?.let { (it / METERS_PER_KM).compact() }.orEmpty(),
 )

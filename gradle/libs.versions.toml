@@ -17,6 +17,9 @@ coil = "3.6.3"
 exif = "1.4.2"
 codeScanner = "16.1.0"
 junit = "4.13.2"
+ktlint = "14.2.0"
+detekt = "2.0.0-alpha.6"
+kover = "0.9.11"
 desugar = "2.1.5"
 
 [libraries]
@@ -57,3 +60,6 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

@@ -11,6 +11,7 @@ import java.util.Locale
 object DatePatterns {
     /** "Sat, 17 Oct" / "сб, 17 окт". */
     const val SHORT = "EEE, d MMM"
+
     /** "Saturday, 17 October" / "Събота, 17 октомври". */
     const val FULL = "EEEE, d MMMM"
     const val TIME = "HH:mm"

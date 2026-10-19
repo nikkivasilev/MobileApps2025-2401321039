@@ -76,7 +76,8 @@ interface RoutineEditorActions {
 class RoutineEditorViewModel(
     savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
-) : ViewModel(), RoutineEditorActions {
+) : ViewModel(),
+    RoutineEditorActions {
 
     private val route = savedStateHandle.toRoute<RoutineEditorRoute>()
 
@@ -97,7 +98,9 @@ class RoutineEditorViewModel(
                 _uiState.update {
                     it.copy(
                         name = routine.name,
-                        drafts = routine.exercises.map { ex -> RoutineExerciseDraft(ex.exercise, ex.targetSets.toString(), ex.targetReps.toString()) },
+                        drafts = routine.exercises.map { ex ->
+                            RoutineExerciseDraft(ex.exercise, ex.targetSets.toString(), ex.targetReps.toString())
+                        },
                     )
                 }
             }

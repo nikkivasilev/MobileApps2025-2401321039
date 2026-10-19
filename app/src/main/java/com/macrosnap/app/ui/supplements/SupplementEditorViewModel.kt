@@ -35,6 +35,7 @@ interface SupplementEditorActions {
     fun onActiveChange(active: Boolean)
     fun onDescribeChange(text: String)
     fun onDescribeSubmit()
+
     /** [defaultDoseLabel] is stored when the dose field is left blank, in the language the user is seeing. */
     fun onSave(defaultDoseLabel: String)
     fun onDeleteClick()
@@ -46,11 +47,13 @@ class SupplementEditorViewModel(
     savedStateHandle: SavedStateHandle,
     private val supplementRepository: SupplementRepository,
     private val foodAnalyzer: FoodAnalyzer,
-) : ViewModel(), SupplementEditorActions {
+) : ViewModel(),
+    SupplementEditorActions {
 
     private val route = savedStateHandle.toRoute<SupplementEditorRoute>()
 
-    private val _uiState = MutableStateFlow(SupplementEditorUiState(id = route.supplementId, isLoaded = route.supplementId == 0L))
+    private val _uiState =
+        MutableStateFlow(SupplementEditorUiState(id = route.supplementId, isLoaded = route.supplementId == 0L))
     val uiState: StateFlow<SupplementEditorUiState> = _uiState.asStateFlow()
 
     private val _effects = Channel<SupplementEditorEffect>(Channel.BUFFERED)
@@ -82,7 +85,9 @@ class SupplementEditorViewModel(
 
     override fun onDoseLabelChange(value: String) = _uiState.update { it.copy(doseLabel = value) }
 
-    override fun onTimesPerDayChange(value: String) = _uiState.update { it.copy(timesPerDayInput = value.filter(Char::isDigit).take(2)) }
+    override fun onTimesPerDayChange(value: String) = _uiState.update {
+        it.copy(timesPerDayInput = value.filter(Char::isDigit).take(2))
+    }
 
     override fun onNutrientChange(nutrient: Nutrient, value: String) = _uiState.update {
         it.copy(nutrientInputs = it.nutrientInputs + (nutrient to value))
@@ -91,7 +96,10 @@ class SupplementEditorViewModel(
     override fun onActiveChange(active: Boolean) = _uiState.update { it.copy(isActive = active) }
 
     override fun onDescribeChange(text: String) = _uiState.update {
-        it.copy(describeInput = text, describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus)
+        it.copy(
+            describeInput = text,
+            describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus,
+        )
     }
 
     override fun onDescribeSubmit() {
@@ -150,7 +158,11 @@ class SupplementEditorViewModel(
     companion object {
         val Factory = viewModelFactory {
             initializer {
-                SupplementEditorViewModel(createSavedStateHandle(), appContainer.supplementRepository, appContainer.foodAnalyzer)
+                SupplementEditorViewModel(
+                    createSavedStateHandle(),
+                    appContainer.supplementRepository,
+                    appContainer.foodAnalyzer,
+                )
             }
         }
     }

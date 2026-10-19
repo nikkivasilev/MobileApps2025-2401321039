@@ -11,22 +11,22 @@ import com.macrosnap.app.data.PhotoStore
 import com.macrosnap.app.data.ProductRepository
 import com.macrosnap.app.data.RecipeRepository
 import com.macrosnap.app.data.SupplementRepository
+import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.WellnessRepository
 import com.macrosnap.app.data.WorkoutRepository
-import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.local.AppDatabase
 import com.macrosnap.app.data.remote.GeminiApi
 import com.macrosnap.app.data.remote.OpenFoodFactsApi
 import com.macrosnap.app.data.settings.SettingsStore
 import com.macrosnap.app.ui.AppLanguage
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /** Hand-rolled DI: one single-module personal app doesn't earn a DI framework. */
 class AppContainer(context: Context) {

@@ -26,9 +26,9 @@ import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.label
-import com.macrosnap.app.ui.unitLabel
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
+import com.macrosnap.app.ui.unitLabel
 
 /** Every tracked nutrient against its daily target; collapsed to a one-line summary by default. */
 @Composable
@@ -88,7 +88,11 @@ private fun NutrientRow(nutrient: Nutrient, amount: Double, target: Double) {
                     nutrient.unitLabel,
                 ),
                 style = MaterialTheme.typography.labelMedium,
-                color = if (nutrient.isLimit && over) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (nutrient.isLimit && over) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
         PillBar(progress = fraction, color = color, height = 6.dp, modifier = Modifier.padding(top = 6.dp))

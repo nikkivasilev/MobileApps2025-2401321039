@@ -4,6 +4,7 @@ sealed interface DataError {
     data object NoApiKey : DataError
     data object InvalidApiKey : DataError
     data object Network : DataError
+
     /** [daily] when the day's quota is gone; otherwise a per-minute limit that clears on its own. */
     data class RateLimited(val daily: Boolean) : DataError
     data object ModelUnavailable : DataError

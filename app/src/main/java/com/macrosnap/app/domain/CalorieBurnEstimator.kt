@@ -2,6 +2,9 @@ package com.macrosnap.app.domain
 
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
+import com.macrosnap.app.model.METERS_PER_KM
+import com.macrosnap.app.model.MILLIS_PER_SECOND
+import com.macrosnap.app.model.SECONDS_PER_HOUR
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutSet
 import kotlin.math.roundToInt
@@ -17,6 +20,7 @@ object CalorieBurnEstimator {
 
     const val DEFAULT_BODY_WEIGHT_KG = 75.0
     private const val STRENGTH_MET = 3.5
+
     /** A set plus the rest after it rarely runs past this; more session time than that was idle. */
     private const val MAX_SECONDS_PER_STRENGTH_SET = 5 * 60
 
@@ -33,23 +37,29 @@ object CalorieBurnEstimator {
                     ExerciseType.CARDIO -> {
                         val seconds = set.durationSec.takeIf { it > 0 } ?: return@forEach
                         cardioSeconds += seconds
-                        kcal += met(entry.exercise, set) * weight * seconds / 3600.0
+                        kcal += met(entry.exercise, set) * weight * seconds / SECONDS_PER_HOUR
                     }
                 }
             }
         }
         if (strengthSets > 0) {
-            val totalSeconds = ((workout.endedAt ?: System.currentTimeMillis()) - workout.startedAt) / 1000.0
+            val totalSeconds = ((workout.endedAt ?: System.currentTimeMillis()) - workout.startedAt) / MILLIS_PER_SECOND
             val strengthSeconds = (totalSeconds - cardioSeconds)
                 .coerceIn(0.0, strengthSets * MAX_SECONDS_PER_STRENGTH_SET.toDouble())
-            kcal += STRENGTH_MET * weight * strengthSeconds / 3600.0
+            kcal += STRENGTH_MET * weight * strengthSeconds / SECONDS_PER_HOUR
         }
         return kcal.roundToInt()
     }
 
+    // MET values from the Compendium of Physical Activities.
+    @Suppress("MagicNumber")
     private fun met(exercise: Exercise, set: WorkoutSet): Double {
         val name = exercise.name.lowercase()
-        val kmh = if (set.distanceM > 0 && set.durationSec > 0) set.distanceM / 1000.0 / (set.durationSec / 3600.0) else null
+        val kmh = if (set.distanceM > 0 && set.durationSec > 0) {
+            set.distanceM / METERS_PER_KM / (set.durationSec / SECONDS_PER_HOUR)
+        } else {
+            null
+        }
         return when {
             "run" in name || "jog" in name || "treadmill" in name ->
                 // Running MET tracks speed closely (8 km/h ≈ 8.3, 12 km/h ≈ 11.5).

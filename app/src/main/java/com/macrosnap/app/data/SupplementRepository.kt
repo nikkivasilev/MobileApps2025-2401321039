@@ -6,10 +6,10 @@ import com.macrosnap.app.data.local.SupplementLogEntity
 import com.macrosnap.app.model.Supplement
 import com.macrosnap.app.model.SupplementStatus
 import com.macrosnap.app.model.sumMicros
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import java.time.LocalDate
 
 class SupplementRepository(private val supplementDao: SupplementDao) {
 
@@ -30,7 +30,9 @@ class SupplementRepository(private val supplementDao: SupplementDao) {
                     SupplementStatus(
                         supplement = supplement,
                         takenCount = doses.size,
-                        micros = doses.map { log -> log.micros?.let(MicrosJson::decode) ?: supplement.micros }.sumMicros(),
+                        micros = doses.map { log ->
+                            log.micros?.let(MicrosJson::decode) ?: supplement.micros
+                        }.sumMicros(),
                     )
                 }
         }
@@ -67,7 +69,8 @@ class SupplementRepository(private val supplementDao: SupplementDao) {
         )
     }
 
-    suspend fun untake(supplementId: Long, date: LocalDate) = supplementDao.deleteLatestLog(supplementId, date.toEpochDay())
+    suspend fun untake(supplementId: Long, date: LocalDate) =
+        supplementDao.deleteLatestLog(supplementId, date.toEpochDay())
 }
 
 private fun SupplementEntity.toModel() = Supplement(

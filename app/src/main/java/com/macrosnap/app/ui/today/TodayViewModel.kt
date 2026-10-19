@@ -21,6 +21,7 @@ import com.macrosnap.app.domain.CalorieBurnEstimator
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.FoodEntry
 import com.macrosnap.app.model.FoodItem
+import com.macrosnap.app.model.MAX_SLEEP_QUALITY
 import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.PastFood
@@ -77,7 +78,10 @@ interface TodayActions {
     suspend fun describeItem(text: String): Outcome<AnalysisResult>
 }
 
-data class PhotoTarget(val path: String, val uri: Uri)
+data class PhotoTarget(
+    val path: String,
+    val uri: Uri,
+)
 
 private data class DayData(
     val date: LocalDate,
@@ -96,9 +100,16 @@ private data class Extras(
     val pendingPhotos: List<PendingPhoto>,
 )
 
-private data class History(val pastFoods: List<PastFood>, val pastMeals: List<PastMeal>)
+private data class History(
+    val pastFoods: List<PastFood>,
+    val pastMeals: List<PastMeal>,
+)
 
-private data class Overlays(val viewing: FoodEntry?, val editing: FoodEntry?, val showSleepSheet: Boolean)
+private data class Overlays(
+    val viewing: FoodEntry?,
+    val editing: FoodEntry?,
+    val showSleepSheet: Boolean,
+)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(
@@ -111,7 +122,8 @@ class TodayViewModel(
     recipeRepository: RecipeRepository,
     workoutRepository: WorkoutRepository,
     weightRepository: WeightRepository,
-) : ViewModel(), TodayActions {
+) : ViewModel(),
+    TodayActions {
 
     private val selectedDate = MutableStateFlow(LocalDate.now())
     private val viewing = MutableStateFlow<FoodEntry?>(null)
@@ -139,7 +151,9 @@ class TodayViewModel(
             wellnessRepository.observeWater(date),
             wellnessRepository.observeSleep(date),
             workoutRepository.observeWorkoutsOn(date),
-        ) { entries, supplements, water, sleep, workouts -> DayData(date, entries, supplements, water, sleep, workouts) }
+        ) { entries, supplements, water, sleep, workouts ->
+            DayData(date, entries, supplements, water, sleep, workouts)
+        }
     }
 
     private val bodyWeight = combine(weightRepository.observeLatestKg(), settingsStore.settings) { latest, settings ->
@@ -177,7 +191,9 @@ class TodayViewModel(
             viewing = overlays.viewing,
             editing = overlays.editing,
             showSleepSheet = overlays.showSleepSheet,
-            workoutBurnKcal = day.workouts.filter { !it.isActive }.sumOf { CalorieBurnEstimator.estimate(it, weightKg) },
+            workoutBurnKcal = day.workouts.filter {
+                !it.isActive
+            }.sumOf { CalorieBurnEstimator.estimate(it, weightKg) },
             addWorkoutBurn = settings.addWorkoutBurn,
             pastFoods = history.pastFoods,
             pastMeals = history.pastMeals,
@@ -246,7 +262,11 @@ class TodayViewModel(
                     photoPath = entry.photoPath,
                 )
             }
-            _effects.send(TodayEffect.ShowMessage(if (saved) uiText(R.string.today_logged_again, entry.item.name) else SAVE_FAILED_MESSAGE))
+            _effects.send(
+                TodayEffect.ShowMessage(
+                    if (saved) uiText(R.string.today_logged_again, entry.item.name) else SAVE_FAILED_MESSAGE,
+                ),
+            )
             if (saved) selectedDate.value = today
         }
     }
@@ -295,7 +315,9 @@ class TodayViewModel(
         // Bedtime later in the clock than wake-up means it was the previous evening.
         val bedDate = if (bedtime > wakeTime) date.minusDays(1) else date
         viewModelScope.launch {
-            wellnessRepository.logSleep(SleepLog(date, bedDate.atTime(bedtime), date.atTime(wakeTime), quality.coerceIn(1, 5)))
+            wellnessRepository.logSleep(
+                SleepLog(date, bedDate.atTime(bedtime), date.atTime(wakeTime), quality.coerceIn(1, MAX_SLEEP_QUALITY)),
+            )
         }
     }
 

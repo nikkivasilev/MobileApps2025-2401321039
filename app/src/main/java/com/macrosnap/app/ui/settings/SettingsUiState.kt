@@ -80,7 +80,9 @@ data class SettingsUiState(
     val sleepGoal: Double? get() = sleepGoalInput.toAmountOrNull()?.takeIf { it in 4.0..14.0 }
     val restSeconds: Int? get() = restSecondsInput.trim().toIntOrNull()?.takeIf { it in 15..600 }
     val isWellnessDirty: Boolean
-        get() = waterGoal != null && sleepGoal != null && restSeconds != null &&
+        get() = waterGoal != null &&
+            sleepGoal != null &&
+            restSeconds != null &&
             (waterGoal != saved?.waterGoalMl || sleepGoal != saved?.sleepGoalHours || restSeconds != saved?.restSeconds)
 }
 

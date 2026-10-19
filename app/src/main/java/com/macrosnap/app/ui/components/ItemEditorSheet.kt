@@ -82,13 +82,15 @@ fun ItemEditorSheet(
     var carbs by rememberSaveable { mutableStateOf(initial?.per100g?.carbs?.compact().orEmpty()) }
     var fat by rememberSaveable { mutableStateOf(initial?.per100g?.fat?.compact().orEmpty()) }
     var mealType by rememberSaveable { mutableStateOf(initialMealType) }
-    val micros = remember { mutableStateMapOf<Nutrient, String>().apply { putAll(initial?.micros100g.orEmpty().toInputs()) } }
+    val micros =
+        remember { mutableStateMapOf<Nutrient, String>().apply { putAll(initial?.micros100g.orEmpty().toInputs()) } }
     var showMicros by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
 
     var describeInput by rememberSaveable { mutableStateOf("") }
     var describeStatus by remember { mutableStateOf<DescribeStatus>(DescribeStatus.Idle) }
     var describeNote by rememberSaveable { mutableStateOf<String?>(null) }
+
     /** How many foods the last description held; only the first fills the form. */
     var describedCount by rememberSaveable { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
@@ -131,11 +133,16 @@ fun ItemEditorSheet(
             title = { Text(stringResource(R.string.review_delete_entry_title)) },
             text = { Text(stringResource(R.string.review_delete_entry_body)) },
             confirmButton = {
-                TextButton(onClick = { confirmDelete = false; onDelete() }) {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    onDelete()
+                }) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 
@@ -152,10 +159,10 @@ fun ItemEditorSheet(
     } else {
         Macros(kcalValue, proteinValue, carbsValue, fatValue) * toPer100g
     }
-    val result = if (name.isNotBlank() && gramsValue != null && per100g != null && toPer100g != null) {
-        FoodItem(name.trim(), gramsValue, per100g, micros.toMicros().scaled(toPer100g))
-    } else {
+    val result = if (name.isBlank() || gramsValue == null || toPer100g == null) {
         null
+    } else {
+        per100g?.let { FoodItem(name.trim(), gramsValue, it, micros.toMicros().scaled(toPer100g)) }
     }
 
     fun switchBasis(target: ValueBasis) {
@@ -243,8 +250,20 @@ fun ItemEditorSheet(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AmountField(kcal, { kcal = it }, stringResource(R.string.calories), Modifier.weight(1f), placeholder = derivedKcal.takeIf { it > 0 }?.whole())
-                AmountField(protein, { protein = it }, stringResource(R.string.review_field_protein), Modifier.weight(1f))
+                AmountField(
+                    kcal,
+                    {
+                        kcal = it
+                    },
+                    stringResource(R.string.calories),
+                    Modifier.weight(1f),
+                    placeholder = derivedKcal.takeIf {
+                        it > 0
+                    }?.whole(),
+                )
+                AmountField(protein, {
+                    protein = it
+                }, stringResource(R.string.review_field_protein), Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AmountField(carbs, { carbs = it }, stringResource(R.string.review_field_carbs), Modifier.weight(1f))
@@ -259,7 +278,9 @@ fun ItemEditorSheet(
             }
 
             Text(
-                text = result?.total?.let { stringResource(R.string.review_this_portion, it.kcal.whole(), it.summary()) }
+                text = result?.total?.let {
+                    stringResource(R.string.review_this_portion, it.kcal.whole(), it.summary())
+                }
                     ?: stringResource(R.string.review_editor_incomplete),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

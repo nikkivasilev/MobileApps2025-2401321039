@@ -75,9 +75,9 @@ import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.NutrientFields
 import com.macrosnap.app.ui.components.appChipColors
+import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
-import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.userMessage
 
 private const val API_KEY_URL = "https://aistudio.google.com/apikey"
@@ -220,11 +220,31 @@ private fun SupplementsCard(uiState: SettingsUiState, onOpenSupplementEditor: (S
 private fun WellnessCard(uiState: SettingsUiState, actions: SettingsActions) {
     SettingsCard(stringResource(R.string.settings_wellness_title), AppIcons.WaterDrop, AppTheme.colors.water) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            NumberInput(stringResource(R.string.settings_water_goal), uiState.waterGoalInput, KeyboardType.Number, Modifier.weight(1f), actions::onWaterGoalChange)
-            NumberInput(stringResource(R.string.settings_sleep_goal), uiState.sleepGoalInput, KeyboardType.Decimal, Modifier.weight(1f), actions::onSleepGoalChange)
+            NumberInput(
+                stringResource(R.string.settings_water_goal),
+                uiState.waterGoalInput,
+                KeyboardType.Number,
+                Modifier.weight(1f),
+                actions::onWaterGoalChange,
+            )
+            NumberInput(
+                stringResource(R.string.settings_sleep_goal),
+                uiState.sleepGoalInput,
+                KeyboardType.Decimal,
+                Modifier.weight(1f),
+                actions::onSleepGoalChange,
+            )
         }
-        NumberInput(stringResource(R.string.settings_rest_timer), uiState.restSecondsInput, KeyboardType.Number, Modifier.fillMaxWidth(), actions::onRestSecondsChange)
-        Button(onClick = actions::onSaveWellness, enabled = uiState.isWellnessDirty) { Text(stringResource(R.string.action_save)) }
+        NumberInput(
+            stringResource(R.string.settings_rest_timer),
+            uiState.restSecondsInput,
+            KeyboardType.Number,
+            Modifier.fillMaxWidth(),
+            actions::onRestSecondsChange,
+        )
+        Button(onClick = actions::onSaveWellness, enabled = uiState.isWellnessDirty) {
+            Text(stringResource(R.string.action_save))
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_workout_burn_title), style = MaterialTheme.typography.bodyLarge)
@@ -249,8 +269,12 @@ private fun NutrientTargetsCard(uiState: SettingsUiState, actions: SettingsActio
         )
         NutrientFields(values = uiState.nutrientInputs, onValueChange = actions::onNutrientTargetChange)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = actions::onSaveNutrientTargets, enabled = uiState.isNutrientTargetsDirty) { Text(stringResource(R.string.settings_save_targets)) }
-            TextButton(onClick = actions::onResetNutrientTargets) { Text(stringResource(R.string.settings_reset_defaults)) }
+            Button(onClick = actions::onSaveNutrientTargets, enabled = uiState.isNutrientTargetsDirty) {
+                Text(stringResource(R.string.settings_save_targets))
+            }
+            TextButton(onClick = actions::onResetNutrientTargets) {
+                Text(stringResource(R.string.settings_reset_defaults))
+            }
         }
     }
 }
@@ -270,7 +294,7 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
             onClick = {
                 try {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(API_KEY_URL)))
-                } catch (e: ActivityNotFoundException) {
+                } catch (ignored: ActivityNotFoundException) {
                     // No browser installed; the URL is still visible on the button.
                 }
             },
@@ -283,7 +307,11 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
             singleLine = true,
             visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = { TextButton(onClick = { showKey = !showKey }) { Text(stringResource(if (showKey) R.string.settings_hide_key else R.string.settings_show_key)) } },
+            trailingIcon = {
+                TextButton(onClick = {
+                    showKey = !showKey
+                }) { Text(stringResource(if (showKey) R.string.settings_hide_key else R.string.settings_show_key)) }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -299,13 +327,22 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
                 onClick = actions::onSaveConnection,
                 enabled = uiState.keyCheck != KeyCheckState.Checking &&
                     (uiState.isConnectionDirty || uiState.apiKeyInput.isNotBlank()),
-            ) { Text(stringResource(if (uiState.isConnectionDirty) R.string.settings_save_and_test else R.string.settings_test_key)) }
+            ) {
+                Text(
+                    stringResource(
+                        if (uiState.isConnectionDirty) R.string.settings_save_and_test else R.string.settings_test_key,
+                    ),
+                )
+            }
             TextButton(onClick = actions::onResetModels) { Text(stringResource(R.string.settings_reset_models)) }
         }
 
         when (val check = uiState.keyCheck) {
             KeyCheckState.Idle -> Unit
-            KeyCheckState.Checking -> Text(stringResource(R.string.settings_checking_key), style = MaterialTheme.typography.bodyMedium)
+            KeyCheckState.Checking -> Text(
+                stringResource(R.string.settings_checking_key),
+                style = MaterialTheme.typography.bodyMedium,
+            )
             is KeyCheckState.Valid -> Text(
                 text = if (check.unavailableModels.isEmpty()) {
                     stringResource(R.string.settings_key_valid)
@@ -328,20 +365,34 @@ private fun ConnectionCard(uiState: SettingsUiState, actions: SettingsActions) {
 private fun GoalsCard(uiState: SettingsUiState, actions: SettingsActions) {
     SettingsCard(stringResource(R.string.settings_goals_title), AppIcons.Flame, AppTheme.colors.calories) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GoalInput(stringResource(R.string.calories), uiState.kcalInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.KCAL, it) }
-            GoalInput(stringResource(R.string.settings_goal_protein), uiState.proteinInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.PROTEIN, it) }
+            GoalInput(stringResource(R.string.calories), uiState.kcalInput, Modifier.weight(1f)) {
+                actions.onGoalInputChange(GoalField.KCAL, it)
+            }
+            GoalInput(stringResource(R.string.settings_goal_protein), uiState.proteinInput, Modifier.weight(1f)) {
+                actions.onGoalInputChange(GoalField.PROTEIN, it)
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            GoalInput(stringResource(R.string.settings_goal_carbs), uiState.carbsInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.CARBS, it) }
-            GoalInput(stringResource(R.string.settings_goal_fat), uiState.fatInput, Modifier.weight(1f)) { actions.onGoalInputChange(GoalField.FAT, it) }
+            GoalInput(stringResource(R.string.settings_goal_carbs), uiState.carbsInput, Modifier.weight(1f)) {
+                actions.onGoalInputChange(GoalField.CARBS, it)
+            }
+            GoalInput(stringResource(R.string.settings_goal_fat), uiState.fatInput, Modifier.weight(1f)) {
+                actions.onGoalInputChange(GoalField.FAT, it)
+            }
         }
-        Button(onClick = actions::onSaveGoals, enabled = uiState.isGoalsDirty) { Text(stringResource(R.string.settings_save_goals)) }
+        Button(onClick = actions::onSaveGoals, enabled = uiState.isGoalsDirty) {
+            Text(stringResource(R.string.settings_save_goals))
+        }
     }
 }
 
 @Composable
 private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
-    SettingsCard(stringResource(R.string.settings_calculator_title), Icons.Filled.Person, MaterialTheme.colorScheme.onSurface) {
+    SettingsCard(
+        stringResource(R.string.settings_calculator_title),
+        Icons.Filled.Person,
+        MaterialTheme.colorScheme.onSurface,
+    ) {
         Text(
             text = stringResource(R.string.settings_calculator_body),
             style = MaterialTheme.typography.bodyMedium,
@@ -349,9 +400,27 @@ private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
         )
         Segmented(Sex.entries, uiState.sex, { it.label }, actions::onSexSelect)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            NumberInput(stringResource(R.string.settings_age), uiState.ageInput, KeyboardType.Number, Modifier.weight(1f), actions::onAgeChange)
-            NumberInput(stringResource(R.string.settings_height), uiState.heightInput, KeyboardType.Decimal, Modifier.weight(1f), actions::onHeightChange)
-            NumberInput(stringResource(R.string.settings_weight), uiState.weightInput, KeyboardType.Decimal, Modifier.weight(1f), actions::onWeightChange)
+            NumberInput(
+                stringResource(R.string.settings_age),
+                uiState.ageInput,
+                KeyboardType.Number,
+                Modifier.weight(1f),
+                actions::onAgeChange,
+            )
+            NumberInput(
+                stringResource(R.string.settings_height),
+                uiState.heightInput,
+                KeyboardType.Decimal,
+                Modifier.weight(1f),
+                actions::onHeightChange,
+            )
+            NumberInput(
+                stringResource(R.string.settings_weight),
+                uiState.weightInput,
+                KeyboardType.Decimal,
+                Modifier.weight(1f),
+                actions::onWeightChange,
+            )
         }
         Text(stringResource(R.string.settings_activity), style = MaterialTheme.typography.labelLarge)
         Row(
@@ -374,13 +443,21 @@ private fun CalculatorCard(uiState: SettingsUiState, actions: SettingsActions) {
         val suggested = uiState.suggestedGoals
         Text(
             text = if (suggested != null) {
-                stringResource(R.string.settings_suggested, suggested.kcal, suggested.protein, suggested.carbs, suggested.fat)
+                stringResource(
+                    R.string.settings_suggested,
+                    suggested.kcal,
+                    suggested.protein,
+                    suggested.carbs,
+                    suggested.fat,
+                )
             } else {
                 stringResource(R.string.settings_suggested_empty)
             },
             style = MaterialTheme.typography.bodyLarge,
         )
-        Button(onClick = actions::onApplySuggestedGoals, enabled = suggested != null) { Text(stringResource(R.string.settings_use_goals)) }
+        Button(onClick = actions::onApplySuggestedGoals, enabled = suggested != null) {
+            Text(stringResource(R.string.settings_use_goals))
+        }
     }
 }
 
