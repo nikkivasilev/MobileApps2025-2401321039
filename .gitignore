@@ -5,3 +5,10 @@ local.properties
 *.iml
 .kotlin/
 *.apk
+
+# Release signing: keep these out of git and back them up somewhere safe.
+keystore/
+keystore.properties
+
+# The graded release build lives in apk/.
+!apk/app-release.apk
