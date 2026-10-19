@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -19,6 +20,8 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+
+        testInstrumentationRunner = "com.macrosnap.app.MacroSnapTestRunner"
     }
 
     buildTypes {
@@ -71,9 +74,41 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.espresso.core)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
 
 detekt {
     buildUponDefaultConfig = true
     config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+}
+
+// Coverage of the app's logic: Compose UI and generated code are left out.
+kover {
+    currentProject {
+        createVariant("logic") {
+            add("debug")
+        }
+    }
+    reports {
+        filters {
+            excludes {
+                annotatedBy("androidx.compose.runtime.Composable", "androidx.compose.ui.tooling.preview.Preview")
+                classes(
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R\$*",
+                    "*_Impl*",
+                    "*ComposableSingletons*",
+                    "com.macrosnap.app.ui.theme.*",
+                    "com.macrosnap.app.MainActivity*",
+                )
+            }
+        }
+    }
 }

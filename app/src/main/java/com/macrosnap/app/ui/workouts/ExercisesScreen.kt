@@ -145,9 +145,11 @@ private fun ExercisesContent(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(selected = uiState.groupFilter == null, onClick = {
-                    actions.onGroupFilterChange(null)
-                }, label = { Text(stringResource(R.string.workout_filter_all)) })
+                FilterChip(
+                    selected = uiState.groupFilter == null,
+                    onClick = { actions.onGroupFilterChange(null) },
+                    label = { Text(stringResource(R.string.workout_filter_all)) },
+                )
                 MuscleGroup.entries.forEach { option ->
                     FilterChip(
                         colors = appChipColors(),

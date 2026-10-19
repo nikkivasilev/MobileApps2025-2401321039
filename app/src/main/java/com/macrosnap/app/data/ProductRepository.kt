@@ -212,9 +212,8 @@ class ProductRepository(
         this["${key}_100g"].asDouble()?.takeIf { it >= 0 }?.let { nutrient to it * nutrient.offScale }
     }.toMap()
 
-    private fun JsonElement?.asDouble(): Double? = (this as? JsonPrimitive)?.content?.toDoubleOrNull()?.takeIf {
-        it.isFinite()
-    }
+    private fun JsonElement?.asDouble(): Double? =
+        (this as? JsonPrimitive)?.content?.toDoubleOrNull()?.takeIf { it.isFinite() }
 
     private companion object {
         const val KJ_PER_KCAL = 4.184

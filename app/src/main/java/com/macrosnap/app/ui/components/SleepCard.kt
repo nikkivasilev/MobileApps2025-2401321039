@@ -207,9 +207,10 @@ fun SleepSheet(
                         Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                     }
                 }
-                Button(onClick = {
-                    onSave(bedtime, wakeTime, quality)
-                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.action_save)) }
+                Button(
+                    onClick = { onSave(bedtime, wakeTime, quality) },
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.action_save)) }
             }
         }
     }

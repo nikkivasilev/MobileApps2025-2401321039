@@ -28,8 +28,14 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-/** Hand-rolled DI: one single-module personal app doesn't earn a DI framework. */
-class AppContainer(context: Context) {
+/**
+ * Hand-rolled DI: one single-module personal app doesn't earn a DI framework. [inMemoryDatabase]
+ * gives UI tests a throwaway database instead of the real log.
+ */
+class AppContainer(
+    context: Context,
+    inMemoryDatabase: Boolean = false,
+) {
 
     private val io = Dispatchers.IO
 
@@ -49,9 +55,13 @@ class AppContainer(context: Context) {
         }
         .build()
 
-    private val database = Room.databaseBuilder(context, AppDatabase::class.java, "macrosnap.db")
-        .addMigrations(*AppDatabase.MIGRATIONS)
-        .build()
+    private val database = if (inMemoryDatabase) {
+        Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
+    } else {
+        Room.databaseBuilder(context, AppDatabase::class.java, "macrosnap.db")
+            .addMigrations(*AppDatabase.MIGRATIONS)
+            .build()
+    }
 
     private val geminiApi: GeminiApi = retrofit(GeminiApi.BASE_URL).create(GeminiApi::class.java)
 
@@ -63,7 +73,7 @@ class AppContainer(context: Context) {
     val supplementRepository = SupplementRepository(database.supplementDao())
     val wellnessRepository = WellnessRepository(database.wellnessDao())
     val workoutRepository = WorkoutRepository(database.workoutDao())
-    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore, ImageEncoder(io), json) {
+    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore.settings, ImageEncoder(io), json) {
         AppLanguage.effectiveLocale().getDisplayLanguage(Locale.ENGLISH)
     }
     val productRepository = ProductRepository(

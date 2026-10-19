@@ -41,12 +41,10 @@ data class ProgressUiState(
     val averageProtein: Double? get() = loggedDays.takeIf { it.isNotEmpty() }?.map { it.total.protein }?.average()
 
     val averageSleepHours: Double? get() = sleepWeek.takeIf { it.isNotEmpty() }?.map { it.hours }?.average()
-    val averageSleepQuality: Double? get() = sleepWeek.takeIf {
-        it.isNotEmpty()
-    }?.map { it.quality.toDouble() }?.average()
-    val averageWaterMl: Double? get() = waterWeek.filter {
-        it.totalMl > 0
-    }.takeIf { it.isNotEmpty() }?.map { it.totalMl.toDouble() }?.average()
+    val averageSleepQuality: Double?
+        get() = sleepWeek.takeIf { it.isNotEmpty() }?.map { it.quality.toDouble() }?.average()
+    val averageWaterMl: Double?
+        get() = waterWeek.filter { it.totalMl > 0 }.takeIf { it.isNotEmpty() }?.map { it.totalMl.toDouble() }?.average()
 
     /** Best estimated 1RM per workout, oldest first: the line on the strength chart. */
     val sessions: List<ExerciseSession>

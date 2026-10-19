@@ -67,6 +67,8 @@ import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.delay
 
+private const val MAX_REPS_DIGITS = 3
+
 @Composable
 fun WorkoutScreen(onClose: () -> Unit, viewModel: WorkoutViewModel = viewModel(factory = WorkoutViewModel.Factory)) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -421,9 +423,11 @@ private fun SetRow(
         )
         if (type == ExerciseType.STRENGTH) {
             NumberField(inputs.weight, { onInputChange(inputs.copy(weight = it)) }, Modifier.weight(1f))
-            NumberField(inputs.reps, {
-                onInputChange(inputs.copy(reps = it.filter(Char::isDigit).take(3)))
-            }, Modifier.weight(1f))
+            NumberField(
+                inputs.reps,
+                { onInputChange(inputs.copy(reps = it.filter(Char::isDigit).take(MAX_REPS_DIGITS))) },
+                Modifier.weight(1f),
+            )
         } else {
             NumberField(inputs.minutes, { onInputChange(inputs.copy(minutes = it)) }, Modifier.weight(1f))
             NumberField(inputs.km, { onInputChange(inputs.copy(km = it)) }, Modifier.weight(1f))

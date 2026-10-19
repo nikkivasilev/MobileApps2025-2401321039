@@ -126,9 +126,10 @@ fun ExercisePickerSheet(
                 if (trimmed.isNotEmpty() && !exactMatch) {
                     item(key = "create") {
                         if (!showCreate) {
-                            OutlinedButton(onClick = {
-                                showCreate = true
-                            }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            OutlinedButton(
+                                onClick = { showCreate = true },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            ) {
                                 Text(stringResource(R.string.workout_add_as_new, trimmed))
                             }
                         } else {

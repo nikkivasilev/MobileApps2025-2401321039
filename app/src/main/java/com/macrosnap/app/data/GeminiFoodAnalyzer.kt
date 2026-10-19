@@ -8,7 +8,7 @@ import com.macrosnap.app.data.remote.GenerateContentResponse
 import com.macrosnap.app.data.remote.GenerationConfig
 import com.macrosnap.app.data.remote.InlineData
 import com.macrosnap.app.data.remote.toDataError
-import com.macrosnap.app.data.settings.SettingsStore
+import com.macrosnap.app.data.settings.AppSettings
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.Confidence
 import com.macrosnap.app.model.DataError
@@ -21,6 +21,7 @@ import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.SupplementAnalysis
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -39,7 +40,8 @@ private const val MAX_KCAL_PER_100G = 900.0
 
 class GeminiFoodAnalyzer(
     private val api: GeminiApi,
-    private val settingsStore: SettingsStore,
+    /** The app's settings; the analyzer reads the API key and model list from the latest value. */
+    private val settings: Flow<AppSettings>,
     private val imageEncoder: ImageEncoder,
     private val json: Json,
     /** English name of the UI language ("Bulgarian"), for item names when the user wrote nothing. */
@@ -94,7 +96,7 @@ class GeminiFoodAnalyzer(
     /** Runs one structured-output request, falling through the configured models on quota errors. */
     @Suppress("TooGenericExceptionCaught") // Any failure is reported to the user as a DataError.
     private suspend fun generate(parts: List<GeminiPart>, schema: JsonObject): Outcome<String> {
-        val settings = settingsStore.settings.first()
+        val settings = settings.first()
         if (settings.apiKey.isBlank()) return Outcome.Failure(DataError.NoApiKey)
 
         val request = GenerateContentRequest(

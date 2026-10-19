@@ -251,19 +251,18 @@ fun ItemEditorSheet(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AmountField(
-                    kcal,
-                    {
-                        kcal = it
-                    },
-                    stringResource(R.string.calories),
-                    Modifier.weight(1f),
-                    placeholder = derivedKcal.takeIf {
-                        it > 0
-                    }?.whole(),
+                    value = kcal,
+                    onValueChange = { kcal = it },
+                    label = stringResource(R.string.calories),
+                    modifier = Modifier.weight(1f),
+                    placeholder = derivedKcal.takeIf { it > 0 }?.whole(),
                 )
-                AmountField(protein, {
-                    protein = it
-                }, stringResource(R.string.review_field_protein), Modifier.weight(1f))
+                AmountField(
+                    value = protein,
+                    onValueChange = { protein = it },
+                    label = stringResource(R.string.review_field_protein),
+                    modifier = Modifier.weight(1f),
+                )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AmountField(carbs, { carbs = it }, stringResource(R.string.review_field_carbs), Modifier.weight(1f))

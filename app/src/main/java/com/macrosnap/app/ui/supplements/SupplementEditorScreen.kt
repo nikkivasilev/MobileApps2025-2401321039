@@ -129,9 +129,11 @@ private fun SupplementEditorContent(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    Button(onClick = {
-                        actions.onSave(defaultDoseLabel)
-                    }, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = { actions.onSave(defaultDoseLabel) },
+                        enabled = uiState.canSave,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
                         Text(stringResource(R.string.action_save))
                     }
                 }
