@@ -75,7 +75,13 @@ class WorkoutsViewModel(
 
     companion object {
         val Factory = viewModelFactory {
-            initializer { WorkoutsViewModel(appContainer.workoutRepository, appContainer.weightRepository, appContainer.settingsStore) }
+            initializer {
+                WorkoutsViewModel(
+                    appContainer.workoutRepository,
+                    appContainer.weightRepository,
+                    appContainer.settingsStore,
+                )
+            }
         }
     }
 }

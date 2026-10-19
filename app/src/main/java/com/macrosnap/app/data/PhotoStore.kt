@@ -3,10 +3,10 @@ package com.macrosnap.app.data
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 class PhotoStore(
     private val context: Context,
@@ -31,8 +31,7 @@ class PhotoStore(
             .forEach { it.delete() }
     }
 
-    fun shareableUri(file: File): Uri =
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    fun shareableUri(file: File): Uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
     /** Copies a gallery pick into app storage; returns null when the source can't be read. */
     suspend fun importFrom(uri: Uri): File? = withContext(io) {
@@ -41,10 +40,10 @@ class PhotoStore(
             val input = context.contentResolver.openInputStream(uri) ?: return@withContext null
             input.use { source -> target.outputStream().use { source.copyTo(it) } }
             target
-        } catch (e: IOException) {
+        } catch (ignored: IOException) {
             target.delete()
             null
-        } catch (e: SecurityException) {
+        } catch (ignored: SecurityException) {
             target.delete()
             null
         }

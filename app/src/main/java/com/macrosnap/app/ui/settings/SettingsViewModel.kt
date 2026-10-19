@@ -29,6 +29,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val MAX_GOAL_DIGITS = 5
+private const val MAX_AGE_DIGITS = 3
+private const val MAX_REST_SECONDS_DIGITS = 3
+
 @Stable
 interface SettingsActions {
     fun onApiKeyChange(value: String)
@@ -60,7 +64,8 @@ class SettingsViewModel(
     private val settingsStore: SettingsStore,
     private val apiKeyChecker: ApiKeyChecker,
     supplementRepository: SupplementRepository,
-) : ViewModel(), SettingsActions {
+) : ViewModel(),
+    SettingsActions {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -79,7 +84,9 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
-            supplementRepository.observeAll().collect { supplements -> _uiState.update { it.copy(supplements = supplements) } }
+            supplementRepository.observeAll().collect { supplements ->
+                _uiState.update { it.copy(supplements = supplements) }
+            }
         }
     }
 
@@ -106,9 +113,13 @@ class SettingsViewModel(
         fatInput = goals.fat.toString(),
     )
 
-    override fun onApiKeyChange(value: String) = _uiState.update { it.copy(apiKeyInput = value, keyCheck = KeyCheckState.Idle) }
+    override fun onApiKeyChange(value: String) = _uiState.update {
+        it.copy(apiKeyInput = value, keyCheck = KeyCheckState.Idle)
+    }
 
-    override fun onModelsChange(value: String) = _uiState.update { it.copy(modelsInput = value, keyCheck = KeyCheckState.Idle) }
+    override fun onModelsChange(value: String) = _uiState.update {
+        it.copy(modelsInput = value, keyCheck = KeyCheckState.Idle)
+    }
 
     override fun onResetModels() = _uiState.update {
         it.copy(modelsInput = AppSettings.DEFAULT_MODELS.joinToString(", "), keyCheck = KeyCheckState.Idle)
@@ -138,7 +149,7 @@ class SettingsViewModel(
     }
 
     override fun onGoalInputChange(field: GoalField, value: String) = _uiState.update {
-        val digits = value.filter(Char::isDigit).take(5)
+        val digits = value.filter(Char::isDigit).take(MAX_GOAL_DIGITS)
         when (field) {
             GoalField.KCAL -> it.copy(kcalInput = digits)
             GoalField.PROTEIN -> it.copy(proteinInput = digits)
@@ -157,7 +168,9 @@ class SettingsViewModel(
 
     override fun onSexSelect(sex: Sex) = _uiState.update { it.copy(sex = sex) }
 
-    override fun onAgeChange(value: String) = _uiState.update { it.copy(ageInput = value.filter(Char::isDigit).take(3)) }
+    override fun onAgeChange(value: String) = _uiState.update {
+        it.copy(ageInput = value.filter(Char::isDigit).take(MAX_AGE_DIGITS))
+    }
 
     override fun onHeightChange(value: String) = _uiState.update { it.copy(heightInput = value) }
 
@@ -201,11 +214,15 @@ class SettingsViewModel(
         viewModelScope.launch { settingsStore.setNutrientOverrides(emptyMap()) }
     }
 
-    override fun onWaterGoalChange(value: String) = _uiState.update { it.copy(waterGoalInput = value.filter(Char::isDigit).take(5)) }
+    override fun onWaterGoalChange(value: String) = _uiState.update {
+        it.copy(waterGoalInput = value.filter(Char::isDigit).take(MAX_GOAL_DIGITS))
+    }
 
     override fun onSleepGoalChange(value: String) = _uiState.update { it.copy(sleepGoalInput = value) }
 
-    override fun onRestSecondsChange(value: String) = _uiState.update { it.copy(restSecondsInput = value.filter(Char::isDigit).take(3)) }
+    override fun onRestSecondsChange(value: String) = _uiState.update {
+        it.copy(restSecondsInput = value.filter(Char::isDigit).take(MAX_REST_SECONDS_DIGITS))
+    }
 
     override fun onAddWorkoutBurnChange(enabled: Boolean) {
         viewModelScope.launch { settingsStore.setAddWorkoutBurn(enabled) }
@@ -225,7 +242,11 @@ class SettingsViewModel(
     companion object {
         val Factory = viewModelFactory {
             initializer {
-                SettingsViewModel(appContainer.settingsStore, appContainer.apiKeyChecker, appContainer.supplementRepository)
+                SettingsViewModel(
+                    appContainer.settingsStore,
+                    appContainer.apiKeyChecker,
+                    appContainer.supplementRepository,
+                )
             }
         }
     }

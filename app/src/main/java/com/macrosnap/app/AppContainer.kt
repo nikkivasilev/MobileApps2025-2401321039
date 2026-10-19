@@ -11,25 +11,31 @@ import com.macrosnap.app.data.PhotoStore
 import com.macrosnap.app.data.ProductRepository
 import com.macrosnap.app.data.RecipeRepository
 import com.macrosnap.app.data.SupplementRepository
+import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.WellnessRepository
 import com.macrosnap.app.data.WorkoutRepository
-import com.macrosnap.app.data.WeightRepository
 import com.macrosnap.app.data.local.AppDatabase
 import com.macrosnap.app.data.remote.GeminiApi
 import com.macrosnap.app.data.remote.OpenFoodFactsApi
 import com.macrosnap.app.data.settings.SettingsStore
 import com.macrosnap.app.ui.AppLanguage
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
-/** Hand-rolled DI: one single-module personal app doesn't earn a DI framework. */
-class AppContainer(context: Context) {
+/**
+ * Hand-rolled DI: one single-module personal app doesn't earn a DI framework. [inMemoryDatabase]
+ * gives UI tests a throwaway database instead of the real log.
+ */
+class AppContainer(
+    context: Context,
+    inMemoryDatabase: Boolean = false,
+) {
 
     private val io = Dispatchers.IO
 
@@ -49,9 +55,13 @@ class AppContainer(context: Context) {
         }
         .build()
 
-    private val database = Room.databaseBuilder(context, AppDatabase::class.java, "macrosnap.db")
-        .addMigrations(*AppDatabase.MIGRATIONS)
-        .build()
+    private val database = if (inMemoryDatabase) {
+        Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
+    } else {
+        Room.databaseBuilder(context, AppDatabase::class.java, "macrosnap.db")
+            .addMigrations(*AppDatabase.MIGRATIONS)
+            .build()
+    }
 
     private val geminiApi: GeminiApi = retrofit(GeminiApi.BASE_URL).create(GeminiApi::class.java)
 
@@ -63,7 +73,7 @@ class AppContainer(context: Context) {
     val supplementRepository = SupplementRepository(database.supplementDao())
     val wellnessRepository = WellnessRepository(database.wellnessDao())
     val workoutRepository = WorkoutRepository(database.workoutDao())
-    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore, ImageEncoder(io), json) {
+    val foodAnalyzer: FoodAnalyzer = GeminiFoodAnalyzer(geminiApi, settingsStore.settings, ImageEncoder(io), json) {
         AppLanguage.effectiveLocale().getDisplayLanguage(Locale.ENGLISH)
     }
     val productRepository = ProductRepository(

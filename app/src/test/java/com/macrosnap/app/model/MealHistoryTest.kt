@@ -1,9 +1,9 @@
 package com.macrosnap.app.model
 
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 class MealHistoryTest {
 
@@ -60,9 +60,12 @@ class MealHistoryTest {
     @Test
     fun `different meals of the same day are separate occasions`() {
         val entries = listOf(
-            entry("Oats", 60.0, 2, MealType.BREAKFAST), entry("Milk", 200.0, 2, MealType.BREAKFAST),
-            entry("Chicken", 150.0, 2), entry("Rice", 200.0, 2),
-            entry("Oats", 60.0, 1, MealType.BREAKFAST), entry("Milk", 200.0, 1, MealType.BREAKFAST),
+            entry("Oats", 60.0, 2, MealType.BREAKFAST),
+            entry("Milk", 200.0, 2, MealType.BREAKFAST),
+            entry("Chicken", 150.0, 2),
+            entry("Rice", 200.0, 2),
+            entry("Oats", 60.0, 1, MealType.BREAKFAST),
+            entry("Milk", 200.0, 1, MealType.BREAKFAST),
         )
 
         val meal = MealHistory.build(entries, now = now).single()

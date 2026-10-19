@@ -84,7 +84,11 @@ fun CardHeader(
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
         trailing()
@@ -93,11 +97,7 @@ fun CardHeader(
 
 /** A heading above a group of cards. */
 @Composable
-fun SectionTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-    trailing: @Composable RowScope.() -> Unit = {},
-) {
+fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: @Composable RowScope.() -> Unit = {}) {
     Row(
         modifier = modifier
             .fillMaxWidth()

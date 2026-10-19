@@ -13,7 +13,8 @@ private val SEEDED_NAMES: Map<String, Int> = ExerciseLibrary.SEEDS.associate { i
 
 /** The name to show: a default exercise in the UI language, anything the user typed as typed. */
 val Exercise.displayName: String
-    @Composable @ReadOnlyComposable get() {
+    @Composable @ReadOnlyComposable
+    get() {
         val res = if (isCustom) null else SEEDED_NAMES[name]
         return if (res != null) stringResource(res) else name
     }

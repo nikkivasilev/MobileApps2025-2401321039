@@ -155,14 +155,21 @@ private val LocalAppColors = staticCompositionLocalOf { LightAppColors }
 
 object AppTheme {
     val colors: AppColors
-        @Composable @ReadOnlyComposable get() = LocalAppColors.current
+        @Composable @ReadOnlyComposable
+        get() = LocalAppColors.current
 }
 
 /** Fixed hues so protein/carbs/fat read the same everywhere; slightly lighter in dark mode. */
 object MacroColors {
-    val Protein: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.protein
-    val Carbs: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.carbs
-    val Fat: Color @Composable @ReadOnlyComposable get() = LocalAppColors.current.fat
+    val Protein: Color
+        @Composable @ReadOnlyComposable
+        get() = LocalAppColors.current.protein
+    val Carbs: Color
+        @Composable @ReadOnlyComposable
+        get() = LocalAppColors.current.carbs
+    val Fat: Color
+        @Composable @ReadOnlyComposable
+        get() = LocalAppColors.current.fat
 }
 
 private val AppShapes = Shapes(

@@ -45,10 +45,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -105,7 +105,10 @@ private fun ExercisesContent(
                 title = { Text(stringResource(R.string.workout_exercises_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -142,7 +145,11 @@ private fun ExercisesContent(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(selected = uiState.groupFilter == null, onClick = { actions.onGroupFilterChange(null) }, label = { Text(stringResource(R.string.workout_filter_all)) })
+                FilterChip(
+                    selected = uiState.groupFilter == null,
+                    onClick = { actions.onGroupFilterChange(null) },
+                    label = { Text(stringResource(R.string.workout_filter_all)) },
+                )
                 MuscleGroup.entries.forEach { option ->
                     FilterChip(
                         colors = appChipColors(),
@@ -201,7 +208,15 @@ private fun ExercisesContent(
 @Composable
 private fun Exercise.summary(): String = listOfNotNull(
     muscleGroup.label,
-    if (type == ExerciseType.CARDIO) pluralStringResource(R.plurals.workout_sets, defaultSets, defaultSets) else "$defaultSets × $defaultReps",
+    if (type == ExerciseType.CARDIO) {
+        pluralStringResource(
+            R.plurals.workout_sets,
+            defaultSets,
+            defaultSets,
+        )
+    } else {
+        "$defaultSets × $defaultReps"
+    },
     if (isCustom) stringResource(R.string.workout_custom) else null,
 ).joinToString(" · ")
 
@@ -226,7 +241,10 @@ private fun ExerciseEditorSheet(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(if (editor.isNew) R.string.workout_new_exercise else R.string.workout_edit_exercise), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(if (editor.isNew) R.string.workout_new_exercise else R.string.workout_edit_exercise),
+                style = MaterialTheme.typography.titleLarge,
+            )
             OutlinedTextField(
                 value = editor.name,
                 onValueChange = { actions.onEditorChange(editor.copy(name = it)) },
@@ -247,7 +265,11 @@ private fun ExerciseEditorSheet(
                 type = editor.type,
                 onTypeChange = { type ->
                     // Follow the type's usual set count unless the user already typed their own.
-                    val sets = if (parseDefaultSets(editor.setsInput) == defaultSetsFor(editor.type)) defaultSetsFor(type).toString() else editor.setsInput
+                    val sets = if (parseDefaultSets(editor.setsInput) == defaultSetsFor(editor.type)) {
+                        defaultSetsFor(type).toString()
+                    } else {
+                        editor.setsInput
+                    }
                     actions.onEditorChange(editor.copy(type = type, setsInput = sets))
                 },
                 setsInput = editor.setsInput,
@@ -260,7 +282,9 @@ private fun ExerciseEditorSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (!editor.isNew) {
-                    TextButton(onClick = actions::onDeleteClick) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = actions::onDeleteClick) {
+                        Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                    }
                 }
                 Button(onClick = actions::onEditorSave, enabled = canSave, modifier = Modifier.weight(1f)) {
                     Text(stringResource(if (editor.isNew) R.string.workout_add_exercise else R.string.action_save))
@@ -280,7 +304,11 @@ private fun DeleteExerciseDialog(name: String, usage: ExerciseUsage, actions: Ex
             val routines = pluralStringResource(R.plurals.workout_count_routines, usage.routines, usage.routines)
             Text(
                 when {
-                    usage.workouts > 0 && usage.routines > 0 -> stringResource(R.string.workout_delete_exercise_in_both, workouts, routines)
+                    usage.workouts > 0 && usage.routines > 0 -> stringResource(
+                        R.string.workout_delete_exercise_in_both,
+                        workouts,
+                        routines,
+                    )
                     usage.workouts > 0 -> stringResource(R.string.workout_delete_exercise_in_workouts, workouts)
                     usage.routines > 0 -> stringResource(R.string.workout_delete_exercise_in_routines, routines)
                     else -> stringResource(R.string.workout_delete_exercise_unused)
@@ -288,8 +316,12 @@ private fun DeleteExerciseDialog(name: String, usage: ExerciseUsage, actions: Ex
             )
         },
         confirmButton = {
-            TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = actions::onDeleteConfirm) {
+                Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+            }
         },
-        dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = {
+            TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }

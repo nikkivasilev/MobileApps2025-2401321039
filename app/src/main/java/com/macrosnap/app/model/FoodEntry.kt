@@ -17,13 +17,18 @@ enum class MealType {
     BREAKFAST,
     LUNCH,
     DINNER,
-    SNACK;
+    SNACK,
+    ;
 
     companion object {
+        private val BREAKFAST_HOURS = 4..10
+        private val LUNCH_HOURS = 11..15
+        private val DINNER_HOURS = 17..21
+
         fun forTime(time: LocalTime): MealType = when (time.hour) {
-            in 4..10 -> BREAKFAST
-            in 11..15 -> LUNCH
-            in 17..21 -> DINNER
+            in BREAKFAST_HOURS -> BREAKFAST
+            in LUNCH_HOURS -> LUNCH
+            in DINNER_HOURS -> DINNER
             else -> SNACK
         }
     }

@@ -86,10 +86,24 @@ val Nutrient.unitRes: Int
         else -> R.string.unit_g
     }
 
-val MealType.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val Sex.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val ActivityLevel.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val GoalType.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val MuscleGroup.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val Nutrient.label: String @Composable @ReadOnlyComposable get() = stringResource(labelRes)
-val Nutrient.unitLabel: String @Composable @ReadOnlyComposable get() = stringResource(unitRes)
+val MealType.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val Sex.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val ActivityLevel.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val GoalType.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val MuscleGroup.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val Nutrient.label: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(labelRes)
+val Nutrient.unitLabel: String
+    @Composable @ReadOnlyComposable
+    get() = stringResource(unitRes)

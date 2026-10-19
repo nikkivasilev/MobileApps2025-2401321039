@@ -59,9 +59,25 @@ fun ProgressRing(
             val inset = stroke / 2
             val arcSize = Size(size.width - stroke, size.height - stroke)
             val style = Stroke(width = stroke, cap = StrokeCap.Round)
-            drawArc(trackColor, 0f, 360f, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = style)
+            drawArc(
+                trackColor,
+                0f,
+                360f,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = style,
+            )
             if (animated > 0.001f) {
-                drawArc(color, -90f, 360f * animated, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = style)
+                drawArc(
+                    color,
+                    -90f,
+                    360f * animated,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = arcSize,
+                    style = style,
+                )
             }
         }
         content()
@@ -87,14 +103,24 @@ fun PillBar(
         drawRoundRect(trackColor, cornerRadius = radius)
         if (animated > 0.001f) {
             // Never narrower than a dot, so a sliver of progress still reads as a rounded pill.
-            drawRoundRect(color, size = Size((size.width * animated).coerceAtLeast(size.height), size.height), cornerRadius = radius)
+            drawRoundRect(
+                color,
+                size = Size((size.width * animated).coerceAtLeast(size.height), size.height),
+                cornerRadius = radius,
+            )
         }
     }
 }
 
 /** The Today hero: calories left as a big number, with what was eaten and burned beside the ring. */
 @Composable
-fun CalorieHero(consumedKcal: Double, goalKcal: Int, burnedKcal: Int, burnAddedToGoal: Boolean, modifier: Modifier = Modifier) {
+fun CalorieHero(
+    consumedKcal: Double,
+    goalKcal: Int,
+    burnedKcal: Int,
+    burnAddedToGoal: Boolean,
+    modifier: Modifier = Modifier,
+) {
     val remaining = goalKcal - consumedKcal
     val isOver = remaining < 0
     val ringColor = if (isOver) MaterialTheme.colorScheme.error else AppTheme.colors.calories
@@ -125,8 +151,18 @@ fun CalorieHero(consumedKcal: Double, goalKcal: Int, burnedKcal: Int, burnAddedT
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HeroStat(stringResource(R.string.today_eaten), consumedKcal.whole(), Modifier.weight(1f))
-            HeroStat(stringResource(if (burnAddedToGoal && burnedKcal > 0) R.string.today_goal_plus_gym else R.string.today_goal), goalKcal.toString(), Modifier.weight(1f))
-            HeroStat(stringResource(R.string.today_burned), if (burnedKcal > 0) "≈$burnedKcal" else "0", Modifier.weight(1f))
+            HeroStat(
+                stringResource(
+                    if (burnAddedToGoal && burnedKcal > 0) R.string.today_goal_plus_gym else R.string.today_goal,
+                ),
+                goalKcal.toString(),
+                Modifier.weight(1f),
+            )
+            HeroStat(
+                stringResource(R.string.today_burned),
+                if (burnedKcal > 0) "≈$burnedKcal" else "0",
+                Modifier.weight(1f),
+            )
         }
     }
 }

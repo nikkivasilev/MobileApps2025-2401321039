@@ -8,18 +8,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class MacroSnapApp : Application() {
+open class MacroSnapApp : Application() {
 
     lateinit var container: AppContainer
         private set
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this)
+        container = createContainer()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch { container.workoutRepository.seedExercisesIfEmpty() }
         scope.launch { container.foodRepository.deleteOrphanPhotos() }
     }
+
+    protected open fun createContainer() = AppContainer(this)
 }
 
 val CreationExtras.appContainer: AppContainer

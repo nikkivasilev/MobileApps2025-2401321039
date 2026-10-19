@@ -71,7 +71,11 @@ fun RecipesScreen(
             if (recipes.isEmpty()) {
                 item(key = "empty") {
                     AppCard {
-                        CardHeader(title = stringResource(R.string.recipes_empty_title), icon = AppIcons.Restaurant, tint = MaterialTheme.colorScheme.onSurface)
+                        CardHeader(
+                            title = stringResource(R.string.recipes_empty_title),
+                            icon = AppIcons.Restaurant,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
                         Text(
                             text = stringResource(R.string.recipes_empty_body),
                             style = MaterialTheme.typography.bodyMedium,
@@ -110,7 +114,11 @@ private fun RecipeCard(recipe: Recipe, onClick: () -> Unit, onLog: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.recipes_card_serving, recipe.servingGrams.whole(), recipe.perServing.kcal.whole()),
+                        text = stringResource(
+                            R.string.recipes_card_serving,
+                            recipe.servingGrams.whole(),
+                            recipe.perServing.kcal.whole(),
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                     )

@@ -16,9 +16,9 @@ object MicrosJson {
         if (text.isNullOrBlank()) return emptyMap()
         val raw = try {
             json.decodeFromString<Map<String, Double>>(text)
-        } catch (e: SerializationException) {
+        } catch (ignored: SerializationException) {
             return emptyMap()
-        } catch (e: IllegalArgumentException) {
+        } catch (ignored: IllegalArgumentException) {
             return emptyMap()
         }
         // Unknown names are skipped so an older build can still read data written by a newer one.

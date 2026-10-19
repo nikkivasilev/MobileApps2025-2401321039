@@ -30,15 +30,21 @@ data class ProgressUiState(
 ) {
     val parsedWeight: Double? get() = weightInput.toAmountOrNull()?.takeIf { it in 20.0..400.0 }
     val latestWeight: WeightEntry? get() = weights.lastOrNull()
-    val weightChange: Double? get() = if (weights.size >= 2) weights.last().weightKg - weights.first().weightKg else null
+    val weightChange: Double? get() = if (weights.size >= 2) {
+        weights.last().weightKg - weights.first().weightKg
+    } else {
+        null
+    }
 
     private val loggedDays: List<DayTotal> get() = week.filter { it.total.kcal > 0 }
     val averageKcal: Double? get() = loggedDays.takeIf { it.isNotEmpty() }?.map { it.total.kcal }?.average()
     val averageProtein: Double? get() = loggedDays.takeIf { it.isNotEmpty() }?.map { it.total.protein }?.average()
 
     val averageSleepHours: Double? get() = sleepWeek.takeIf { it.isNotEmpty() }?.map { it.hours }?.average()
-    val averageSleepQuality: Double? get() = sleepWeek.takeIf { it.isNotEmpty() }?.map { it.quality.toDouble() }?.average()
-    val averageWaterMl: Double? get() = waterWeek.filter { it.totalMl > 0 }.takeIf { it.isNotEmpty() }?.map { it.totalMl.toDouble() }?.average()
+    val averageSleepQuality: Double?
+        get() = sleepWeek.takeIf { it.isNotEmpty() }?.map { it.quality.toDouble() }?.average()
+    val averageWaterMl: Double?
+        get() = waterWeek.filter { it.totalMl > 0 }.takeIf { it.isNotEmpty() }?.map { it.totalMl.toDouble() }?.average()
 
     /** Best estimated 1RM per workout, oldest first: the line on the strength chart. */
     val sessions: List<ExerciseSession>
@@ -56,7 +62,10 @@ data class ProgressUiState(
     val bestRecord: SetRecord? get() = records.maxByOrNull { it.estimated1Rm }
 }
 
-data class DayTotal(val date: LocalDate, val total: Macros)
+data class DayTotal(
+    val date: LocalDate,
+    val total: Macros,
+)
 
 data class ExerciseSession(
     val date: LocalDate,

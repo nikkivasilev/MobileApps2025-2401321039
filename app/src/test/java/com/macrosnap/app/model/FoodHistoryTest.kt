@@ -1,10 +1,10 @@
 package com.macrosnap.app.model
 
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 class FoodHistoryTest {
 
@@ -42,13 +42,18 @@ class FoodHistoryTest {
 
     @Test
     fun `nutrition comes from the newest entry so corrections stick`() {
-        val foods = FoodHistory.build(listOf(entry("Milk", 250.0, 5, kcal = 90.0), entry("Milk", 250.0, 1, kcal = 64.0)), now = now)
+        val foods = FoodHistory.build(
+            listOf(entry("Milk", 250.0, 5, kcal = 90.0), entry("Milk", 250.0, 1, kcal = 64.0)),
+            now = now,
+        )
         assertEquals(64.0, foods.single().item.per100g.kcal, 0.0)
     }
 
     @Test
     fun `frequent and recent foods rank first`() {
-        val entries = List(5) { entry("Milk", 250.0, it) } + entry("Birthday cake", 120.0, 0) + List(5) { entry("Oats", 50.0, 200 + it) }
+        val entries = List(5) {
+            entry("Milk", 250.0, it)
+        } + entry("Birthday cake", 120.0, 0) + List(5) { entry("Oats", 50.0, 200 + it) }
         val order = FoodHistory.build(entries, now = now).map { it.key }
         assertEquals(listOf("milk", "birthday cake", "oats"), order)
     }
@@ -59,7 +64,10 @@ class FoodHistoryTest {
         assertTrue(FoodHistory.build(entries, hidden = mapOf("birthday cake" to now - 1 * day), now = now).isEmpty())
 
         val loggedAgain = entries + entry("Birthday cake", 120.0, 0)
-        assertEquals(1, FoodHistory.build(loggedAgain, hidden = mapOf("birthday cake" to now - 1 * day), now = now).size)
+        assertEquals(
+            1,
+            FoodHistory.build(loggedAgain, hidden = mapOf("birthday cake" to now - 1 * day), now = now).size,
+        )
     }
 
     @Test

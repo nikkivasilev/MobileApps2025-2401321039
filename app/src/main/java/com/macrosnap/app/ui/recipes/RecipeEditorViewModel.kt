@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val MAX_SERVINGS_DIGITS = 3
+
 @Stable
 interface RecipeEditorActions {
     fun onNameChange(name: String)
@@ -58,7 +60,8 @@ class RecipeEditorViewModel(
     private val recipeRepository: RecipeRepository,
     private val foodAnalyzer: FoodAnalyzer,
     foodRepository: FoodRepository,
-) : ViewModel(), RecipeEditorActions {
+) : ViewModel(),
+    RecipeEditorActions {
 
     private val route = savedStateHandle.toRoute<RecipeEditorRoute>()
     private var nextDraftId = 0L
@@ -95,17 +98,26 @@ class RecipeEditorViewModel(
 
     override fun onNameChange(name: String) = _uiState.update { it.copy(name = name) }
 
-    override fun onServingsChange(value: String) = _uiState.update { it.copy(servingsInput = value.filter(Char::isDigit).take(3)) }
+    override fun onServingsChange(value: String) = _uiState.update {
+        it.copy(servingsInput = value.filter(Char::isDigit).take(MAX_SERVINGS_DIGITS))
+    }
 
     override fun onCookedWeightChange(value: String) = _uiState.update { it.copy(cookedWeightInput = value) }
 
     override fun onDescribeChange(text: String) = _uiState.update {
-        it.copy(describeInput = text, describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus)
+        it.copy(
+            describeInput = text,
+            describeStatus = if (it.describeStatus is DescribeStatus.Failed) DescribeStatus.Idle else it.describeStatus,
+        )
     }
 
     override fun onSuggestionClick(food: PastFood) = _uiState.update { state ->
         val (item, remaining) = acceptSuggestion(state.describeInput, food)
-        state.copy(ingredients = state.ingredients + DraftItem(nextDraftId++, item), describeInput = remaining, describeStatus = DescribeStatus.Idle)
+        state.copy(
+            ingredients = state.ingredients + DraftItem(nextDraftId++, item),
+            describeInput = remaining,
+            describeStatus = DescribeStatus.Idle,
+        )
     }
 
     override fun onDescribeSubmit() {
@@ -118,7 +130,9 @@ class RecipeEditorViewModel(
                     state.copy(
                         describeInput = "",
                         describeStatus = DescribeStatus.Idle,
-                        ingredients = state.ingredients + outcome.value.items.map { DraftItem(nextDraftId++, it.item, it.confidence) },
+                        ingredients = state.ingredients + outcome.value.items.map {
+                            DraftItem(nextDraftId++, it.item, it.confidence)
+                        },
                     )
                 }
                 is Outcome.Failure -> _uiState.update { it.copy(describeStatus = DescribeStatus.Failed(outcome.error)) }
@@ -135,7 +149,9 @@ class RecipeEditorViewModel(
         )
     }
 
-    override fun onIngredientClick(draft: DraftItem) = _uiState.update { it.copy(editor = EditorTarget.Existing(draft)) }
+    override fun onIngredientClick(draft: DraftItem) = _uiState.update {
+        it.copy(editor = EditorTarget.Existing(draft))
+    }
 
     override fun onAddIngredientClick() = _uiState.update { it.copy(editor = EditorTarget.NewItem) }
 
@@ -145,7 +161,9 @@ class RecipeEditorViewModel(
 
     override fun onEditorSave(item: FoodItem) = _uiState.update { state ->
         val ingredients = when (val target = state.editor) {
-            is EditorTarget.Existing -> state.ingredients.map { if (it.id == target.draft.id) it.copy(item = item) else it }
+            is EditorTarget.Existing -> state.ingredients.map {
+                if (it.id == target.draft.id) it.copy(item = item) else it
+            }
             EditorTarget.NewItem, null -> state.ingredients + DraftItem(nextDraftId++, item)
         }
         state.copy(ingredients = ingredients, editor = null)
@@ -189,7 +207,12 @@ class RecipeEditorViewModel(
 
         val Factory = viewModelFactory {
             initializer {
-                RecipeEditorViewModel(createSavedStateHandle(), appContainer.recipeRepository, appContainer.foodAnalyzer, appContainer.foodRepository)
+                RecipeEditorViewModel(
+                    createSavedStateHandle(),
+                    appContainer.recipeRepository,
+                    appContainer.foodAnalyzer,
+                    appContainer.foodRepository,
+                )
             }
         }
     }

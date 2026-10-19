@@ -18,7 +18,10 @@ interface WellnessDao {
     @Insert
     suspend fun insertWater(log: WaterLogEntity)
 
-    @Query("DELETE FROM water_logs WHERE id = (SELECT id FROM water_logs WHERE epochDay = :epochDay ORDER BY loggedAt DESC, id DESC LIMIT 1)")
+    @Query(
+        "DELETE FROM water_logs WHERE id = (SELECT id FROM water_logs WHERE epochDay = :epochDay " +
+            "ORDER BY loggedAt DESC, id DESC LIMIT 1)",
+    )
     suspend fun deleteLatestWater(epochDay: Long)
 
     @Query("SELECT * FROM sleep_logs WHERE epochDay = :epochDay")

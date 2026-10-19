@@ -68,9 +68,9 @@ import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.components.AppCard
 import com.macrosnap.app.ui.components.CardHeader
 import com.macrosnap.app.ui.components.formatSleepDuration
-import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.currentLocale
 import com.macrosnap.app.ui.formatted
+import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
 import com.macrosnap.app.ui.whole
 import com.macrosnap.app.ui.workouts.displayName
@@ -119,7 +119,11 @@ private fun StrengthCard(uiState: ProgressUiState, onExerciseSelect: (Exercise) 
                 title = stringResource(R.string.progress_strength_title),
                 icon = AppIcons.Dumbbell,
                 tint = MaterialTheme.colorScheme.onSurface,
-                subtitle = pluralStringResource(R.plurals.progress_workouts_this_week, uiState.workoutDays.size, uiState.workoutDays.size),
+                subtitle = pluralStringResource(
+                    R.plurals.progress_workouts_this_week,
+                    uiState.workoutDays.size,
+                    uiState.workoutDays.size,
+                ),
             )
             if (uiState.trainedExercises.isEmpty()) {
                 Text(
@@ -188,7 +192,11 @@ private fun StrengthCard(uiState: ProgressUiState, onExerciseSelect: (Exercise) 
                                 ((last.best1Rm / first.best1Rm - 1) * 100).whole(),
                             )
                         } else {
-                            stringResource(R.string.progress_last_session, last.topWeight.compact(), last.volume.whole())
+                            stringResource(
+                                R.string.progress_last_session,
+                                last.topWeight.compact(),
+                                last.volume.whole(),
+                            )
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -203,7 +211,11 @@ private fun StrengthCard(uiState: ProgressUiState, onExerciseSelect: (Exercise) 
                 )
                 sessions.lastOrNull()?.let { last ->
                     Text(
-                        text = stringResource(R.string.progress_last_cardio, (last.distanceM / 1000).compact(), last.durationSec / 60),
+                        text = stringResource(
+                            R.string.progress_last_cardio,
+                            (last.distanceM / 1000).compact(),
+                            last.durationSec / 60,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -225,15 +237,24 @@ private fun LineChart(values: List<Double>, lineColor: Color) {
         val span = (values.max() - min).coerceAtLeast(1.0)
         val inset = 6.dp.toPx()
         fun pointAt(index: Int) = Offset(
-            x = if (values.size == 1) size.width / 2 else inset + index.toFloat() / (values.size - 1) * (size.width - 2 * inset),
+            x = if (values.size == 1) {
+                size.width / 2
+            } else {
+                inset + index.toFloat() / (values.size - 1) * (size.width - 2 * inset)
+            },
             y = size.height - inset - ((values[index] - min) / span).toFloat() * (size.height - 2 * inset),
         )
         val path = Path()
-        values.indices.forEach { i -> val p = pointAt(i); if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y) }
+        values.indices.forEach { i ->
+            val p = pointAt(i)
+            if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
+        }
         drawAreaUnder(path, pointAt(0).x, pointAt(values.lastIndex).x, lineColor)
         drawPath(path, lineColor, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-        values.indices.forEach { drawCircle(lineColor, radius = 4.dp.toPx(), center = pointAt(it))
-        values.indices.forEach { drawCircle(cardColor, radius = 2.dp.toPx(), center = pointAt(it)) } }
+        values.indices.forEach {
+            drawCircle(lineColor, radius = 4.dp.toPx(), center = pointAt(it))
+            values.indices.forEach { drawCircle(cardColor, radius = 2.dp.toPx(), center = pointAt(it)) }
+        }
     }
 }
 
@@ -299,7 +320,9 @@ private fun WaterWeekCard(uiState: ProgressUiState) {
             } else {
                 EmptyHint(stringResource(R.string.progress_water_empty))
             }
-            val days = uiState.waterWeek.map { it.date }.ifEmpty { (6 downTo 0).map { LocalDate.now().minusDays(it.toLong()) } }
+            val days = uiState.waterWeek.map {
+                it.date
+            }.ifEmpty { (6 downTo 0).map { LocalDate.now().minusDays(it.toLong()) } }
             WeekBars(
                 days = days,
                 values = uiState.waterWeek.map { it.totalMl / 1000.0 }.ifEmpty { days.map { 0.0 } },
@@ -384,7 +407,9 @@ private fun WeekBars(
             }
             values.forEachIndexed { index, value ->
                 // Never shorter than it is wide, so a small value still reads as a rounded bar.
-                val barHeight = ((value / maxValue).toFloat() * size.height).let { if (it > 0f) it.coerceAtLeast(barWidth) else 0f }
+                val barHeight = ((value / maxValue).toFloat() * size.height).let {
+                    if (it > 0f) it.coerceAtLeast(barWidth) else 0f
+                }
                 if (barHeight > 0f) {
                     val color = when {
                         overIsBad && value > goal * 1.05 -> overColor
@@ -437,7 +462,11 @@ private fun WeightCard(
 
     AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CardHeader(title = stringResource(R.string.progress_weight_title), icon = AppIcons.Scale, tint = MaterialTheme.colorScheme.onSurface)
+            CardHeader(
+                title = stringResource(R.string.progress_weight_title),
+                icon = AppIcons.Scale,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
 
             val latest = uiState.latestWeight
             if (latest != null) {
@@ -445,7 +474,10 @@ private fun WeightCard(
                 HeadlineStat(
                     value = stringResource(R.string.amount_kg, latest.weightKg.compact()),
                     caption = if (change != null) {
-                        stringResource(R.string.progress_weight_change, "${if (change > 0) "+" else ""}${change.compact()}")
+                        stringResource(
+                            R.string.progress_weight_change,
+                            "${if (change > 0) "+" else ""}${change.compact()}",
+                        )
                     } else {
                         stringResource(R.string.progress_weight_latest)
                     },
@@ -461,11 +493,15 @@ private fun WeightCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
                 )
-                Button(onClick = onLog, enabled = uiState.parsedWeight != null) { Text(stringResource(R.string.progress_log_weight)) }
+                Button(onClick = onLog, enabled = uiState.parsedWeight != null) {
+                    Text(stringResource(R.string.progress_log_weight))
+                }
             }
             TextButton(onClick = { showDatePicker = true }, contentPadding = PaddingValues(0.dp)) {
                 Text(
-                    uiState.weightDate?.let { stringResource(R.string.progress_weight_for_date, it.formatted(DatePatterns.SHORT)) }
+                    uiState.weightDate?.let {
+                        stringResource(R.string.progress_weight_for_date, it.formatted(DatePatterns.SHORT))
+                    }
                         ?: stringResource(R.string.progress_weight_for_today),
                 )
             }
@@ -476,9 +512,15 @@ private fun WeightCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val date = entry.date.formatted(DatePatterns.SHORT)
                     Text(date, modifier = Modifier.weight(1f))
-                    Text(stringResource(R.string.amount_kg, entry.weightKg.compact()), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.amount_kg, entry.weightKg.compact()),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
                     IconButton(onClick = { onDelete(entry.date) }) {
-                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.progress_delete_weight, date))
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.progress_delete_weight, date),
+                        )
                     }
                 }
             }
@@ -513,7 +555,9 @@ private fun WeightDatePicker(initial: LocalDate, onPick: (LocalDate) -> Unit, on
         confirmButton = {
             TextButton(
                 onClick = {
-                    state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
+                    state.selectedDateMillis?.let {
+                        onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
+                    }
                         ?: onDismiss()
                 },
             ) { Text(stringResource(R.string.action_ok)) }

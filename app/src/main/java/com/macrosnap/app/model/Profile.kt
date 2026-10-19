@@ -22,7 +22,10 @@ enum class ActivityLevel(val multiplier: Double) {
     VERY_ACTIVE(1.9),
 }
 
-enum class GoalType(val calorieFactor: Double, val proteinPerKg: Double) {
+enum class GoalType(
+    val calorieFactor: Double,
+    val proteinPerKg: Double,
+) {
     LOSE(0.80, 2.0),
     MAINTAIN(1.00, 1.8),
     GAIN(1.10, 1.8),

@@ -8,7 +8,7 @@ import com.macrosnap.app.data.remote.GenerateContentResponse
 import com.macrosnap.app.data.remote.GenerationConfig
 import com.macrosnap.app.data.remote.InlineData
 import com.macrosnap.app.data.remote.toDataError
-import com.macrosnap.app.data.settings.SettingsStore
+import com.macrosnap.app.data.settings.AppSettings
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.Confidence
 import com.macrosnap.app.model.DataError
@@ -19,7 +19,9 @@ import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.SupplementAnalysis
+import java.io.IOException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -31,11 +33,15 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
-import java.io.IOException
+
+/** No single item on a plate weighs more than this; larger estimates are model slips. */
+private const val MAX_ITEM_GRAMS = 5000.0
+private const val MAX_KCAL_PER_100G = 900.0
 
 class GeminiFoodAnalyzer(
     private val api: GeminiApi,
-    private val settingsStore: SettingsStore,
+    /** The app's settings; the analyzer reads the API key and model list from the latest value. */
+    private val settings: Flow<AppSettings>,
     private val imageEncoder: ImageEncoder,
     private val json: Json,
     /** English name of the UI language ("Bulgarian"), for item names when the user wrote nothing. */
@@ -47,7 +53,7 @@ class GeminiFoodAnalyzer(
         // entered items, and a full-resolution camera file is far too big to keep per meal.
         val imageBase64 = try {
             imageEncoder.shrinkAndEncode(photoPath)
-        } catch (e: IOException) {
+        } catch (ignored: IOException) {
             return Outcome.Failure(DataError.BadImage)
         }
         val prompt = buildString {
@@ -73,7 +79,11 @@ class GeminiFoodAnalyzer(
         return generate(listOf(GeminiPart(text = prompt)), SUPPLEMENT_SCHEMA).flatMap(::parseSupplement)
     }
 
-    override suspend fun estimateProductMicros(productName: String, brand: String?, quantity: String?): Outcome<Micros> {
+    override suspend fun estimateProductMicros(
+        productName: String,
+        brand: String?,
+        quantity: String?,
+    ): Outcome<Micros> {
         val product = buildString {
             append("Product name: \"").append(productName.trim()).append('"')
             if (!brand.isNullOrBlank()) append("\nBrand: ").append(brand.trim())
@@ -84,8 +94,9 @@ class GeminiFoodAnalyzer(
     }
 
     /** Runs one structured-output request, falling through the configured models on quota errors. */
+    @Suppress("TooGenericExceptionCaught") // Any failure is reported to the user as a DataError.
     private suspend fun generate(parts: List<GeminiPart>, schema: JsonObject): Outcome<String> {
-        val settings = settingsStore.settings.first()
+        val settings = settings.first()
         if (settings.apiKey.isBlank()) return Outcome.Failure(DataError.NoApiKey)
 
         val request = GenerateContentRequest(
@@ -134,7 +145,7 @@ class GeminiFoodAnalyzer(
     private fun parseFood(text: String): Outcome<AnalysisResult> {
         val dto = try {
             json.decodeFromString<AnalysisDto>(text)
-        } catch (e: SerializationException) {
+        } catch (ignored: SerializationException) {
             return Outcome.Failure(DataError.Unexpected("The model's answer could not be read"))
         }
         if (!dto.isFood || dto.items.isEmpty()) return Outcome.Failure(DataError.NotFood)
@@ -149,7 +160,7 @@ class GeminiFoodAnalyzer(
     private fun parseSupplement(text: String): Outcome<SupplementAnalysis> {
         val dto = try {
             json.decodeFromString<SupplementDto>(text)
-        } catch (e: SerializationException) {
+        } catch (ignored: SerializationException) {
             return Outcome.Failure(DataError.Unexpected("The model's answer could not be read"))
         }
         if (!dto.isSupplement || dto.name.isBlank()) return Outcome.Failure(DataError.NotFood)
@@ -166,7 +177,7 @@ class GeminiFoodAnalyzer(
     private fun parseProductMicros(text: String): Outcome<Micros> {
         val dto = try {
             json.decodeFromString<ProductMicrosDto>(text)
-        } catch (e: SerializationException) {
+        } catch (ignored: SerializationException) {
             return Outcome.Failure(DataError.Unexpected("The model's answer could not be read"))
         }
         return Outcome.Success(dto.nutrients.toMicros())
@@ -295,18 +306,31 @@ class GeminiFoodAnalyzer(
                             putJsonObject("fat_per_100g") { put("type", "NUMBER") }
                             putJsonObject("confidence") {
                                 put("type", "STRING")
-                                putJsonArray("enum") { add("low"); add("medium"); add("high") }
+                                putJsonArray("enum") {
+                                    add("low")
+                                    add("medium")
+                                    add("high")
+                                }
                             }
                             put("nutrients_per_100g", NUTRIENTS_SCHEMA)
                         }
                         putJsonArray("required") {
-                            add("name"); add("grams"); add("kcal_per_100g"); add("protein_per_100g")
-                            add("carbs_per_100g"); add("fat_per_100g"); add("confidence"); add("nutrients_per_100g")
+                            add("name")
+                            add("grams")
+                            add("kcal_per_100g")
+                            add("protein_per_100g")
+                            add("carbs_per_100g")
+                            add("fat_per_100g")
+                            add("confidence")
+                            add("nutrients_per_100g")
                         }
                     }
                 }
             }
-            putJsonArray("required") { add("is_food"); add("items") }
+            putJsonArray("required") {
+                add("is_food")
+                add("items")
+            }
         }
 
         val PRODUCT_MICROS_SCHEMA: JsonObject = buildJsonObject {
@@ -326,7 +350,12 @@ class GeminiFoodAnalyzer(
                 put("nutrients_per_dose", NUTRIENTS_SCHEMA)
                 putJsonObject("notes") { put("type", "STRING") }
             }
-            putJsonArray("required") { add("is_supplement"); add("name"); add("dose_label"); add("nutrients_per_dose") }
+            putJsonArray("required") {
+                add("is_supplement")
+                add("name")
+                add("dose_label")
+                add("nutrients_per_dose")
+            }
         }
     }
 }
@@ -360,9 +389,9 @@ private data class AnalysisItemDto(
     fun toDetectedItem() = DetectedItem(
         item = FoodItem(
             name = name.trim().replaceFirstChar { it.uppercase() },
-            grams = grams.coerceIn(1.0, 5000.0),
+            grams = grams.coerceIn(1.0, MAX_ITEM_GRAMS),
             per100g = Macros(
-                kcal = kcalPer100g.coerceIn(0.0, 900.0),
+                kcal = kcalPer100g.coerceIn(0.0, MAX_KCAL_PER_100G),
                 protein = proteinPer100g.coerceIn(0.0, 100.0),
                 carbs = carbsPer100g.coerceIn(0.0, 100.0),
                 fat = fatPer100g.coerceIn(0.0, 100.0),
@@ -378,9 +407,7 @@ private data class AnalysisItemDto(
 }
 
 @Serializable
-private data class ProductMicrosDto(
-    @SerialName("nutrients_per_100g") val nutrients: Map<String, Double>? = null,
-)
+private data class ProductMicrosDto(@SerialName("nutrients_per_100g") val nutrients: Map<String, Double>? = null)
 
 @Serializable
 private data class SupplementDto(

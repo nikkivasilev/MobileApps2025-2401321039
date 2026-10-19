@@ -4,12 +4,14 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+const val MAX_SLEEP_QUALITY = 5
+
 /** One night's sleep, filed under the morning you woke up. */
 data class SleepLog(
     val date: LocalDate,
     val bedtime: LocalDateTime,
     val wakeTime: LocalDateTime,
-    /** 1 (terrible) to 5 (great). */
+    /** 1 (terrible) to [MAX_SLEEP_QUALITY] (great). */
     val quality: Int,
 ) {
     val minutes: Long get() = Duration.between(bedtime, wakeTime).toMinutes().coerceAtLeast(0)

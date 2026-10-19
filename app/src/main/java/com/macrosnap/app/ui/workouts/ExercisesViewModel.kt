@@ -46,7 +46,13 @@ data class ExerciseEditorState(
         val trimmed = name.trim().takeIf { it.isNotEmpty() } ?: return null
         val name = if (!isNew && trimmed == shownName) storedName else trimmed
         val sets = parseDefaultSets(setsInput) ?: return null
-        val reps = if (type == ExerciseType.CARDIO) parseDefaultReps(repsInput) ?: originalReps else parseDefaultReps(repsInput) ?: return null
+        val reps = if (type == ExerciseType.CARDIO) {
+            parseDefaultReps(
+                repsInput,
+            ) ?: originalReps
+        } else {
+            parseDefaultReps(repsInput) ?: return null
+        }
         return Exercise(id, name, group, type, isCustom, sets, reps)
     }
 
@@ -57,7 +63,9 @@ data class ExerciseEditorState(
             name = name,
             group = group ?: MuscleGroup.OTHER,
             type = if (group == MuscleGroup.CARDIO) ExerciseType.CARDIO else ExerciseType.STRENGTH,
-            setsInput = defaultSetsFor(if (group == MuscleGroup.CARDIO) ExerciseType.CARDIO else ExerciseType.STRENGTH).toString(),
+            setsInput = defaultSetsFor(
+                if (group == MuscleGroup.CARDIO) ExerciseType.CARDIO else ExerciseType.STRENGTH,
+            ).toString(),
             repsInput = Exercise.DEFAULT_REPS.toString(),
         )
 
@@ -89,11 +97,18 @@ data class ExercisesUiState(
     fun filtered(displayNames: Map<Long, String>): List<Exercise> {
         val trimmed = query.trim()
         return exercises.filter { exercise ->
-            (groupFilter == null || exercise.muscleGroup == groupFilter) && exercise.matches(trimmed, displayNames[exercise.id].orEmpty())
+            (groupFilter == null || exercise.muscleGroup == groupFilter) &&
+                exercise.matches(
+                    trimmed,
+                    displayNames[exercise.id].orEmpty(),
+                )
         }.sortedByDisplayName(displayNames)
     }
 
-    /** Another exercise already has the editor's name; two identical entries would be indistinguishable in the picker. */
+    /**
+     * Another exercise already has the editor's name; two identical entries would be
+     * indistinguishable in the picker.
+     */
     val editorNameTaken: Boolean
         get() {
             val editor = editor ?: return false
@@ -112,6 +127,7 @@ sealed interface ExercisesEffect {
 interface ExercisesActions {
     fun onQueryChange(query: String)
     fun onGroupFilterChange(group: MuscleGroup?)
+
     /** [name] pre-fills the editor; the screen passes the search when it found nothing. */
     fun onNewClick(name: String)
     fun onExerciseClick(exercise: Exercise, displayName: String)
@@ -123,7 +139,9 @@ interface ExercisesActions {
     fun onDeleteDismiss()
 }
 
-class ExercisesViewModel(private val workoutRepository: WorkoutRepository) : ViewModel(), ExercisesActions {
+class ExercisesViewModel(private val workoutRepository: WorkoutRepository) :
+    ViewModel(),
+    ExercisesActions {
 
     private val _uiState = MutableStateFlow(ExercisesUiState())
     val uiState: StateFlow<ExercisesUiState> = _uiState.asStateFlow()

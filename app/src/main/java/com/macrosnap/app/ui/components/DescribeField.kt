@@ -73,7 +73,10 @@ fun DescribeField(
             placeholder = { Text(placeholder) },
             supportingText = {
                 when (status) {
-                    is DescribeStatus.Failed -> Text(status.error.userMessage(), color = MaterialTheme.colorScheme.error)
+                    is DescribeStatus.Failed -> Text(
+                        status.error.userMessage(),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                     DescribeStatus.Loading -> Text(stringResource(R.string.today_describe_loading))
                     DescribeStatus.Idle -> Text(hint)
                 }
@@ -85,7 +88,10 @@ fun DescribeField(
                     TextButton(onClick = onSubmit, enabled = canSubmit) { Text(stringResource(R.string.action_add)) }
                 }
             },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Send,
+            ),
             keyboardActions = KeyboardActions(onSend = { if (canSubmit) onSubmit() }),
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth(),
@@ -113,7 +119,11 @@ fun PastFoodRow(food: PastFood, onClick: () -> Unit, modifier: Modifier = Modifi
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
                 Text(
-                    text = stringResource(R.string.today_past_food_amount, food.item.grams.whole(), food.item.total.kcal.whole()),
+                    text = stringResource(
+                        R.string.today_past_food_amount,
+                        food.item.grams.whole(),
+                        food.item.total.kcal.whole(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

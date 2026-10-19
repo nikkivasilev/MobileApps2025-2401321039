@@ -40,7 +40,11 @@ class ProductRepositoryTest {
         override suspend fun analyzePhoto(photoPath: String, hint: String?): Outcome<AnalysisResult> = error("unused")
         override suspend fun analyzeText(description: String): Outcome<AnalysisResult> = error("unused")
         override suspend fun analyzeSupplement(description: String): Outcome<SupplementAnalysis> = error("unused")
-        override suspend fun estimateProductMicros(productName: String, brand: String?, quantity: String?): Outcome<Micros> {
+        override suspend fun estimateProductMicros(
+            productName: String,
+            brand: String?,
+            quantity: String?,
+        ): Outcome<Micros> {
             calls++
             return estimate
         }
@@ -57,8 +61,11 @@ class ProductRepositoryTest {
         quantity = "250 ml",
     )
 
-    private fun repository(product: OffProduct?, analyzer: FakeAnalyzer = FakeAnalyzer(Outcome.Success(emptyMap())), cache: FakeCache = FakeCache()) =
-        ProductRepository(FakeApi(product), cache, analyzer)
+    private fun repository(
+        product: OffProduct?,
+        analyzer: FakeAnalyzer = FakeAnalyzer(Outcome.Success(emptyMap())),
+        cache: FakeCache = FakeCache(),
+    ) = ProductRepository(FakeApi(product), cache, analyzer)
 
     private suspend fun ProductRepository.scan(): ScannedProduct = (lookup("90415425") as Outcome.Success).value
 
@@ -68,8 +75,14 @@ class ProductRepositoryTest {
         val scanned = repository(
             product(
                 nutriments(
-                    "energy-kcal_100g" to 2, "energy-kj_100g" to 9, "proteins_100g" to 0, "carbohydrates_100g" to 0,
-                    "fat_100g" to 0, "caffeine_100g" to 0.032, "vitamin-pp_100g" to 0.008, "pantothenic-acid_100g" to 0.002,
+                    "energy-kcal_100g" to 2,
+                    "energy-kj_100g" to 9,
+                    "proteins_100g" to 0,
+                    "carbohydrates_100g" to 0,
+                    "fat_100g" to 0,
+                    "caffeine_100g" to 0.032,
+                    "vitamin-pp_100g" to 0.008,
+                    "pantothenic-acid_100g" to 0.002,
                 ),
             ),
         ).scan()
@@ -86,7 +99,17 @@ class ProductRepositoryTest {
 
     @Test
     fun `kcal field holding kJ is converted`() = runTest {
-        val scanned = repository(product(nutriments("energy-kcal_100g" to 192, "energy-kj_100g" to 192, "carbohydrates_100g" to 11, "proteins_100g" to 0, "fat_100g" to 0))).scan()
+        val scanned = repository(
+            product(
+                nutriments(
+                    "energy-kcal_100g" to 192,
+                    "energy-kj_100g" to 192,
+                    "carbohydrates_100g" to 11,
+                    "proteins_100g" to 0,
+                    "fat_100g" to 0,
+                ),
+            ),
+        ).scan()
 
         assertEquals(192 / 4.184, scanned.item.per100g.kcal, 0.01)
         assertEquals(1, scanned.warnings.size)
@@ -95,7 +118,17 @@ class ProductRepositoryTest {
     @Test
     fun `kcal that disagrees with kJ falls back to the value the macros support`() = runTest {
         // 330 "kcal" per 100 ml × 250 ml would log 825 kcal for a sugar-free can.
-        val scanned = repository(product(nutriments("energy-kcal_100g" to 330, "energy-kj_100g" to 13, "proteins_100g" to 0, "carbohydrates_100g" to 0, "fat_100g" to 0))).scan()
+        val scanned = repository(
+            product(
+                nutriments(
+                    "energy-kcal_100g" to 330,
+                    "energy-kj_100g" to 13,
+                    "proteins_100g" to 0,
+                    "carbohydrates_100g" to 0,
+                    "fat_100g" to 0,
+                ),
+            ),
+        ).scan()
 
         assertEquals(13 / 4.184, scanned.item.per100g.kcal, 0.01)
         assertTrue(scanned.item.total.kcal < 10)
@@ -104,7 +137,11 @@ class ProductRepositoryTest {
 
     @Test
     fun `kcal the macros cannot explain is flagged but kept`() = runTest {
-        val scanned = repository(product(nutriments("energy-kcal_100g" to 330, "proteins_100g" to 0, "carbohydrates_100g" to 0, "fat_100g" to 0))).scan()
+        val scanned = repository(
+            product(
+                nutriments("energy-kcal_100g" to 330, "proteins_100g" to 0, "carbohydrates_100g" to 0, "fat_100g" to 0),
+            ),
+        ).scan()
 
         assertEquals(330.0, scanned.item.per100g.kcal, 0.001)
         assertEquals(1, scanned.warnings.size)
@@ -156,7 +193,9 @@ class ProductRepositoryTest {
 
     @Test
     fun `numbers sent as strings are still read`() = runTest {
-        val raw = Json.parseToJsonElement("""{"energy-kcal_100g":"45","proteins_100g":"0","carbohydrates_100g":"11","fat_100g":"0"}""").jsonObject
+        val raw = Json.parseToJsonElement(
+            """{"energy-kcal_100g":"45","proteins_100g":"0","carbohydrates_100g":"11","fat_100g":"0"}""",
+        ).jsonObject
         val scanned = repository(product(raw)).scan()
 
         assertEquals(45.0, scanned.item.per100g.kcal, 0.001)

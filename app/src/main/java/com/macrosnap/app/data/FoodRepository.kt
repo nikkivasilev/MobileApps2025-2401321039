@@ -15,6 +15,8 @@ import com.macrosnap.app.model.MealType
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.PastMeal
 import com.macrosnap.app.model.PendingPhoto
+import java.io.File
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,8 +24,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.io.File
-import java.time.LocalDate
 
 class FoodRepository(
     private val foodDao: FoodDao,
@@ -33,10 +33,14 @@ class FoodRepository(
 ) {
 
     /** Every food logged before, one per name, most useful first; see [FoodHistory.build]. */
-    fun observePastFoods(): Flow<List<PastFood>> =
-        combine(foodDao.observeAll(), settingsStore.settings.map { it.hiddenFoods }.distinctUntilChanged()) { rows, hidden ->
-            FoodHistory.build(rows.map { it.toModel() }, hidden)
-        }
+    fun observePastFoods(): Flow<List<PastFood>> = combine(
+        foodDao.observeAll(),
+        settingsStore.settings.map {
+            it.hiddenFoods
+        }.distinctUntilChanged(),
+    ) { rows, hidden ->
+        FoodHistory.build(rows.map { it.toModel() }, hidden)
+    }
 
     /** Looks a past food up by key, including hidden ones: the caller already chose it. */
     suspend fun pastFood(key: String): PastFood? =
@@ -45,10 +49,14 @@ class FoodRepository(
     suspend fun hidePastFood(key: String) = settingsStore.hideFood(key)
 
     /** Meals eaten more than once with the same foods, most useful first; see [MealHistory.build]. */
-    fun observePastMeals(): Flow<List<PastMeal>> =
-        combine(foodDao.observeAll(), settingsStore.settings.map { it.hiddenMeals }.distinctUntilChanged()) { rows, hidden ->
-            MealHistory.build(rows.map { it.toModel() }, hidden)
-        }
+    fun observePastMeals(): Flow<List<PastMeal>> = combine(
+        foodDao.observeAll(),
+        settingsStore.settings.map {
+            it.hiddenMeals
+        }.distinctUntilChanged(),
+    ) { rows, hidden ->
+        MealHistory.build(rows.map { it.toModel() }, hidden)
+    }
 
     /** Looks a past meal up by key, including hidden ones: the caller already chose it. */
     suspend fun pastMeal(key: String): PastMeal? =
@@ -58,7 +66,9 @@ class FoodRepository(
 
     /** What was logged under one meal on one day, in the order it was logged. */
     suspend fun mealOn(date: LocalDate, mealType: MealType): List<FoodItem> =
-        foodDao.observeDay(date.toEpochDay()).first().map { it.toModel() }.filter { it.mealType == mealType }.map { it.item }
+        foodDao.observeDay(date.toEpochDay()).first().map {
+            it.toModel()
+        }.filter { it.mealType == mealType }.map { it.item }
 
     fun observeDay(date: LocalDate): Flow<List<FoodEntry>> =
         foodDao.observeDay(date.toEpochDay()).map { rows -> rows.map { it.toModel() } }
@@ -97,10 +107,9 @@ class FoodRepository(
     }
 
     /** Photos waiting to be analyzed again, oldest first; one whose file has gone is left out. */
-    fun observePendingPhotos(): Flow<List<PendingPhoto>> =
-        pendingPhotoDao.observeAll()
-            .map { rows -> rows.filter { File(it.photoPath).exists() }.map { it.toModel() } }
-            .flowOn(Dispatchers.IO)
+    fun observePendingPhotos(): Flow<List<PendingPhoto>> = pendingPhotoDao.observeAll()
+        .map { rows -> rows.filter { File(it.photoPath).exists() }.map { it.toModel() } }
+        .flowOn(Dispatchers.IO)
 
     suspend fun pendingPhoto(photoPath: String): PendingPhoto? = pendingPhotoDao.get(photoPath)?.toModel()
 

@@ -5,12 +5,12 @@ import com.macrosnap.app.data.local.WaterLogEntity
 import com.macrosnap.app.data.local.WellnessDao
 import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.WaterDay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class WellnessRepository(private val wellnessDao: WellnessDao) {
 
@@ -26,12 +26,15 @@ class WellnessRepository(private val wellnessDao: WellnessDao) {
             }.toList()
         }
 
-    suspend fun addWater(date: LocalDate, ml: Int) =
-        wellnessDao.insertWater(WaterLogEntity(epochDay = date.toEpochDay(), ml = ml, loggedAt = System.currentTimeMillis()))
+    suspend fun addWater(date: LocalDate, ml: Int) = wellnessDao.insertWater(
+        WaterLogEntity(epochDay = date.toEpochDay(), ml = ml, loggedAt = System.currentTimeMillis()),
+    )
 
     suspend fun undoWater(date: LocalDate) = wellnessDao.deleteLatestWater(date.toEpochDay())
 
-    fun observeSleep(date: LocalDate): Flow<SleepLog?> = wellnessDao.observeSleep(date.toEpochDay()).map { it?.toModel() }
+    fun observeSleep(date: LocalDate): Flow<SleepLog?> = wellnessDao.observeSleep(date.toEpochDay()).map {
+        it?.toModel()
+    }
 
     fun observeSleepRange(from: LocalDate, to: LocalDate): Flow<List<SleepLog>> =
         wellnessDao.observeSleepRange(from.toEpochDay(), to.toEpochDay()).map { rows -> rows.map { it.toModel() } }
@@ -55,6 +58,7 @@ private fun SleepLogEntity.toModel() = SleepLog(
     quality = quality,
 )
 
-private fun Long.toLocalDateTime(): LocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
+private fun Long.toLocalDateTime(): LocalDateTime =
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
 private fun LocalDateTime.toEpochMillis(): Long = atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

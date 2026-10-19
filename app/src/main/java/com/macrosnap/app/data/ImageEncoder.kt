@@ -5,13 +5,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Base64
 import androidx.exifinterface.media.ExifInterface
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import kotlin.math.max
 import kotlin.math.min
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 class ImageEncoder(private val io: CoroutineDispatcher) {
 

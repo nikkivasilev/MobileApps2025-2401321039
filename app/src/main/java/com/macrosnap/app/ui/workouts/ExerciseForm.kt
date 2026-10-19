@@ -53,7 +53,13 @@ fun ExerciseDetailsFields(
         // Wrapped rather than scrolled, so the selected group is always in view.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MuscleGroup.entries.forEach { option ->
-                FilterChip(colors = appChipColors(), shape = CircleShape, selected = group == option, onClick = { onGroupChange(option) }, label = { Text(option.label) })
+                FilterChip(
+                    selected = group == option,
+                    onClick = { onGroupChange(option) },
+                    label = { Text(option.label) },
+                    shape = CircleShape,
+                    colors = appChipColors(),
+                )
             }
         }
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -62,7 +68,17 @@ fun ExerciseDetailsFields(
                     selected = type == option,
                     onClick = { onTypeChange(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, ExerciseType.entries.size),
-                ) { Text(stringResource(if (option == ExerciseType.STRENGTH) R.string.workout_type_strength else R.string.workout_type_cardio)) }
+                ) {
+                    Text(
+                        stringResource(
+                            if (option == ExerciseType.STRENGTH) {
+                                R.string.workout_type_strength
+                            } else {
+                                R.string.workout_type_cardio
+                            },
+                        ),
+                    )
+                }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

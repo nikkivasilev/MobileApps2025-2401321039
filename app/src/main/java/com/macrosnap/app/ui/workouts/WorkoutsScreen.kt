@@ -75,7 +75,9 @@ fun WorkoutsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_gym)) },
-                actions = { TextButton(onClick = onOpenExercises) { Text(stringResource(R.string.workout_exercises_title)) } },
+                actions = {
+                    TextButton(onClick = onOpenExercises) { Text(stringResource(R.string.workout_exercises_title)) }
+                },
             )
         },
         floatingActionButton = {
@@ -111,10 +113,18 @@ fun WorkoutsScreen(
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 )
-                                Text(active.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
+                                Text(
+                                    active.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                )
                                 Text(
                                     text = stringResource(R.string.workout_minutes, active.durationMinutes) + " · " +
-                                        pluralStringResource(R.plurals.workout_sets_done, active.doneSets, active.doneSets),
+                                        pluralStringResource(
+                                            R.plurals.workout_sets_done,
+                                            active.doneSets,
+                                            active.doneSets,
+                                        ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 )
@@ -133,7 +143,9 @@ fun WorkoutsScreen(
 
             item(key = "routines-header") {
                 SectionTitle(stringResource(R.string.workout_routines)) {
-                    TextButton(onClick = { onOpenRoutine(RoutineEditorRoute()) }) { Text(stringResource(R.string.workout_new_routine)) }
+                    TextButton(onClick = {
+                        onOpenRoutine(RoutineEditorRoute())
+                    }) { Text(stringResource(R.string.workout_new_routine)) }
                 }
             }
             if (uiState.routines.isEmpty()) {
@@ -176,7 +188,9 @@ fun WorkoutsScreen(
                 }
             }
             items(uiState.history, key = { "workout-${it.id}" }) { workout ->
-                HistoryCard(workout = workout, burnKcal = uiState.burnKcal[workout.id], onClick = { onOpenWorkout(WorkoutRoute(workout.id)) })
+                HistoryCard(workout = workout, burnKcal = uiState.burnKcal[workout.id], onClick = {
+                    onOpenWorkout(WorkoutRoute(workout.id))
+                })
             }
         }
     }
@@ -192,13 +206,17 @@ private fun RoutineCard(routine: Routine, canStart: Boolean, onStart: () -> Unit
             Column(Modifier.weight(1f)) {
                 Text(routine.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = routine.exercises.map { it.exercise.displayName }.joinToString(" · ").ifEmpty { stringResource(R.string.workout_routine_no_exercises) },
+                    text = routine.exercises.map {
+                        it.exercise.displayName
+                    }.joinToString(" · ").ifEmpty { stringResource(R.string.workout_routine_no_exercises) },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                 )
             }
-            OutlinedButton(onClick = onStart, enabled = canStart && routine.exercises.isNotEmpty()) { Text(stringResource(R.string.workout_start_routine)) }
+            OutlinedButton(onClick = onStart, enabled = canStart && routine.exercises.isNotEmpty()) {
+                Text(stringResource(R.string.workout_start_routine))
+            }
         }
     }
 }
@@ -211,14 +229,20 @@ private fun HistoryCard(workout: Workout, burnKcal: Int?, onClick: () -> Unit) {
                 Text(workout.name, style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = workout.date.formatted(DatePatterns.SHORT) + " · " +
-                        workout.exercises.map { it.exercise.displayName }.joinToString(", ").ifEmpty { stringResource(R.string.workout_history_no_exercises) },
+                        workout.exercises.map {
+                            it.exercise.displayName
+                        }.joinToString(", ").ifEmpty { stringResource(R.string.workout_history_no_exercises) },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(stringResource(R.string.workout_minutes, workout.durationMinutes), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.workout_minutes, workout.durationMinutes),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
                 Text(
                     text = listOfNotNull(
                         pluralStringResource(R.plurals.workout_sets, workout.doneSets, workout.doneSets),

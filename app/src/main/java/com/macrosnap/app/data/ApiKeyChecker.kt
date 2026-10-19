@@ -8,6 +8,7 @@ import kotlinx.coroutines.CancellationException
 class ApiKeyChecker(private val api: GeminiApi) {
 
     /** Succeeds with the configured models the key can NOT use (empty means all good). */
+    @Suppress("TooGenericExceptionCaught") // Any failure is reported to the user as a DataError.
     suspend fun check(apiKey: String, configuredModels: List<String>): Outcome<List<String>> = try {
         val available = api.listModels(apiKey).models
             .filter { "generateContent" in it.supportedGenerationMethods }

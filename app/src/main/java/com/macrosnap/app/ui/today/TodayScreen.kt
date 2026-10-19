@@ -120,7 +120,10 @@ import java.io.File
 import java.time.LocalDate
 import java.time.format.TextStyle
 
-internal enum class AddMethod(val icon: ImageVector, @StringRes val labelRes: Int) {
+internal enum class AddMethod(
+    val icon: ImageVector,
+    @StringRes val labelRes: Int,
+) {
     CAMERA(AppIcons.Camera, R.string.today_method_camera),
     DESCRIBE(AppIcons.ChatBubble, R.string.today_method_describe),
     BARCODE(AppIcons.Barcode, R.string.today_method_barcode),
@@ -144,7 +147,9 @@ fun TodayScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    is TodayEffect.OpenPhotoReview -> onOpenReview(ReviewRoute(effect.epochDay, photoPath = effect.photoPath))
+                    is TodayEffect.OpenPhotoReview -> onOpenReview(
+                        ReviewRoute(effect.epochDay, photoPath = effect.photoPath),
+                    )
                     is TodayEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
@@ -173,12 +178,19 @@ fun TodayScreen(
                 pendingPhotoPath = target.path
                 takePicture.launch(target.uri)
             }
-            AddMethod.GALLERY -> pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            AddMethod.GALLERY -> pickPhoto.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+            )
             AddMethod.DESCRIBE -> onOpenReview(ReviewRoute(epochDay, describe = true))
             AddMethod.RECIPE -> showRecipePicker = true
             AddMethod.BARCODE -> {
                 val options = GmsBarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E)
+                    .setBarcodeFormats(
+                        Barcode.FORMAT_EAN_13,
+                        Barcode.FORMAT_EAN_8,
+                        Barcode.FORMAT_UPC_A,
+                        Barcode.FORMAT_UPC_E,
+                    )
                     .build()
                 GmsBarcodeScanning.getClient(context, options).startScan()
                     .addOnSuccessListener { barcode ->
@@ -201,9 +213,13 @@ fun TodayScreen(
         // copy is in view when the review screen closes.
         onCopyMeal = { mealType ->
             viewModel.onJumpToToday()
-            onOpenReview(ReviewRoute(LocalDate.now().toEpochDay(), copyMealEpochDay = epochDay, copyMealType = mealType.name))
+            onOpenReview(
+                ReviewRoute(LocalDate.now().toEpochDay(), copyMealEpochDay = epochDay, copyMealType = mealType.name),
+            )
         },
-        onResumePending = { onOpenReview(ReviewRoute(it.date.toEpochDay(), photoPath = it.photoPath, resumePending = true)) },
+        onResumePending = {
+            onOpenReview(ReviewRoute(it.date.toEpochDay(), photoPath = it.photoPath, resumePending = true))
+        },
         onDescribe = { onOpenReview(ReviewRoute(epochDay, describe = true, describeText = it)) },
     )
 
@@ -218,7 +234,6 @@ fun TodayScreen(
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,7 +259,11 @@ private fun TodayContent(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(64.dp),
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.today_add_food), modifier = Modifier.size(30.dp))
+                Icon(
+                    Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.today_add_food),
+                    modifier = Modifier.size(30.dp),
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -277,9 +296,27 @@ private fun TodayContent(
             item(key = "macros") {
                 val totals = uiState.totals
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MacroTile(stringResource(R.string.protein), MacroColors.Protein, totals.protein, uiState.goals.protein, Modifier.weight(1f))
-                    MacroTile(stringResource(R.string.carbs), MacroColors.Carbs, totals.carbs, uiState.goals.carbs, Modifier.weight(1f))
-                    MacroTile(stringResource(R.string.fat), MacroColors.Fat, totals.fat, uiState.goals.fat, Modifier.weight(1f))
+                    MacroTile(
+                        stringResource(R.string.protein),
+                        MacroColors.Protein,
+                        totals.protein,
+                        uiState.goals.protein,
+                        Modifier.weight(1f),
+                    )
+                    MacroTile(
+                        stringResource(R.string.carbs),
+                        MacroColors.Carbs,
+                        totals.carbs,
+                        uiState.goals.carbs,
+                        Modifier.weight(1f),
+                    )
+                    MacroTile(
+                        stringResource(R.string.fat),
+                        MacroColors.Fat,
+                        totals.fat,
+                        uiState.goals.fat,
+                        Modifier.weight(1f),
+                    )
                 }
             }
 
@@ -297,7 +334,11 @@ private fun TodayContent(
                 SectionTitle(stringResource(R.string.today_meals)) {
                     if (uiState.entries.isNotEmpty()) {
                         Text(
-                            text = pluralStringResource(R.plurals.today_items, uiState.entries.size, uiState.entries.size),
+                            text = pluralStringResource(
+                                R.plurals.today_items,
+                                uiState.entries.size,
+                                uiState.entries.size,
+                            ),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -354,7 +395,9 @@ private fun TodayContent(
                     )
                 }
             }
-            item(key = "nutrients") { NutrientsCard(totals = uiState.nutrientTotals, targets = uiState.nutrientTargets) }
+            item(key = "nutrients") {
+                NutrientsCard(totals = uiState.nutrientTotals, targets = uiState.nutrientTargets)
+            }
         }
     }
 
@@ -445,13 +488,19 @@ private fun DayHeader(uiState: TodayUiState, actions: TodayActions) {
             ) { Text(stringResource(R.string.today_today)) }
         }
         IconButton(onClick = { actions.onSelectDate(uiState.date.minusWeeks(1)) }) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.today_previous_week))
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.today_previous_week),
+            )
         }
         IconButton(
             onClick = { actions.onSelectDate(minOf(uiState.date.plusWeeks(1), today)) },
             enabled = lastWeekDay < today,
         ) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.today_next_week))
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.today_next_week),
+            )
         }
     }
 }
@@ -482,9 +531,15 @@ private fun WeekStrip(
                     .padding(vertical = 6.dp),
             ) {
                 Text(
-                    text = day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(3).replaceFirstChar { it.titlecase(locale) },
+                    text = day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(3).replaceFirstChar {
+                        it.titlecase(locale)
+                    },
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
                 Spacer(Modifier.height(6.dp))
                 ProgressRing(
@@ -497,7 +552,10 @@ private fun WeekStrip(
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape),
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                CircleShape,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -519,7 +577,11 @@ private fun WeekStrip(
 
 /** Photos Gemini couldn't take when they were sent; each can be sent again or thrown away. */
 @Composable
-private fun PendingPhotosCard(photos: List<PendingPhoto>, onResume: (PendingPhoto) -> Unit, onDiscard: (PendingPhoto) -> Unit) {
+private fun PendingPhotosCard(
+    photos: List<PendingPhoto>,
+    onResume: (PendingPhoto) -> Unit,
+    onDiscard: (PendingPhoto) -> Unit,
+) {
     var discarding by remember { mutableStateOf<PendingPhoto?>(null) }
     AppCard {
         CardHeader(
@@ -554,7 +616,11 @@ private fun PendingPhotosCard(photos: List<PendingPhoto>, onResume: (PendingPhot
                     )
                 }
                 IconButton(onClick = { discarding = photo }) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.today_discard_photo), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.today_discard_photo),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 FilledTonalButton(
                     onClick = { onResume(photo) },
@@ -576,7 +642,9 @@ private fun PendingPhotosCard(photos: List<PendingPhoto>, onResume: (PendingPhot
                     onDiscard(photo)
                 }) { Text(stringResource(R.string.today_discard), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { discarding = null }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = { discarding = null }) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }
@@ -587,7 +655,10 @@ private fun EmptyMealsCard(isToday: Boolean, onAdd: () -> Unit) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             IconBadge(AppIcons.Camera, MaterialTheme.colorScheme.onSurface, size = 56.dp)
             Spacer(Modifier.height(12.dp))
-            Text(stringResource(if (isToday) R.string.today_empty_today else R.string.today_empty_past), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(if (isToday) R.string.today_empty_today else R.string.today_empty_past),
+                style = MaterialTheme.typography.titleMedium,
+            )
             Text(
                 text = stringResource(R.string.today_empty_text),
                 style = MaterialTheme.typography.bodyMedium,
@@ -638,7 +709,13 @@ private fun MealCard(
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(if (isToday) R.string.today_log_meal_again else R.string.today_log_meal_again_today)) },
+                        text = {
+                            Text(
+                                stringResource(
+                                    if (isToday) R.string.today_log_meal_again else R.string.today_log_meal_again_today,
+                                ),
+                            )
+                        },
                         onClick = {
                             showMenu = false
                             onLogAgain()
@@ -648,7 +725,12 @@ private fun MealCard(
             }
         }
         entries.forEachIndexed { index, entry ->
-            if (index > 0) HorizontalDivider(Modifier.padding(start = 82.dp, end = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            if (index > 0) {
+                HorizontalDivider(
+                    Modifier.padding(start = 82.dp, end = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+            }
             EntryRow(entry, onClick = { onEntryClick(entry) })
         }
     }
@@ -688,7 +770,11 @@ private fun EntryRow(entry: FoodEntry, onClick: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(horizontalAlignment = Alignment.End) {
             Text(total.kcal.whole(), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.unit_kcal), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.unit_kcal),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -747,7 +833,11 @@ private fun RecipePickerSheet(recipes: List<Recipe>, onSelect: (Recipe) -> Unit,
                 AppCard(onClick = { onSelect(recipe) }) {
                     Text(recipe.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = stringResource(R.string.today_recipe_serving, recipe.servingGrams.whole(), recipe.perServing.kcal.whole()),
+                        text = stringResource(
+                            R.string.today_recipe_serving,
+                            recipe.servingGrams.whole(),
+                            recipe.perServing.kcal.whole(),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp, bottom = 6.dp),
@@ -760,11 +850,7 @@ private fun RecipePickerSheet(recipes: List<Recipe>, onSelect: (Recipe) -> Unit,
 }
 
 @Composable
-private fun SupplementsCard(
-    supplements: List<SupplementStatus>,
-    onTake: (Long) -> Unit,
-    onUntake: (Long) -> Unit,
-) {
+private fun SupplementsCard(supplements: List<SupplementStatus>, onTake: (Long) -> Unit, onUntake: (Long) -> Unit) {
     // Taken doses fold away so the card only takes room for what's still due.
     var showTaken by rememberSaveable { mutableStateOf(false) }
     val done = supplements.count { it.isDone }
@@ -785,7 +871,9 @@ private fun SupplementsCard(
             if (done > 0) {
                 Icon(
                     imageVector = if (showTaken) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = stringResource(if (showTaken) R.string.today_hide_taken else R.string.today_show_taken),
+                    contentDescription = stringResource(
+                        if (showTaken) R.string.today_hide_taken else R.string.today_show_taken,
+                    ),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -803,7 +891,11 @@ private fun SupplementsCard(
                     Text(supplement.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                     Text(
                         text = if (supplement.timesPerDay > 1) {
-                            stringResource(R.string.today_dose_times_a_day, supplement.doseLabel, supplement.timesPerDay)
+                            stringResource(
+                                R.string.today_dose_times_a_day,
+                                supplement.doseLabel,
+                                supplement.timesPerDay,
+                            )
                         } else {
                             supplement.doseLabel
                         },
@@ -846,13 +938,26 @@ private fun CheckCircle(checked: Boolean, onToggle: () -> Unit, contentDescripti
                 .border(2.dp, if (checked) green else MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            if (checked) Icon(Icons.Filled.Check, contentDescription = contentDescription, tint = AppTheme.colors.onData, modifier = Modifier.size(18.dp))
+            if (checked) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = contentDescription,
+                    tint = AppTheme.colors.onData,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun Stepper(value: String, onMinus: () -> Unit, onPlus: () -> Unit, minusEnabled: Boolean, plusEnabled: Boolean) {
+private fun Stepper(
+    value: String,
+    onMinus: () -> Unit,
+    onPlus: () -> Unit,
+    minusEnabled: Boolean,
+    plusEnabled: Boolean,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         FilledTonalIconButton(onClick = onMinus, enabled = minusEnabled, modifier = Modifier.size(36.dp)) {
             Text("−", style = MaterialTheme.typography.titleMedium)

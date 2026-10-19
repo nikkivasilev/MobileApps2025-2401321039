@@ -17,6 +17,7 @@ import com.macrosnap.app.model.SleepLog
 import com.macrosnap.app.model.WaterDay
 import com.macrosnap.app.model.sum
 import com.macrosnap.app.ui.currentDates
+import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,11 +29,18 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
-private data class WellnessWeek(val sleep: List<SleepLog>, val water: List<WaterDay>, val workoutDays: Set<LocalDate>)
+private data class WellnessWeek(
+    val sleep: List<SleepLog>,
+    val water: List<WaterDay>,
+    val workoutDays: Set<LocalDate>,
+)
 
-private data class Strength(val trained: List<Exercise>, val selected: Exercise?, val records: List<SetRecord>)
+private data class Strength(
+    val trained: List<Exercise>,
+    val selected: Exercise?,
+    val records: List<SetRecord>,
+)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProgressViewModel(
@@ -44,14 +52,19 @@ class ProgressViewModel(
 ) : ViewModel() {
 
     private val weightInput = MutableStateFlow("")
+
     /** Null means today; set when logging a weigh-in from an earlier day. */
     private val weightDate = MutableStateFlow<LocalDate?>(null)
     private val selectedExerciseId = MutableStateFlow<Long?>(null)
 
     val uiState: StateFlow<ProgressUiState> = run {
-        val trained = combine(workoutRepository.observeExercises(), workoutRepository.observeExerciseIdsWithHistory()) { all, ids ->
-            all.filter { it.id in ids.toSet() }
-        }
+        val trained =
+            combine(workoutRepository.observeExercises(), workoutRepository.observeExerciseIdsWithHistory()) {
+                    all,
+                    ids,
+                ->
+                all.filter { it.id in ids.toSet() }
+            }
         val strength = combine(trained, selectedExerciseId) { list, selectedId ->
             list to (list.firstOrNull { it.id == selectedId } ?: list.firstOrNull())
         }.flatMapLatest { (list, selected) ->
@@ -63,7 +76,9 @@ class ProgressViewModel(
         }
 
         // The 7-day window slides forward at midnight instead of staying on the day the screen opened.
-        currentDates().flatMapLatest { today -> observeWeek(today, foodRepository, wellnessRepository, workoutRepository, settingsStore, strength) }
+        currentDates().flatMapLatest { today ->
+            observeWeek(today, foodRepository, wellnessRepository, workoutRepository, settingsStore, strength)
+        }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProgressUiState())
     }
 

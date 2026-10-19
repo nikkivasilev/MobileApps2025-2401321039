@@ -44,7 +44,11 @@ fun DraftItemCard(
 ) {
     val total = draft.item.total
     val servings = draft.servings
-    AppCard(modifier, onClick = onClick, contentPadding = PaddingValues(start = 16.dp, top = 8.dp, bottom = 16.dp, end = 4.dp)) {
+    AppCard(
+        modifier,
+        onClick = onClick,
+        contentPadding = PaddingValues(start = 16.dp, top = 8.dp, bottom = 16.dp, end = 4.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
@@ -63,7 +67,11 @@ fun DraftItemCard(
                     MacroDots(total)
                 }
                 if (draft.confidence == Confidence.LOW) {
-                    Tag(stringResource(R.string.review_low_confidence), MaterialTheme.colorScheme.error, Modifier.padding(top = 6.dp))
+                    Tag(
+                        stringResource(R.string.review_low_confidence),
+                        MaterialTheme.colorScheme.error,
+                        Modifier.padding(top = 6.dp),
+                    )
                 }
             }
             IconButton(onClick = onRemove) {
@@ -82,7 +90,11 @@ fun DraftItemCard(
             if (servings != null && onServingsStep != null) {
                 AmountStepper(
                     // Fractions such as 1.5 take the plural, so only exactly one counts as "one".
-                    text = pluralStringResource(R.plurals.review_servings, if (servings == 1.0) 1 else 2, servings.compact()),
+                    text = pluralStringResource(
+                        R.plurals.review_servings,
+                        if (servings == 1.0) 1 else 2,
+                        servings.compact(),
+                    ),
                     onMinus = { onServingsStep(-SERVINGS_STEP) },
                     onPlus = { onServingsStep(SERVINGS_STEP) },
                     minusEnabled = servings > SERVINGS_STEP,

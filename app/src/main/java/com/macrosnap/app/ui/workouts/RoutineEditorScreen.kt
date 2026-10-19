@@ -71,29 +71,57 @@ fun RoutineEditorScreen(
             viewModel.effects.collect { effect ->
                 when (effect) {
                     RoutineEditorEffect.Close -> onClose()
-                    is RoutineEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
+                    is RoutineEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                        effect.message.asString(context),
+                    )
                 }
             }
         }
     }
 
-    RoutineEditorContent(uiState = uiState, actions = viewModel, snackbarHostState = snackbarHostState, onClose = onClose)
+    RoutineEditorContent(
+        uiState = uiState,
+        actions = viewModel,
+        snackbarHostState = snackbarHostState,
+        onClose = onClose,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostState: SnackbarHostState, actions: RoutineEditorActions, onClose: () -> Unit) {
+private fun RoutineEditorContent(
+    uiState: RoutineEditorUiState,
+    snackbarHostState: SnackbarHostState,
+    actions: RoutineEditorActions,
+    onClose: () -> Unit,
+) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (uiState.isExisting) R.string.workout_edit_routine else R.string.workout_new_routine)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (uiState.isExisting) R.string.workout_edit_routine else R.string.workout_new_routine,
+                        ),
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back)) }
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
                 },
                 actions = {
                     if (uiState.isExisting) {
-                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.workout_delete_routine_cd)) }
+                        IconButton(onClick = actions::onDeleteClick) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.workout_delete_routine_cd),
+                            )
+                        }
                     }
                 },
             )
@@ -106,7 +134,9 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
-                    Button(onClick = actions::onSave, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_save_routine)) }
+                    Button(onClick = actions::onSave, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.workout_save_routine))
+                    }
                 }
             }
         },
@@ -148,11 +178,17 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(name, style = MaterialTheme.typography.titleSmall)
-                            Text(draft.exercise.muscleGroup.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                draft.exercise.muscleGroup.label,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                         OutlinedTextField(
                             value = draft.setsInput,
-                            onValueChange = { actions.onDraftChange(index, draft.copy(setsInput = it.filter(Char::isDigit).take(2))) },
+                            onValueChange = {
+                                actions.onDraftChange(index, draft.copy(setsInput = it.filter(Char::isDigit).take(2)))
+                            },
                             label = { Text(stringResource(R.string.workout_sets_label)) },
                             singleLine = true,
                             isError = draft.sets == null,
@@ -161,7 +197,9 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                         )
                         OutlinedTextField(
                             value = draft.repsInput,
-                            onValueChange = { actions.onDraftChange(index, draft.copy(repsInput = it.filter(Char::isDigit).take(3))) },
+                            onValueChange = {
+                                actions.onDraftChange(index, draft.copy(repsInput = it.filter(Char::isDigit).take(3)))
+                            },
                             label = { Text(stringResource(R.string.workout_reps_label)) },
                             singleLine = true,
                             isError = draft.reps == null,
@@ -169,7 +207,10 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                             modifier = Modifier.width(72.dp),
                         )
                         IconButton(onClick = { actions.onDraftRemove(index) }) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.workout_remove_exercise_cd, name))
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = stringResource(R.string.workout_remove_exercise_cd, name),
+                            )
                         }
                     }
                 }
@@ -199,9 +240,13 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
             title = { Text(stringResource(R.string.workout_delete_routine_title)) },
             text = { Text(stringResource(R.string.workout_delete_routine_body)) },
             confirmButton = {
-                TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = actions::onDeleteConfirm) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = {
+                TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) }
+            },
         )
     }
 }
