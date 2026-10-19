@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings screen. -->
+<resources>
+    <!-- Supplements -->
+    <string name="settings_supplements_title">Добавки</string>
+    <string name="settings_supplements_empty">Добави какво приемаш (креатин, витамин D, рибено масло…) и Днес ще показва списък за отмятане. Отметнатите дози се броят към витамините и минералите ти.</string>
+    <!-- After a supplement's dose, e.g. "1 capsule · 2× a day" -->
+    <string name="settings_supplement_times_per_day">%1$d× дневно</string>
+    <string name="settings_supplement_paused">на пауза</string>
+    <string name="settings_add_supplement">Добави добавка</string>
+
+    <!-- Water, sleep and gym -->
+    <string name="settings_wellness_title">Вода, сън и зала</string>
+    <string name="settings_water_goal">Цел за вода (мл)</string>
+    <string name="settings_sleep_goal">Цел за сън (ч)</string>
+    <string name="settings_rest_timer">Почивка между сериите (секунди)</string>
+    <string name="settings_workout_burn_title">Добавяй калориите от тренировки към дневната ми цел</string>
+    <string name="settings_workout_burn_body">Оценките са груби (MET × телесно тегло × време). Изключено запазва целта фиксирана, тъй като калкулаторът вече отчита нивото ти на активност.</string>
+
+    <!-- Vitamin and mineral targets -->
+    <string name="settings_nutrients_title">Цели за витамини и минерали</string>
+    <string name="settings_nutrients_body">Попълнени с препоръчителния дневен прием за възрастни според пола ти (от калкулатора на целите). За кофеина е дневен максимум. Съвет: 1000 IU витамин D са 25 мкг.</string>
+    <string name="settings_save_targets">Запази целите</string>
+    <string name="settings_reset_defaults">Върни стандартните</string>
+
+    <!-- AI recognition -->
+    <string name="settings_ai_title">AI разпознаване</string>
+    <string name="settings_ai_body">MacroSnap използва Gemini на Google през безплатния му план. Създай ключ в Google AI Studio (стига ти Google акаунт, без карта) и го постави тук. Той остава само на този телефон.</string>
+    <string name="settings_get_key">Вземи безплатен ключ: aistudio.google.com/apikey</string>
+    <string name="settings_api_key">Gemini API ключ</string>
+    <string name="settings_show_key">Покажи</string>
+    <string name="settings_hide_key">Скрий</string>
+    <string name="settings_models">Модели, по реда на опитване</string>
+    <string name="settings_models_hint">Когато безплатната дневна квота на един модел свърши, поема следващият.</string>
+    <string name="settings_save_and_test">Запази и провери</string>
+    <string name="settings_test_key">Провери ключа</string>
+    <string name="settings_reset_models">Върни моделите</string>
+    <string name="settings_checking_key">Проверявам ключа…</string>
+    <string name="settings_key_valid">Ключът работи. Готов си да снимаш храненията си.</string>
+    <!-- %1$s is a comma-separated list of model names -->
+    <string name="settings_key_valid_skipped">Ключът работи, но тези модели не са достъпни за него и ще бъдат пропуснати: %1$s</string>
+    <string name="settings_key_removed">API ключът е премахнат. Анализът на снимки и текст е изключен, докато не добавиш нов.</string>
+
+    <!-- Daily goals -->
+    <string name="settings_goals_title">Дневни цели</string>
+    <string name="settings_goal_protein">Протеин г</string>
+    <string name="settings_goal_carbs">Въглехидрати г</string>
+    <string name="settings_goal_fat">Мазнини г</string>
+    <string name="settings_save_goals">Запази целите</string>
+    <string name="settings_goals_saved">Целите са запазени</string>
+    <string name="settings_goals_updated">Целите са обновени на %1$d ккал</string>
+    <string name="settings_nutrient_targets_saved">Целите за хранителни вещества са запазени</string>
+    <string name="settings_wellness_saved">Целите за вода и сън са запазени</string>
+
+    <!-- Goal calculator -->
+    <string name="settings_calculator_title">Калкулатор на целите</string>
+    <string name="settings_calculator_body">Изчислява дневните ти нужди по формулата на Mifflin-St Jeor. Приеми го за отправна точка и коригирай след две седмици проследяване на теглото.</string>
+    <string name="settings_age">Възраст</string>
+    <string name="settings_height">Ръст см</string>
+    <string name="settings_weight">Тегло кг</string>
+    <string name="settings_activity">Активност</string>
+    <string name="settings_goal">Цел</string>
+    <!-- Calories, then protein, carbs and fat in grams -->
+    <string name="settings_suggested">Предложение: %1$d ккал · П %2$d · В %3$d · М %4$d г</string>
+    <string name="settings_suggested_empty">Попълни възраст, ръст и тегло, за да видиш предложение.</string>
+    <string name="settings_use_goals">Използвай тези цели</string>
+</resources>

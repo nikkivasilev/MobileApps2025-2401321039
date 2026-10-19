@@ -1,5 +1,6 @@
 package com.macrosnap.app.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,9 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.model.AnalysisResult
 import com.macrosnap.app.model.FoodItem
 import com.macrosnap.app.model.Macros
@@ -46,9 +51,9 @@ import com.macrosnap.app.ui.toAmountOrNull
 import com.macrosnap.app.ui.whole
 import kotlinx.coroutines.launch
 
-private enum class ValueBasis(val label: String) {
-    PER_100G("Per 100 g"),
-    PORTION("Whole portion"),
+private enum class ValueBasis(@StringRes val labelRes: Int) {
+    PER_100G(R.string.review_basis_per_100g),
+    PORTION(R.string.review_basis_portion),
 }
 
 /**
@@ -84,6 +89,8 @@ fun ItemEditorSheet(
     var describeInput by rememberSaveable { mutableStateOf("") }
     var describeStatus by remember { mutableStateOf<DescribeStatus>(DescribeStatus.Idle) }
     var describeNote by rememberSaveable { mutableStateOf<String?>(null) }
+    /** How many foods the last description held; only the first fills the form. */
+    var describedCount by rememberSaveable { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
 
     fun fillFrom(item: FoodItem) {
@@ -110,10 +117,8 @@ fun ItemEditorSheet(
                     fillFrom(items.first().item)
                     describeInput = ""
                     describeStatus = DescribeStatus.Idle
-                    describeNote = buildString {
-                        if (items.size > 1) append("Only the first of ${items.size} foods was used; describe one food at a time here. ")
-                        outcome.value.notes?.let { append(it) }
-                    }.trim().ifEmpty { null }
+                    describedCount = items.size
+                    describeNote = outcome.value.notes?.trim()?.ifEmpty { null }
                 }
                 is Outcome.Failure -> describeStatus = DescribeStatus.Failed(outcome.error)
             }
@@ -123,14 +128,14 @@ fun ItemEditorSheet(
     if (confirmDelete && onDelete != null) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete this entry?") },
-            text = { Text("It will be removed from the log.") },
+            title = { Text(stringResource(R.string.review_delete_entry_title)) },
+            text = { Text(stringResource(R.string.review_delete_entry_body)) },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; onDelete() }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -194,59 +199,68 @@ fun ItemEditorSheet(
                     },
                     onSubmit = ::describe,
                     status = describeStatus,
-                    label = "Describe it and let the AI fill this in",
-                    placeholder = "e.g. 150 g grilled chicken breast",
-                    hint = "Replaces the values below with the AI's estimate; you can still edit them.",
+                    label = stringResource(R.string.review_editor_describe_label),
+                    placeholder = stringResource(R.string.review_editor_describe_placeholder),
+                    hint = stringResource(R.string.review_editor_describe_hint),
                 )
-                describeNote?.let { note ->
-                    Text("Note: $note", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val firstOnly = if (describedCount > 1) {
+                    pluralStringResource(R.plurals.review_editor_first_only, describedCount, describedCount)
+                } else {
+                    null
+                }
+                listOfNotNull(firstOnly, describeNote).takeIf { it.isNotEmpty() }?.let { parts ->
+                    Text(
+                        text = stringResource(R.string.review_note, parts.joinToString(" ")),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Food name") },
+                label = { Text(stringResource(R.string.review_food_name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
-            AmountField(grams, { grams = it }, "Amount eaten (g or ml)", Modifier.fillMaxWidth())
+            AmountField(grams, { grams = it }, stringResource(R.string.review_amount_eaten), Modifier.fillMaxWidth())
 
             mealType?.let { selected ->
                 MealTypeChips(selected = selected, onSelect = { mealType = it })
             }
 
-            Text("Nutrition values are for", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.review_values_for), style = MaterialTheme.typography.labelLarge)
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 ValueBasis.entries.forEachIndexed { index, option ->
                     SegmentedButton(
                         selected = basis == option,
                         onClick = { switchBasis(option) },
                         shape = SegmentedButtonDefaults.itemShape(index, ValueBasis.entries.size),
-                    ) { Text(option.label) }
+                    ) { Text(stringResource(option.labelRes)) }
                 }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AmountField(kcal, { kcal = it }, "Calories", Modifier.weight(1f), placeholder = derivedKcal.takeIf { it > 0 }?.whole())
-                AmountField(protein, { protein = it }, "Protein g", Modifier.weight(1f))
+                AmountField(kcal, { kcal = it }, stringResource(R.string.calories), Modifier.weight(1f), placeholder = derivedKcal.takeIf { it > 0 }?.whole())
+                AmountField(protein, { protein = it }, stringResource(R.string.review_field_protein), Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AmountField(carbs, { carbs = it }, "Carbs g", Modifier.weight(1f))
-                AmountField(fat, { fat = it }, "Fat g", Modifier.weight(1f))
+                AmountField(carbs, { carbs = it }, stringResource(R.string.review_field_carbs), Modifier.weight(1f))
+                AmountField(fat, { fat = it }, stringResource(R.string.review_field_fat), Modifier.weight(1f))
             }
 
             TextButton(onClick = { showMicros = !showMicros }) {
-                Text(if (showMicros) "Hide vitamins & minerals" else "Vitamins & minerals (optional)")
+                Text(stringResource(if (showMicros) R.string.review_hide_micros else R.string.review_show_micros))
             }
             if (showMicros) {
                 NutrientFields(values = micros, onValueChange = { nutrient, value -> micros[nutrient] = value })
             }
 
             Text(
-                text = result?.total?.let { "This portion: ${it.kcal.whole()} kcal · ${it.summary()}" }
-                    ?: "Enter a name, an amount and calories (or macros) to save.",
+                text = result?.total?.let { stringResource(R.string.review_this_portion, it.kcal.whole(), it.summary()) }
+                    ?: stringResource(R.string.review_editor_incomplete),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -254,14 +268,14 @@ fun ItemEditorSheet(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (onDelete != null) {
                     TextButton(onClick = { confirmDelete = true }) {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                     }
                 }
                 Button(
                     onClick = { result?.let { onSave(it, mealType) } },
                     enabled = result != null && describeStatus !is DescribeStatus.Loading,
                     modifier = Modifier.weight(1f),
-                ) { Text("Save") }
+                ) { Text(stringResource(R.string.action_save)) }
             }
         }
     }

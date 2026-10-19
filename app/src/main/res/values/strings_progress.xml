@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Progress screen. -->
+<resources>
+    <string name="progress_last_7_days">Last 7 days</string>
+
+    <!-- Calories -->
+    <string name="progress_calories_caption">daily average on logged days · %1$s g protein</string>
+    <string name="progress_calories_empty">Log a few meals to see your weekly average.</string>
+    <string name="progress_calories_goal_line">Dashed line: your %1$d kcal goal · dot: gym day</string>
+
+    <!-- Strength -->
+    <string name="progress_strength_title">Strength</string>
+    <plurals name="progress_workouts_this_week">
+        <item quantity="one">%1$d workout this week</item>
+        <item quantity="other">%1$d workouts this week</item>
+    </plurals>
+    <string name="progress_strength_empty">Finish a workout and each exercise gets a chart here: estimated one-rep max per session, best set and volume.</string>
+    <string name="progress_exercise">Exercise</string>
+    <plurals name="progress_1rm_caption">
+        <item quantity="one">Estimated 1RM per session (%1$d session)</item>
+        <item quantity="other">Estimated 1RM per session (%1$d sessions)</item>
+    </plurals>
+    <!-- Weight, reps, estimated one-rep max, date -->
+    <string name="progress_best_set">Best: %1$s kg × %2$d (est. 1RM %3$s kg) on %4$s</string>
+    <string name="progress_last_session">Last session: top set %1$s kg, volume %2$s kg</string>
+    <!-- %3$s is the change in estimated one-rep max, in percent -->
+    <string name="progress_last_session_with_change">Last session: top set %1$s kg, volume %2$s kg · 1RM %3$s%% since first session</string>
+    <plurals name="progress_distance_caption">
+        <item quantity="one">Distance per session (km), %1$d session</item>
+        <item quantity="other">Distance per session (km), %1$d sessions</item>
+    </plurals>
+    <string name="progress_last_cardio">Last: %1$s km in %2$d min</string>
+
+    <!-- Sleep -->
+    <string name="progress_sleep_title">Sleep</string>
+    <string name="progress_last_7_nights">Last 7 nights</string>
+    <!-- %1$d is the number of nights, %2$s the average quality out of 5 -->
+    <plurals name="progress_sleep_caption">
+        <item quantity="one">average · quality %2$s/5 · %1$d night logged</item>
+        <item quantity="other">average · quality %2$s/5 · %1$d nights logged</item>
+    </plurals>
+    <string name="progress_sleep_empty">Log a few nights from the Today screen to see your week.</string>
+    <string name="progress_sleep_goal_line">Dashed line: your %1$s h goal</string>
+
+    <!-- Water -->
+    <string name="progress_water_title">Water</string>
+    <string name="progress_amount_l">%1$s L</string>
+    <string name="progress_water_caption">average on logged days</string>
+    <string name="progress_water_empty">Tap the water buttons on Today to fill this in.</string>
+
+    <!-- Body weight -->
+    <string name="progress_weight_title">Body weight</string>
+    <!-- %1$s is a signed change, e.g. "-1.5" or "+2" -->
+    <string name="progress_weight_change">%1$s kg since you started</string>
+    <string name="progress_weight_latest">latest</string>
+    <string name="progress_weight_input">Weight (kg)</string>
+    <string name="progress_log_weight">Log</string>
+    <string name="progress_weight_for_date">For %1$s</string>
+    <string name="progress_weight_for_today">For today · change date</string>
+    <string name="progress_delete_weight">Delete weight from %1$s</string>
+</resources>

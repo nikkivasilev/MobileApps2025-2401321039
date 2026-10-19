@@ -15,6 +15,7 @@ import com.macrosnap.app.model.Routine
 import com.macrosnap.app.model.RoutineExercise
 import com.macrosnap.app.ui.RoutineEditorRoute
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
+import com.macrosnap.app.ui.UiText
 import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,7 @@ data class RoutineEditorUiState(
 }
 
 sealed interface RoutineEditorEffect {
-    data class ShowMessage(val message: String) : RoutineEditorEffect
+    data class ShowMessage(val message: UiText) : RoutineEditorEffect
     data object Close : RoutineEditorEffect
 }
 

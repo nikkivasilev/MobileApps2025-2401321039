@@ -36,6 +36,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -44,6 +46,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.R
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.components.DescribeField
 import com.macrosnap.app.ui.components.NutrientFields
 
@@ -56,12 +60,13 @@ fun SupplementEditorScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
                     SupplementEditorEffect.Close -> onClose()
-                    is SupplementEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                    is SupplementEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -73,20 +78,22 @@ fun SupplementEditorScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHostState: SnackbarHostState, actions: SupplementEditorActions, onClose: () -> Unit) {
+    val defaultDoseLabel = stringResource(R.string.supplements_default_dose)
+    val activeLabel = stringResource(R.string.supplements_active)
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.isExisting) "Edit supplement" else "New supplement") },
+                title = { Text(stringResource(if (uiState.isExisting) R.string.supplements_edit_title else R.string.supplements_new)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (uiState.isExisting) {
                         IconButton(onClick = actions::onDeleteClick) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Delete supplement")
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.supplements_delete))
                         }
                     }
                 },
@@ -101,7 +108,9 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    Button(onClick = actions::onSave, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) { Text("Save") }
+                    Button(onClick = { actions.onSave(defaultDoseLabel) }, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.action_save))
+                    }
                 }
             }
         },
@@ -121,18 +130,18 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                 onValueChange = actions::onDescribeChange,
                 onSubmit = actions::onDescribeSubmit,
                 status = uiState.describeStatus,
-                label = "Describe it and let the AI fill this in",
-                placeholder = "e.g. vitamin D3 2000 IU, fish oil 1000 mg",
-                hint = "Gemini names it and fills in the content of one dose.",
+                label = stringResource(R.string.supplements_describe_label),
+                placeholder = stringResource(R.string.supplements_describe_placeholder),
+                hint = stringResource(R.string.supplements_describe_hint),
             )
             uiState.notes?.let { notes ->
-                Text("Note: $notes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.supplements_note, notes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = actions::onNameChange,
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.supplements_name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
@@ -141,15 +150,15 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                 OutlinedTextField(
                     value = uiState.doseLabel,
                     onValueChange = actions::onDoseLabelChange,
-                    label = { Text("One dose is") },
-                    placeholder = { Text("5 g, 1 capsule…") },
+                    label = { Text(stringResource(R.string.supplements_dose)) },
+                    placeholder = { Text(stringResource(R.string.supplements_dose_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.weight(1.5f),
                 )
                 OutlinedTextField(
                     value = uiState.timesPerDayInput,
                     onValueChange = actions::onTimesPerDayChange,
-                    label = { Text("Times a day") },
+                    label = { Text(stringResource(R.string.supplements_times_per_day)) },
                     singleLine = true,
                     isError = uiState.timesPerDay == null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -158,9 +167,9 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Currently taking", style = MaterialTheme.typography.bodyLarge)
+                    Text(activeLabel, style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        text = "Turn off to keep it in the list without showing it on Today.",
+                        text = stringResource(R.string.supplements_active_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -168,10 +177,9 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
                 Switch(checked = uiState.isActive, onCheckedChange = actions::onActiveChange)
             }
 
-            Text("Content of one dose", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.supplements_dose_content), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             Text(
-                text = "Only fill what it contains. Vitamin D: 1000 IU = 25 µg. Magnesium, zinc and calcium " +
-                    "are the elemental amount, which labels usually state.",
+                text = stringResource(R.string.supplements_dose_content_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -182,14 +190,14 @@ private fun SupplementEditorContent(uiState: SupplementEditorUiState, snackbarHo
     if (uiState.showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = actions::onDeleteDismiss,
-            title = { Text("Delete this supplement?") },
-            text = { Text("Its history of taken doses is deleted too. To stop it without losing that, turn off \"Currently taking\" instead.") },
+            title = { Text(stringResource(R.string.supplements_delete_title)) },
+            text = { Text(stringResource(R.string.supplements_delete_body, activeLabel)) },
             confirmButton = {
                 TextButton(onClick = actions::onDeleteConfirm) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }

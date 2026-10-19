@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Supplement editor. -->
+<resources>
+    <string name="supplements_new">Нова добавка</string>
+    <string name="supplements_edit_title">Редактирай добавка</string>
+    <string name="supplements_delete">Изтрий добавката</string>
+    <string name="supplements_describe_label">Опиши я и AI ще попълни полетата</string>
+    <string name="supplements_describe_placeholder">напр. витамин D3 2000 МЕ, рибено масло 1000 мг</string>
+    <string name="supplements_describe_hint">Gemini ще я назове и ще попълни съдържанието на една доза.</string>
+    <!-- A remark Gemini returned with the analysis -->
+    <string name="supplements_note">Бележка: %1$s</string>
+    <string name="supplements_name">Име</string>
+    <string name="supplements_dose">Една доза е</string>
+    <string name="supplements_dose_placeholder">5 г, 1 капсула…</string>
+    <!-- Saved as the dose when the field is left blank -->
+    <string name="supplements_default_dose">1 доза</string>
+    <string name="supplements_times_per_day">Пъти на ден</string>
+    <string name="supplements_active">Приемам в момента</string>
+    <string name="supplements_active_hint">Изключи, за да остане в списъка, без да се показва в Днес.</string>
+    <string name="supplements_dose_content">Съдържание на една доза</string>
+    <string name="supplements_dose_content_hint">Попълни само това, което съдържа. Витамин D: 1000 МЕ = 25 мкг. За магнезий, цинк и калций въведи елементарното количество, което обикновено е посочено на етикета.</string>
+    <string name="supplements_delete_title">Да изтрия ли добавката?</string>
+    <!-- %1$s is the "Currently taking" switch label -->
+    <string name="supplements_delete_body">Историята на приетите дози също ще се изтрие. За да я спреш, без да я губиш, вместо това изключи „%1$s“.</string>
+</resources>

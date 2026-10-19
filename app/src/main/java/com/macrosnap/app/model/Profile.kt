@@ -9,21 +9,21 @@ data class Profile(
     val goal: GoalType,
 )
 
-enum class Sex(val label: String) {
-    MALE("Male"),
-    FEMALE("Female"),
+enum class Sex {
+    MALE,
+    FEMALE,
 }
 
-enum class ActivityLevel(val label: String, val multiplier: Double) {
-    SEDENTARY("Sedentary", 1.2),
-    LIGHT("Light (1-3 days/wk)", 1.375),
-    MODERATE("Moderate (3-5 days/wk)", 1.55),
-    ACTIVE("Active (6-7 days/wk)", 1.725),
-    VERY_ACTIVE("Very active / physical job", 1.9),
+enum class ActivityLevel(val multiplier: Double) {
+    SEDENTARY(1.2),
+    LIGHT(1.375),
+    MODERATE(1.55),
+    ACTIVE(1.725),
+    VERY_ACTIVE(1.9),
 }
 
-enum class GoalType(val label: String, val calorieFactor: Double, val proteinPerKg: Double) {
-    LOSE("Lose fat", 0.80, 2.0),
-    MAINTAIN("Maintain", 1.00, 1.8),
-    GAIN("Build muscle", 1.10, 1.8),
+enum class GoalType(val calorieFactor: Double, val proteinPerKg: Double) {
+    LOSE(0.80, 2.0),
+    MAINTAIN(1.00, 1.8),
+    GAIN(1.10, 1.8),
 }

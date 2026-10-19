@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Day header and week strip -->
+    <string name="today_today">Днес</string>
+    <string name="today_yesterday">Вчера</string>
+    <string name="today_previous_week">Предишна седмица</string>
+    <string name="today_next_week">Следваща седмица</string>
+
+    <!-- Sections -->
+    <string name="today_add_food">Добави храна</string>
+    <string name="today_meals">Хранения</string>
+    <plurals name="today_items">
+        <item quantity="one">%d храна</item>
+        <item quantity="other">%d храни</item>
+    </plurals>
+    <string name="today_habits">Навици</string>
+    <string name="today_edit_entry">Редактирай записа</string>
+
+    <!-- Photos waiting to be analyzed -->
+    <string name="today_pending_title">Чакат анализ</string>
+    <plurals name="today_pending_subtitle">
+        <item quantity="one">Gemini не успя да обработи тази снимка по-рано. Опитай отново сега.</item>
+        <item quantity="other">Gemini не успя да обработи тези снимки по-рано. Опитай отново сега.</item>
+    </plurals>
+    <string name="today_no_hint">Без уточнение</string>
+    <string name="today_discard_photo">Изхвърли снимката</string>
+    <string name="today_analyze">Анализирай</string>
+    <string name="today_discard_title">Да изхвърля ли снимката?</string>
+    <string name="today_discard_text">Ще бъде изтрита без анализ. От нея не е записано нищо.</string>
+    <string name="today_discard">Изхвърли</string>
+
+    <!-- Empty day -->
+    <string name="today_empty_today">Още нищо не е записано</string>
+    <string name="today_empty_past">Нищо не е записано за този ден</string>
+    <string name="today_empty_text">Снимай чинията, сканирай баркод или просто я опиши. AI ще изчисли макросите.</string>
+
+    <!-- Recipe picker -->
+    <string name="today_my_recipes">Моите рецепти</string>
+    <string name="today_no_recipes">Още нямаш рецепти. Създай първата в раздел „Рецепти“.</string>
+    <string name="today_recipe_serving">Порция %1$s г · %2$s ккал</string>
+
+    <!-- Supplements -->
+    <string name="today_supplements">Добавки</string>
+    <string name="today_supplements_all_taken">Всички са взети днес</string>
+    <string name="today_supplements_taken">Взети %1$d от %2$d</string>
+    <string name="today_hide_taken">Скрий взетите</string>
+    <string name="today_show_taken">Покажи взетите</string>
+    <string name="today_dose_times_a_day">%1$s · %2$d× на ден</string>
+    <string name="today_mark_taken">Отбележи %1$s като взета</string>
+    <string name="today_mark_not_taken">Отбележи %1$s като невзета</string>
+
+    <!-- Snackbars -->
+    <string name="today_logged_again">Записано отново: %1$s</string>
+    <string name="today_food_hidden">Скрито от твоите храни до следващото записване: %1$s</string>
+    <string name="today_image_open_failed">Изображението не може да се отвори.</string>
+    <string name="today_scanner_not_ready">Скенерът за баркодове още не е готов. Провери връзката и опитай отново след минута.</string>
+
+    <!-- Ways to add food -->
+    <string name="today_method_camera">Снимай</string>
+    <string name="today_method_describe">Опиши</string>
+    <string name="today_method_barcode">Баркод</string>
+    <string name="today_method_gallery">Галерия</string>
+    <string name="today_method_recipe">Рецепта</string>
+    <string name="today_method_manual">Ръчно</string>
+
+    <!-- Add food sheet -->
+    <string name="today_search_foods">Търси в твоите храни</string>
+    <string name="today_your_foods">Твоите храни</string>
+    <string name="today_long_press_hide">Задръж, за да скриеш</string>
+    <string name="today_no_match">В твоите храни още няма „%1$s“.</string>
+    <string name="today_describe_query">Опиши „%1$s“</string>
+    <string name="today_gemini_macros">Gemini изчислява макросите</string>
+    <string name="today_hide_title">Да скрия ли „%1$s“?</string>
+    <string name="today_hide_text">Храната няма да се предлага, докато не я запишеш отново. Вече записаното остава както е.</string>
+    <string name="today_hide">Скрий</string>
+
+    <!-- Calorie hero and macro tiles -->
+    <string name="today_calories_left">Оставащи калории</string>
+    <string name="today_calories_over">Калории над целта</string>
+    <string name="today_eaten">Изядени</string>
+    <string name="today_goal">Цел</string>
+    <string name="today_goal_plus_gym">Цел + зала</string>
+    <string name="today_burned">Изгорени</string>
+    <string name="today_macro_goal">" / %1$s г"</string>
+    <string name="today_letter_protein">П</string>
+    <string name="today_letter_carbs">В</string>
+    <string name="today_letter_fat">М</string>
+
+    <!-- Water -->
+    <string name="today_water">Вода</string>
+    <string name="today_add_water">Добави вода</string>
+    <string name="today_millilitres">Милилитри</string>
+    <string name="today_water_goal">" / %1$s л"</string>
+    <string name="today_water_quick_add">+250 мл</string>
+
+    <!-- Sleep -->
+    <string name="today_sleep">Сън</string>
+    <string name="today_sleep_empty">Докосни, за да запишеш изминалата нощ</string>
+    <string name="today_sleep_short">%1$dч %2$sм</string>
+    <string name="today_sleep_duration">%1$d ч %2$s мин</string>
+    <string name="today_sleep_sheet_title">Сън · нощта преди %1$s</string>
+    <string name="today_bedtime">Лягане</string>
+    <string name="today_woke_up_at">Събуждане</string>
+    <string name="today_bed_at">Лягане %1$s</string>
+    <string name="today_up_at">Ставане %1$s</string>
+    <string name="today_slept">Сън: %1$s</string>
+    <string name="today_sleep_quality">Как спа?</string>
+    <plurals name="today_stars">
+        <item quantity="one">%d звезда</item>
+        <item quantity="other">%d звезди</item>
+    </plurals>
+
+    <!-- Vitamins and minerals -->
+    <string name="today_nutrients_title">Витамини и минерали</string>
+    <string name="today_nutrients_subtitle">%1$d от %2$d в норма · храна + добавки</string>
+    <string name="today_expand">Разгъни</string>
+    <string name="today_collapse">Свий</string>
+    <string name="today_nutrients_note">Кофеинът е дневен лимит, останалите са цели. Стойностите от снимки са груби (около ±50%), така че ги ползвай, за да видиш какво ти липсва постоянно.</string>
+    <string name="today_nutrient_amount">%1$s / %2$s %3$s</string>
+    <string name="today_nutrient_amount_max">%1$s / %2$s %3$s макс.</string>
+
+    <!-- Describe field and remembered foods -->
+    <string name="today_describe_placeholder">напр. 200 г пилешко филе, 1 с.л. зехтин</string>
+    <string name="today_describe_hint">Gemini разпознава всяка храна и попълва макросите.</string>
+    <string name="today_describe_suggestions">От твоите храни (без AI)</string>
+    <string name="today_describe_loading">Разпознавам храната…</string>
+    <string name="today_past_food_amount">%1$s г · %2$s ккал</string>
+</resources>

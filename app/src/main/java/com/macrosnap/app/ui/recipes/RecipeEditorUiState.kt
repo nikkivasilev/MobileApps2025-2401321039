@@ -3,6 +3,7 @@ package com.macrosnap.app.ui.recipes
 import com.macrosnap.app.model.PastFood
 import com.macrosnap.app.model.Recipe
 import com.macrosnap.app.model.suggestionsFor
+import com.macrosnap.app.ui.UiText
 import com.macrosnap.app.ui.components.DescribeStatus
 import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
@@ -44,6 +45,6 @@ data class RecipeEditorUiState(
 }
 
 sealed interface RecipeEditorEffect {
-    data class ShowMessage(val message: String) : RecipeEditorEffect
+    data class ShowMessage(val message: UiText) : RecipeEditorEffect
     data object Close : RecipeEditorEffect
 }

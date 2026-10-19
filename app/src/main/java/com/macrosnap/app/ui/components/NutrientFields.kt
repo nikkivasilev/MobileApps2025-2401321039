@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import com.macrosnap.app.model.Micros
 import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.ui.compact
+import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.toAmountOrNull
+import com.macrosnap.app.ui.unitLabel
 
 /** One text field per tracked nutrient, two to a row. Values are whatever unit [Nutrient.unit] says. */
 @Composable
@@ -31,7 +33,7 @@ fun NutrientFields(
                     OutlinedTextField(
                         value = values[nutrient].orEmpty(),
                         onValueChange = { onValueChange(nutrient, it) },
-                        label = { Text("${nutrient.label} (${nutrient.unit})") },
+                        label = { Text("${nutrient.label} (${nutrient.unitLabel})") },
                         placeholder = placeholders[nutrient]?.let { { Text(it) } },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

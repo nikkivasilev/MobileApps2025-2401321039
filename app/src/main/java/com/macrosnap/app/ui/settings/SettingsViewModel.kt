@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.macrosnap.app.R
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.ApiKeyChecker
 import com.macrosnap.app.data.SupplementRepository
@@ -18,6 +19,7 @@ import com.macrosnap.app.model.Outcome
 import com.macrosnap.app.model.Sex
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.components.toInputs
+import com.macrosnap.app.ui.uiText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -122,7 +124,7 @@ class SettingsViewModel(
             settingsStore.setModels(models)
             if (apiKey.isEmpty()) {
                 // An empty field removes the key; say so rather than let it look like nothing happened.
-                if (hadKey) _effects.send(SettingsEffect.ShowMessage("API key removed. Photo and text analysis are off until you add one."))
+                if (hadKey) _effects.send(SettingsEffect.ShowMessage(uiText(R.string.settings_key_removed)))
                 return@launch
             }
 
@@ -149,7 +151,7 @@ class SettingsViewModel(
         val goals = _uiState.value.enteredGoals ?: return
         viewModelScope.launch {
             settingsStore.setGoals(goals)
-            _effects.send(SettingsEffect.ShowMessage("Goals saved"))
+            _effects.send(SettingsEffect.ShowMessage(uiText(R.string.settings_goals_saved)))
         }
     }
 
@@ -173,7 +175,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsStore.setProfile(profile)
             settingsStore.setGoals(goals)
-            _effects.send(SettingsEffect.ShowMessage("Goals updated to ${goals.kcal} kcal"))
+            _effects.send(SettingsEffect.ShowMessage(uiText(R.string.settings_goals_updated, goals.kcal)))
         }
     }
 
@@ -189,7 +191,7 @@ class SettingsViewModel(
         val overrides = targets.filter { (nutrient, amount) -> amount != defaults[nutrient] }
         viewModelScope.launch {
             settingsStore.setNutrientOverrides(overrides)
-            _effects.send(SettingsEffect.ShowMessage("Nutrient targets saved"))
+            _effects.send(SettingsEffect.ShowMessage(uiText(R.string.settings_nutrient_targets_saved)))
         }
     }
 
@@ -216,7 +218,7 @@ class SettingsViewModel(
         val rest = state.restSeconds ?: return
         viewModelScope.launch {
             settingsStore.setWellnessGoals(water, sleep, rest)
-            _effects.send(SettingsEffect.ShowMessage("Wellness goals saved"))
+            _effects.send(SettingsEffect.ShowMessage(uiText(R.string.settings_wellness_saved)))
         }
     }
 

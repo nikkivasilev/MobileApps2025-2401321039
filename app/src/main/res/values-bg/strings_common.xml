@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Language picker -->
+    <string name="language_title">Език</string>
+    <string name="language_system">Според системата</string>
+    <string name="language_english">English</string>
+    <string name="language_bulgarian">Български</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_today">Днес</string>
+    <string name="nav_gym">Зала</string>
+    <string name="nav_recipes">Рецепти</string>
+    <string name="nav_progress">Прогрес</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Common actions -->
+    <string name="action_save">Запази</string>
+    <string name="action_cancel">Отказ</string>
+    <string name="action_delete">Изтрий</string>
+    <string name="action_edit">Редактирай</string>
+    <string name="action_add">Добави</string>
+    <string name="action_back">Назад</string>
+    <string name="action_retry">Опитай отново</string>
+    <string name="action_ok">OK</string>
+
+    <!-- Macros and units -->
+    <string name="calories">Калории</string>
+    <string name="protein">Протеин</string>
+    <string name="carbs">Въглехидрати</string>
+    <string name="fat">Мазнини</string>
+    <string name="unit_kcal">ккал</string>
+    <string name="unit_g">г</string>
+    <string name="unit_mg">мг</string>
+    <string name="unit_ug">мкг</string>
+    <string name="unit_kg">кг</string>
+    <string name="unit_min">мин</string>
+    <string name="unit_km">км</string>
+    <string name="amount_g">%1$s г</string>
+    <string name="amount_kcal">%1$s ккал</string>
+    <string name="amount_kg">%1$s кг</string>
+    <string name="amount_ml">%1$s мл</string>
+    <string name="macros_summary">П %1$s · В %2$s · М %3$s г</string>
+
+    <!-- Meals -->
+    <string name="meal_breakfast">Закуска</string>
+    <string name="meal_lunch">Обяд</string>
+    <string name="meal_dinner">Вечеря</string>
+    <string name="meal_snack">Междинна закуска</string>
+
+    <!-- Profile -->
+    <string name="sex_male">Мъж</string>
+    <string name="sex_female">Жена</string>
+    <string name="activity_sedentary">Заседнал начин на живот</string>
+    <string name="activity_light">Лека (1–3 дни седмично)</string>
+    <string name="activity_moderate">Умерена (3–5 дни седмично)</string>
+    <string name="activity_active">Висока (6–7 дни седмично)</string>
+    <string name="activity_very_active">Много висока / физическа работа</string>
+    <string name="goal_lose">Отслабване</string>
+    <string name="goal_maintain">Поддържане</string>
+    <string name="goal_gain">Покачване на мускулна маса</string>
+
+    <!-- Muscle groups -->
+    <string name="muscle_chest">Гърди</string>
+    <string name="muscle_back">Гръб</string>
+    <string name="muscle_shoulders">Рамене</string>
+    <string name="muscle_biceps">Бицепс</string>
+    <string name="muscle_triceps">Трицепс</string>
+    <string name="muscle_legs">Крака</string>
+    <string name="muscle_glutes">Седалище</string>
+    <string name="muscle_core">Корем</string>
+    <string name="muscle_cardio">Кардио</string>
+    <string name="muscle_other">Друго</string>
+
+    <!-- Nutrients -->
+    <string name="nutrient_vitamin_d">Витамин D</string>
+    <string name="nutrient_vitamin_b12">Витамин B12</string>
+    <string name="nutrient_vitamin_b6">Витамин B6</string>
+    <string name="nutrient_vitamin_b3">Витамин B3</string>
+    <string name="nutrient_vitamin_b5">Витамин B5</string>
+    <string name="nutrient_vitamin_c">Витамин C</string>
+    <string name="nutrient_vitamin_a">Витамин A</string>
+    <string name="nutrient_iron">Желязо</string>
+    <string name="nutrient_magnesium">Магнезий</string>
+    <string name="nutrient_zinc">Цинк</string>
+    <string name="nutrient_calcium">Калций</string>
+    <string name="nutrient_potassium">Калий</string>
+    <string name="nutrient_omega_3">Омега-3</string>
+    <string name="nutrient_creatine">Креатин</string>
+    <string name="nutrient_caffeine">Кофеин</string>
+
+    <!-- Errors -->
+    <string name="save_failed">Не се запази. Опитай отново.</string>
+    <string name="error_no_api_key">Добави безплатния си Gemini API ключ в Настройки, за да анализираш снимки.</string>
+    <string name="error_invalid_api_key">Gemini API ключът беше отхвърлен. Провери го в Настройки.</string>
+    <string name="error_network">Няма връзка. Провери интернета и опитай отново.</string>
+    <string name="error_rate_limited_daily">Безплатната квота за днес е изчерпана за всички зададени модели. Опитай по-късно или въведи храната ръчно.</string>
+    <string name="error_rate_limited">Безплатният план на Gemini е натоварен (лимит на минута). Изчакай минута и опитай отново или въведи храната ръчно.</string>
+    <string name="error_model_unavailable">Нито един от зададените модели на Gemini не е достъпен. Провери списъка с модели в Настройки.</string>
+    <string name="error_server">Gemini има проблем в момента. Опитай отново след малко.</string>
+    <string name="error_bad_image">Снимката не може да се прочете. Опитай да я направиш отново.</string>
+    <string name="error_not_food">Не е разпозната храна. Опитай с друга снимка или описание, или добави храните ръчно.</string>
+    <string name="error_product_not_found">Този баркод го няма в Open Food Facts. Добави продукта ръчно.</string>
+    <string name="error_unexpected">Нещо се обърка. Опитай отново.</string>
+</resources>

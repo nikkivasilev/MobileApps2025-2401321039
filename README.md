@@ -39,6 +39,8 @@ weights and macros; you correct anything that's off and log it. Everything you l
 - **Goal calculator** - Mifflin-St Jeor from sex, age, height, weight, activity and goal.
 - **Progress** - strength chart per exercise, 7-day calorie/sleep/water charts, body-weight trend
   (weigh-ins can be logged for earlier days).
+- **English or Bulgarian** - Settings > Language (or the phone's per-app language setting on Android 13+).
+  Photos analyzed without a hint get item names in the app's language.
 
 ## Install on your phone
 

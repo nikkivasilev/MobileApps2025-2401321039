@@ -1,9 +1,10 @@
 package com.macrosnap.app.ui
 
 import android.util.Log
+import com.macrosnap.app.R
 import kotlinx.coroutines.CancellationException
 
-const val SAVE_FAILED_MESSAGE = "Couldn't save. Try again."
+val SAVE_FAILED_MESSAGE: UiText = UiText.Res(R.string.save_failed)
 
 /**
  * Runs a local write and reports whether it went through, so a database failure puts the screen

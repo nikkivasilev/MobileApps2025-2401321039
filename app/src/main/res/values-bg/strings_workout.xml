@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Gym tab -->
+    <string name="workout_exercises_title">Упражнения</string>
+    <string name="workout_start">Започни тренировка</string>
+    <string name="workout_default_name">Тренировка</string>
+    <string name="workout_in_progress">Тренировка в ход</string>
+    <string name="workout_continue">Продължи</string>
+    <string name="workout_routines">Програми</string>
+    <string name="workout_new_routine">Нова програма</string>
+    <string name="workout_no_routines">Още нямаш програми</string>
+    <string name="workout_no_routines_body">Запази обичайните си тренировки (Push, Pull, Legs…) като програми. Когато стартираш някоя, сериите се попълват с тежестите от миналия път.</string>
+    <string name="workout_routine_no_exercises">Още няма упражнения</string>
+    <string name="workout_start_routine">Започни</string>
+    <string name="workout_history">История</string>
+    <string name="workout_history_empty">Завършените тренировки ще се появят тук.</string>
+    <string name="workout_history_no_exercises">без упражнения</string>
+    <string name="workout_minutes">%1$d мин</string>
+    <string name="workout_kcal_approx">≈%1$d ккал</string>
+    <string name="workout_amount_km">%1$s км</string>
+    <plurals name="workout_sets">
+        <item quantity="one">%1$d серия</item>
+        <item quantity="other">%1$d серии</item>
+    </plurals>
+    <plurals name="workout_sets_done">
+        <item quantity="one">%1$d завършена серия</item>
+        <item quantity="other">%1$d завършени серии</item>
+    </plurals>
+
+    <!-- Workout screen -->
+    <string name="workout_finish">Завърши</string>
+    <string name="workout_delete_cd">Изтрий тренировката</string>
+    <string name="workout_name_label">Име на тренировката</string>
+    <plurals name="workout_stats">
+        <item quantity="one">%1$d мин · %2$d серия · %3$s кг вдигнати · ≈%4$d ккал изгорени</item>
+        <item quantity="other">%1$d мин · %2$d серии · %3$s кг вдигнати · ≈%4$d ккал изгорени</item>
+    </plurals>
+    <string name="workout_finished_note">%1$s. Още можеш да поправяш серии.</string>
+    <string name="workout_add_exercise">Добави упражнение</string>
+    <string name="workout_discard">Откажи тренировката</string>
+    <string name="workout_done_title">Тренировката е завършена</string>
+    <string name="workout_no_records">Този път няма нови рекорди. Постоянството е рекордът.</string>
+    <string name="workout_new_records">Нови лични рекорди:</string>
+    <string name="workout_record_line">%1$s: %2$s</string>
+    <string name="workout_summary_ok">Супер</string>
+    <string name="workout_discard_title">Да откажа ли тренировката?</string>
+    <string name="workout_delete_title">Да изтрия ли тренировката?</string>
+    <string name="workout_delete_body">Сериите ѝ ще бъдат изтрити и няма да се броят към прогреса ти.</string>
+    <string name="workout_rest">Почивка %1$d:%2$02d</string>
+    <string name="workout_rest_extend">+30 сек</string>
+    <string name="workout_rest_skip">Пропусни</string>
+    <string name="workout_last_time">Последно: %1$s</string>
+    <string name="workout_remove_exercise_cd">Премахни %1$s</string>
+    <string name="workout_col_set">Серия</string>
+    <string name="workout_col_last">Последно</string>
+    <string name="workout_col_reps">повт.</string>
+    <string name="workout_add_set">Добави серия</string>
+    <string name="workout_remove_set">Премахни серия</string>
+    <string name="workout_finish_needs_set">Отбележи поне една серия като завършена, преди да приключиш.</string>
+    <string name="workout_record_one_rep_max">%1$s кг × %2$d (изч. 1ПМ %3$s кг, преди %4$s)</string>
+    <string name="workout_record_heaviest">най-тежка серия %1$s кг (преди %2$s)</string>
+    <string name="workout_record_distance">най-дълго разстояние %1$s км (преди %2$s)</string>
+
+    <!-- Routine editor -->
+    <string name="workout_edit_routine">Редактирай програма</string>
+    <string name="workout_delete_routine_cd">Изтрий програмата</string>
+    <string name="workout_save_routine">Запази програмата</string>
+    <string name="workout_routine_name">Име на програмата</string>
+    <string name="workout_routine_name_hint">Push ден, Крака, Цяло тяло…</string>
+    <string name="workout_routine_help">Сериите и повторенията са само план; при старт на програмата се създават толкова серии, попълнени с последните ти тежести.</string>
+    <string name="workout_sets_label">Серии</string>
+    <string name="workout_reps_label">Повт.</string>
+    <string name="workout_delete_routine_title">Да изтрия ли програмата?</string>
+    <string name="workout_delete_routine_body">Вече направените тренировки по нея остават.</string>
+
+    <!-- Exercises screen and picker -->
+    <string name="workout_new_exercise">Ново упражнение</string>
+    <string name="workout_edit_exercise">Редактирай упражнение</string>
+    <string name="workout_search_exercises">Търси упражнения</string>
+    <string name="workout_filter_all">Всички</string>
+    <string name="workout_no_exercises_in_group">Още няма упражнения в тази група.</string>
+    <string name="workout_no_match">Няма съвпадение. Натисни „Ново упражнение“, за да добавиш „%1$s“.</string>
+    <string name="workout_custom">твое</string>
+    <string name="workout_exercise_name">Име</string>
+    <string name="workout_name_taken">Вече имаш упражнение с това име.</string>
+    <string name="workout_delete_exercise_title">Да изтрия ли %1$s?</string>
+    <plurals name="workout_count_workouts">
+        <item quantity="one">%1$d тренировка</item>
+        <item quantity="other">%1$d тренировки</item>
+    </plurals>
+    <plurals name="workout_count_routines">
+        <item quantity="one">%1$d програма</item>
+        <item quantity="other">%1$d програми</item>
+    </plurals>
+    <string name="workout_delete_exercise_in_workouts">Така ще изтриеш и сериите му в %1$s, заедно с историята на прогреса му. Това не може да се отмени.</string>
+    <string name="workout_delete_exercise_in_routines">Така ще го премахнеш и от %1$s, заедно с историята на прогреса му. Това не може да се отмени.</string>
+    <string name="workout_delete_exercise_in_both">Така ще изтриеш и сериите му в %1$s и ще го премахнеш от %2$s, заедно с историята на прогреса му. Това не може да се отмени.</string>
+    <string name="workout_delete_exercise_unused">Не се използва в нито една тренировка или програма.</string>
+    <string name="workout_add_as_new">Добави „%1$s“ като ново упражнение</string>
+    <string name="workout_new_exercise_named">Ново упражнение: %1$s</string>
+    <string name="workout_create_and_add">Създай и добави</string>
+    <string name="workout_type_strength">Тежест × повторения</string>
+    <string name="workout_type_cardio">Време / разстояние</string>
+    <string name="workout_default_sets">Стандартни серии</string>
+    <string name="workout_default_reps">Стандартни повт.</string>
+    <string name="workout_defaults_help">Използват се, когато добавиш упражнението към програма или към тренировка, преди да си го записвал.</string>
+
+    <!-- Default exercises -->
+    <string name="exercise_bench_press">Лежанка</string>
+    <string name="exercise_incline_bench_press">Наклонена лежанка</string>
+    <string name="exercise_dumbbell_bench_press">Лежанка с дъмбели</string>
+    <string name="exercise_incline_dumbbell_press">Наклонена лежанка с дъмбели</string>
+    <string name="exercise_chest_fly">Разтваряне с дъмбели</string>
+    <string name="exercise_cable_crossover">Кросоувър на скрипец</string>
+    <string name="exercise_push_up">Лицеви опори</string>
+    <string name="exercise_dip">Кофички</string>
+    <string name="exercise_deadlift">Мъртва тяга</string>
+    <string name="exercise_romanian_deadlift">Румънска тяга</string>
+    <string name="exercise_barbell_row">Гребане с щанга</string>
+    <string name="exercise_dumbbell_row">Гребане с дъмбел</string>
+    <string name="exercise_seated_cable_row">Гребане на долен скрипец</string>
+    <string name="exercise_lat_pulldown">Вертикален скрипец</string>
+    <string name="exercise_pull_up">Набирания</string>
+    <string name="exercise_chin_up">Набирания с обратен хват</string>
+    <string name="exercise_t_bar_row">Гребане с Т-лост</string>
+    <string name="exercise_face_pull">Фейс пул</string>
+    <string name="exercise_overhead_press">Раменна преса</string>
+    <string name="exercise_dumbbell_shoulder_press">Раменна преса с дъмбели</string>
+    <string name="exercise_lateral_raise">Странично разтваряне</string>
+    <string name="exercise_front_raise">Предно повдигане</string>
+    <string name="exercise_rear_delt_fly">Разтваряне за задно рамо</string>
+    <string name="exercise_upright_row">Изтегляне до брадичката</string>
+    <string name="exercise_shrug">Шрагове</string>
+    <string name="exercise_barbell_curl">Бицепсово сгъване с щанга</string>
+    <string name="exercise_dumbbell_curl">Бицепсово сгъване с дъмбели</string>
+    <string name="exercise_hammer_curl">Чукове</string>
+    <string name="exercise_preacher_curl">Сгъване на Скот</string>
+    <string name="exercise_cable_curl">Бицепсово сгъване на скрипец</string>
+    <string name="exercise_triceps_pushdown">Трицепсово разгъване на скрипец</string>
+    <string name="exercise_overhead_triceps_extension">Трицепсово разгъване над глава</string>
+    <string name="exercise_skull_crusher">Френско разгъване</string>
+    <string name="exercise_close_grip_bench_press">Лежанка с тесен хват</string>
+    <string name="exercise_squat">Клек</string>
+    <string name="exercise_front_squat">Преден клек</string>
+    <string name="exercise_leg_press">Преса за крака</string>
+    <string name="exercise_hack_squat">Хакен клек</string>
+    <string name="exercise_bulgarian_split_squat">Български клек</string>
+    <string name="exercise_lunge">Напади</string>
+    <string name="exercise_leg_extension">Разгъване за бедра</string>
+    <string name="exercise_leg_curl">Сгъване за задно бедро</string>
+    <string name="exercise_calf_raise">Повдигане за прасци</string>
+    <string name="exercise_hip_thrust">Хип тръст</string>
+    <string name="exercise_glute_bridge">Глутеус мост</string>
+    <string name="exercise_cable_kickback">Кикбек на скрипец</string>
+    <string name="exercise_plank">Планк</string>
+    <string name="exercise_crunch">Коремни преси</string>
+    <string name="exercise_hanging_leg_raise">Повдигане на крака от вис</string>
+    <string name="exercise_cable_crunch">Коремни преси на скрипец</string>
+    <string name="exercise_russian_twist">Руски туист</string>
+    <string name="exercise_ab_wheel_rollout">Колело за корем</string>
+    <string name="exercise_treadmill_run">Бягаща пътека</string>
+    <string name="exercise_outdoor_run">Бягане навън</string>
+    <string name="exercise_walk">Ходене</string>
+    <string name="exercise_cycling">Колоездене</string>
+    <string name="exercise_stationary_bike">Велоергометър</string>
+    <string name="exercise_rowing_machine">Гребна машина</string>
+    <string name="exercise_elliptical">Кростренажор</string>
+    <string name="exercise_stair_climber">Степер</string>
+    <string name="exercise_jump_rope">Скачане на въже</string>
+    <string name="exercise_swimming">Плуване</string>
+</resources>

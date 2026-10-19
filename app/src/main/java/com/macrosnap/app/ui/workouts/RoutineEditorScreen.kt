@@ -41,6 +41,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -49,7 +51,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.R
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.label
 
 @Composable
 fun RoutineEditorScreen(
@@ -59,13 +64,14 @@ fun RoutineEditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
                     RoutineEditorEffect.Close -> onClose()
-                    is RoutineEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                    is RoutineEditorEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -81,13 +87,13 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.isExisting) "Edit routine" else "New routine") },
+                title = { Text(stringResource(if (uiState.isExisting) R.string.workout_edit_routine else R.string.workout_new_routine)) },
                 navigationIcon = {
-                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back)) }
                 },
                 actions = {
                     if (uiState.isExisting) {
-                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = "Delete routine") }
+                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.workout_delete_routine_cd)) }
                     }
                 },
             )
@@ -100,7 +106,7 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
-                    Button(onClick = actions::onSave, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) { Text("Save routine") }
+                    Button(onClick = actions::onSave, enabled = uiState.canSave, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_save_routine)) }
                 }
             }
         },
@@ -118,8 +124,8 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                 OutlinedTextField(
                     value = uiState.name,
                     onValueChange = actions::onNameChange,
-                    label = { Text("Routine name") },
-                    placeholder = { Text("Push day, Legs, Full body…") },
+                    label = { Text(stringResource(R.string.workout_routine_name)) },
+                    placeholder = { Text(stringResource(R.string.workout_routine_name_hint)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier.fillMaxWidth(),
@@ -127,13 +133,13 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
             }
             item(key = "help") {
                 Text(
-                    text = "Target sets and reps are just the plan; starting the routine creates that many sets, " +
-                        "pre-filled with your last weights.",
+                    text = stringResource(R.string.workout_routine_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             itemsIndexed(uiState.drafts, key = { index, draft -> "${draft.exercise.id}-$index" }) { index, draft ->
+                val name = draft.exercise.displayName
                 AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
                     Row(
                         modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
@@ -141,13 +147,13 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(draft.exercise.name, style = MaterialTheme.typography.titleSmall)
+                            Text(name, style = MaterialTheme.typography.titleSmall)
                             Text(draft.exercise.muscleGroup.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         OutlinedTextField(
                             value = draft.setsInput,
                             onValueChange = { actions.onDraftChange(index, draft.copy(setsInput = it.filter(Char::isDigit).take(2))) },
-                            label = { Text("Sets") },
+                            label = { Text(stringResource(R.string.workout_sets_label)) },
                             singleLine = true,
                             isError = draft.sets == null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -156,14 +162,14 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                         OutlinedTextField(
                             value = draft.repsInput,
                             onValueChange = { actions.onDraftChange(index, draft.copy(repsInput = it.filter(Char::isDigit).take(3))) },
-                            label = { Text("Reps") },
+                            label = { Text(stringResource(R.string.workout_reps_label)) },
                             singleLine = true,
                             isError = draft.reps == null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.width(72.dp),
                         )
                         IconButton(onClick = { actions.onDraftRemove(index) }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Remove ${draft.exercise.name}")
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.workout_remove_exercise_cd, name))
                         }
                     }
                 }
@@ -172,7 +178,7 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
                 OutlinedButton(onClick = actions::onAddExerciseClick, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Add exercise")
+                    Text(stringResource(R.string.workout_add_exercise))
                 }
             }
         }
@@ -190,12 +196,12 @@ private fun RoutineEditorContent(uiState: RoutineEditorUiState, snackbarHostStat
     if (uiState.showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = actions::onDeleteDismiss,
-            title = { Text("Delete this routine?") },
-            text = { Text("Workouts you already did from it are kept.") },
+            title = { Text(stringResource(R.string.workout_delete_routine_title)) },
+            text = { Text(stringResource(R.string.workout_delete_routine_body)) },
             confirmButton = {
-                TextButton(onClick = actions::onDeleteConfirm) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }

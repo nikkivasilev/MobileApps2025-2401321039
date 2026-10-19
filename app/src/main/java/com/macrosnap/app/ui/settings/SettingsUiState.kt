@@ -11,6 +11,7 @@ import com.macrosnap.app.model.Nutrient
 import com.macrosnap.app.model.Profile
 import com.macrosnap.app.model.Sex
 import com.macrosnap.app.model.Supplement
+import com.macrosnap.app.ui.UiText
 import com.macrosnap.app.ui.components.toMicros
 import com.macrosnap.app.ui.toAmountOrNull
 
@@ -91,5 +92,5 @@ sealed interface KeyCheckState {
 }
 
 sealed interface SettingsEffect {
-    data class ShowMessage(val message: String) : SettingsEffect
+    data class ShowMessage(val message: UiText) : SettingsEffect
 }

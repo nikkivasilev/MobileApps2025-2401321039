@@ -38,6 +38,8 @@ class GeminiFoodAnalyzer(
     private val settingsStore: SettingsStore,
     private val imageEncoder: ImageEncoder,
     private val json: Json,
+    /** English name of the UI language ("Bulgarian"), for item names when the user wrote nothing. */
+    private val uiLanguage: () -> String,
 ) : FoodAnalyzer {
 
     override suspend fun analyzePhoto(photoPath: String, hint: String?): Outcome<AnalysisResult> {
@@ -49,7 +51,7 @@ class GeminiFoodAnalyzer(
             return Outcome.Failure(DataError.BadImage)
         }
         val prompt = buildString {
-            append(PHOTO_PROMPT).append("\n\n").append(MICROS_PROMPT)
+            append(PHOTO_PROMPT.replace(UI_LANGUAGE, uiLanguage())).append("\n\n").append(MICROS_PROMPT)
             if (!hint.isNullOrBlank()) append("\n\nExtra context from the person who ate this: ").append(hint.trim())
         }
         val parts = listOf(
@@ -179,13 +181,15 @@ class GeminiFoodAnalyzer(
         get() = this is DataError.RateLimited || this is DataError.ModelUnavailable || this is DataError.Server
 
     private companion object {
+        const val UI_LANGUAGE = "{ui_language}"
+
         val PHOTO_PROMPT = """
             You are a sports nutritionist estimating macros from a photo of a meal.
 
             Identify every distinct food and drink in the photo as a separate item. For each item:
             - name: a short, specific name including the cooking method when visible
               (e.g. "grilled chicken breast", "white rice, cooked", "olive oil dressing"). Write names in
-              the language the person used in their extra context below; if there is none, use English.
+              the language the person used in their extra context below; if there is none, use $UI_LANGUAGE.
             - grams: your best estimate of the weight of the portion shown, as served. Use plate and
               cutlery size, packaging and typical serving sizes as scale references.
             - per-100 g values: typical calories (kcal), protein, carbohydrates and fat per 100 g of that

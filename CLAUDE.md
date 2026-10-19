@@ -53,14 +53,14 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
 
 - `FoodItem` stores nutrition **per 100 g** plus grams eaten; totals are computed. Keep this invariant when adding sources.
 - `Micros = Map<Nutrient, Double>`; an absent key means "unknown", not zero. Persisted as JSON keyed by `Nutrient.name` via `MicrosJson`.
-- Adding a `Nutrient`: the enum entry (label, unit, Gemini `schemaKey`, Open Food Facts `offKey`/`offScale`, RDA) is enough for storage, UI, targets and schemas, which all iterate `Nutrient.entries`, **but** the unit lists in the Gemini prompts (`MICROS_PROMPT`, `SUPPLEMENT_PROMPT`, `PRODUCT_MICROS_PROMPT` in `GeminiFoodAnalyzer`) are hand-written and must be updated too.
+- Adding a `Nutrient`: the enum entry (unit, Gemini `schemaKey`, Open Food Facts `offKey`/`offScale`, RDA) plus its `nutrient_*` string and `labelRes` branch in `ui/Labels.kt` are enough for storage, UI, targets and schemas, which all iterate `Nutrient.entries`, **but** the unit lists in the Gemini prompts (`MICROS_PROMPT`, `SUPPLEMENT_PROMPT`, `PRODUCT_MICROS_PROMPT` in `GeminiFoodAnalyzer`) are hand-written and must be updated too.
 - Supplement doses (`supplement_logs.micros`) snapshot the supplement's nutrients when taken, so editing or deactivating a supplement doesn't rewrite past days.
 
 ### AI and external data
 
 - `FoodAnalyzer` is the seam for the recognition backend; `GeminiFoodAnalyzer` is the only implementation. Requests use structured output (`responseSchema` built with `buildJsonObject`) and the model list from Settings, falling through to the next model only on `RateLimited`, `ModelUnavailable` or `Server`. Parsed values are clamped (kcal ≤ 900/100 g, macros ≤ 100 g/100 g).
-- `DataError` + `Outcome` carry failures to the UI; `DataError.userMessage()` in `ui/Formatting.kt` is the user-facing text. `RateLimited(daily)` distinguishes per-minute from daily quota using the 429 body.
-- Prompts accept English and Bulgarian input (units like гр/мл/с.л.); the UI itself is English-only with hardcoded strings.
+- `DataError` + `Outcome` carry failures to the UI; `DataError.userText()` / `userMessage()` in `ui/Formatting.kt` is the user-facing text. `RateLimited(daily)` distinguishes per-minute from daily quota using the 429 body.
+- Prompts accept English and Bulgarian input (units like гр/мл/с.л.). Photo item names follow the hint's language, or the UI language when there is no hint (`uiLanguage` passed in by `AppContainer`).
 - `ProductRepository` (Open Food Facts) treats listings as untrustworthy: it repairs kJ-typed-as-kcal, resolves kcal/kJ conflicts with the macros, flags impossible values and servings, and returns `ScannedProduct.warnings` for the review screen. Nutrients a listing lacks are estimated by Gemini and cached per barcode in `product_micros`; label values always win.
 - Free-tier quota is scarce, so avoid adding Gemini calls on paths that run often; prefer caching or reusing history.
 
@@ -69,6 +69,15 @@ Every way of adding food (camera, gallery, barcode, describe, manual, recipe, pa
 - Room database `macrosnap.db`, currently **version 8**, `exportSchema = false`, no destructive fallback. Every schema change needs a hand-written `Migration` appended to `AppDatabase.MIGRATIONS`. A column added with `DEFAULT x` in SQL needs a matching `@ColumnInfo(defaultValue = "x")` on the entity, or Room's schema validation fails at startup. Enums are stored as their `name` strings.
 - DataStore (`SettingsStore`/`AppSettings`) holds the Gemini API key (plaintext), model list, goals, profile, nutrient-target overrides (only values differing from the RDA), wellness goals and hidden foods.
 - Exercises are seeded once from `ExerciseLibrary` when the table is empty, so new defaults there don't reach existing installs.
+
+### Localization
+
+- The UI is in English (`values/`) and Bulgarian (`values-bg/`). Strings are split per area: `strings_common.xml` for shared ones (actions, units, macros, meals, enum labels, errors) and `strings_<area>.xml` with a matching name prefix for each screen group. Every string needs both languages.
+- The language is chosen in Settings and stored by AppCompat (`AppLanguage`, `AppCompatDelegate.setApplicationLocales`), which is why `MainActivity` is an `AppCompatActivity` with an AppCompat theme. Android 13+ also lists it in the system's per-app language settings via `res/xml/locales_config.xml`.
+- ViewModels and repositories never resolve strings: messages and warnings are `UiText` (`ui/UiText.kt`), resolved in composition with `asString()`.
+- Model enums carry no display text; `ui/Labels.kt` maps them to strings (`x.label` in composition, `x.labelRes` outside).
+- Dates go through `formatted(DatePatterns.X)` (`ui/Dates.kt`) so month and day names follow the UI language. Numbers keep the decimal dot in both languages (input accepts a comma too).
+- Seeded exercises keep their English names in the database and are translated at display time (`ui/workouts/ExerciseNames.kt`); custom or renamed ones show as typed.
 
 ### Design system
 

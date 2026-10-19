@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.toRoute
+import com.macrosnap.app.R
 import com.macrosnap.app.appContainer
 import com.macrosnap.app.data.FoodAnalyzer
 import com.macrosnap.app.data.FoodRepository
@@ -31,8 +32,7 @@ import com.macrosnap.app.ui.components.DraftItem
 import com.macrosnap.app.ui.components.EditorTarget
 import com.macrosnap.app.ui.components.SERVINGS_STEP
 import com.macrosnap.app.ui.trySave
-import com.macrosnap.app.ui.userMessage
-import com.macrosnap.app.ui.whole
+import com.macrosnap.app.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -91,7 +91,7 @@ class ReviewViewModel(
             editor = if (route.isBlankManualEntry) EditorTarget.NewItem else null,
             // A resubmitted photo already has its hint; go straight to the request instead of asking again.
             hasAnalyzed = route.resumePending,
-            status = if (route.resumePending) ReviewStatus.Loading(ANALYZING_LABEL) else ReviewStatus.Ready,
+            status = if (route.resumePending) ReviewStatus.Loading(uiText(R.string.review_analyzing)) else ReviewStatus.Ready,
             savedForLater = route.resumePending,
         ),
     )
@@ -140,7 +140,7 @@ class ReviewViewModel(
 
     private fun analyzePhoto(photoPath: String) {
         lookupJob?.cancel()
-        _uiState.update { it.copy(status = ReviewStatus.Loading(ANALYZING_LABEL), hasAnalyzed = true) }
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_analyzing)), hasAnalyzed = true) }
         lookupJob = viewModelScope.launch {
             val hint = _uiState.value.hint.takeIf { it.isNotBlank() }
             when (val outcome = foodAnalyzer.analyzePhoto(photoPath, hint)) {
@@ -184,7 +184,7 @@ class ReviewViewModel(
     }
 
     private fun lookUpBarcode(barcode: String) {
-        _uiState.update { it.copy(status = ReviewStatus.Loading("Looking up barcode $barcode…")) }
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_looking_up_barcode, barcode))) }
         lookupJob = viewModelScope.launch {
             when (val outcome = productRepository.lookup(barcode)) {
                 is Outcome.Success -> {
@@ -203,7 +203,12 @@ class ReviewViewModel(
     /** Label values show straight away; the vitamins and minerals the listing lacks follow when estimated. */
     private fun fillMissingMicros(product: ScannedProduct, draftId: Long) {
         val fromLabel = product.item.micros100g.isNotEmpty()
-        _uiState.update { it.copy(isEstimatingMicros = true, microsNote = "Estimating the vitamins and minerals the listing leaves out…") }
+        // Gemini estimates from the name, so without one there's nothing to ask.
+        if (product.productName == null) {
+            _uiState.update { it.copy(microsNote = MicrosNote.NoProductName) }
+            return
+        }
+        _uiState.update { it.copy(isEstimatingMicros = true, microsNote = MicrosNote.Estimating) }
         microsJob = viewModelScope.launch {
             val outcome = productRepository.estimateMissingMicros(product)
             _uiState.update { state ->
@@ -215,18 +220,11 @@ class ReviewViewModel(
                             if (draft.id != draftId) return@map draft
                             draft.copy(item = draft.item.copy(micros100g = outcome.value + draft.item.micros100g))
                         },
-                        microsNote = if (fromLabel) {
-                            "Vitamins and minerals: from the label where listed, the rest estimated by Gemini."
-                        } else {
-                            "Vitamins and minerals estimated by Gemini; the listing doesn't include them."
-                        },
+                        microsNote = if (fromLabel) MicrosNote.FromLabelAndGemini else MicrosNote.FromGemini,
                     )
                     is Outcome.Failure -> state.copy(
                         isEstimatingMicros = false,
-                        microsNote = when (outcome.error) {
-                            DataError.NoApiKey -> "Add your Gemini key in Settings to estimate the vitamins and minerals this listing leaves out."
-                            else -> "Couldn't estimate the vitamins and minerals this listing leaves out: ${outcome.error.userMessage()}"
-                        },
+                        microsNote = MicrosNote.Failed(outcome.error),
                     )
                 }
             }
@@ -234,31 +232,30 @@ class ReviewViewModel(
     }
 
     private fun loadRecipe(recipeId: Long) {
-        _uiState.update { it.copy(status = ReviewStatus.Loading("Loading recipe…")) }
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_loading_recipe))) }
         lookupJob = viewModelScope.launch {
             val recipe = recipeRepository.get(recipeId)
             if (recipe == null) {
-                _uiState.update { it.copy(status = ReviewStatus.Failed(DataError.Unexpected("That recipe no longer exists."))) }
+                _uiState.update { it.copy(status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_recipe_missing))) }
                 return@launch
             }
             _uiState.update { state ->
                 state.copy(
                     status = ReviewStatus.Ready,
                     items = listOf(DraftItem(nextDraftId++, recipe.portion(recipe.servingGrams), servingGrams = recipe.servingGrams)),
-                    notes = "One serving of ${recipe.name} is ${recipe.servingGrams.whole()} g " +
-                        "(${recipe.totalWeight.whole()} g makes ${recipe.servings}). Adjust the grams to what you ate.",
+                    recipeServing = RecipeServing(recipe.name, recipe.servingGrams, recipe.totalWeight, recipe.servings),
                 )
             }
         }
     }
 
     private fun loadPastFood(key: String) {
-        _uiState.update { it.copy(status = ReviewStatus.Loading("Loading…")) }
+        _uiState.update { it.copy(status = ReviewStatus.Loading(uiText(R.string.review_loading))) }
         lookupJob = viewModelScope.launch {
             val food = foodRepository.pastFood(key)
             _uiState.update { state ->
                 if (food == null) {
-                    state.copy(status = ReviewStatus.Failed(DataError.Unexpected("That food is no longer in your log.")))
+                    state.copy(status = ReviewStatus.Failed(DataError.Unexpected(null), uiText(R.string.review_food_missing)))
                 } else {
                     state.copy(status = ReviewStatus.Ready, items = listOf(DraftItem(nextDraftId++, food.item)))
                 }
@@ -401,7 +398,6 @@ class ReviewViewModel(
         private const val SAVED_REVIEW_KEY = "review"
         private const val MICROS_WAIT_MILLIS = 15_000L
         private const val PENDING_UPDATE_DELAY_MILLIS = 500L
-        private const val ANALYZING_LABEL = "Analyzing your meal…"
 
         val Factory = viewModelFactory {
             initializer {

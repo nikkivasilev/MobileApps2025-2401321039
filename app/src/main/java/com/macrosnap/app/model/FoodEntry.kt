@@ -13,11 +13,11 @@ data class FoodEntry(
     val photoPath: String?,
 )
 
-enum class MealType(val label: String) {
-    BREAKFAST("Breakfast"),
-    LUNCH("Lunch"),
-    DINNER("Dinner"),
-    SNACK("Snack");
+enum class MealType {
+    BREAKFAST,
+    LUNCH,
+    DINNER,
+    SNACK;
 
     companion object {
         fun forTime(time: LocalTime): MealType = when (time.hour) {

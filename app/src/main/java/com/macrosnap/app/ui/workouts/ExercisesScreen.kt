@@ -45,6 +45,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -53,11 +56,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.R
 import com.macrosnap.app.data.ExerciseUsage
 import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.components.appChipColors
+import com.macrosnap.app.ui.label
 
 @Composable
 fun ExercisesScreen(
@@ -67,12 +73,13 @@ fun ExercisesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    is ExercisesEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                    is ExercisesEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -89,14 +96,16 @@ private fun ExercisesContent(
     snackbarHostState: SnackbarHostState,
     onClose: () -> Unit,
 ) {
+    val names = displayNames(uiState.exercises)
+    val filtered = uiState.filtered(names)
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Exercises") },
+                title = { Text(stringResource(R.string.workout_exercises_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -105,9 +114,10 @@ private fun ExercisesContent(
             ExtendedFloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = actions::onNewClick,
+                // A search that found nothing is usually the name of the exercise the user is about to add.
+                onClick = { actions.onNewClick(if (filtered.isEmpty()) uiState.query.trim() else "") },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New exercise") },
+                text = { Text(stringResource(R.string.workout_new_exercise)) },
             )
         },
     ) { padding ->
@@ -120,7 +130,7 @@ private fun ExercisesContent(
             OutlinedTextField(
                 value = uiState.query,
                 onValueChange = actions::onQueryChange,
-                label = { Text("Search exercises") },
+                label = { Text(stringResource(R.string.workout_search_exercises)) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,7 +142,7 @@ private fun ExercisesContent(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                FilterChip(selected = uiState.groupFilter == null, onClick = { actions.onGroupFilterChange(null) }, label = { Text("All") })
+                FilterChip(selected = uiState.groupFilter == null, onClick = { actions.onGroupFilterChange(null) }, label = { Text(stringResource(R.string.workout_filter_all)) })
                 MuscleGroup.entries.forEach { option ->
                     FilterChip(
                         colors = appChipColors(),
@@ -143,10 +153,13 @@ private fun ExercisesContent(
                     )
                 }
             }
-            val filtered = uiState.filtered
             if (filtered.isEmpty()) {
                 Text(
-                    text = if (uiState.query.isBlank()) "No exercises in this group yet." else "No match. Tap \"New exercise\" to add \"${uiState.query.trim()}\".",
+                    text = if (uiState.query.isBlank()) {
+                        stringResource(R.string.workout_no_exercises_in_group)
+                    } else {
+                        stringResource(R.string.workout_no_match, uiState.query.trim())
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),
@@ -157,11 +170,12 @@ private fun ExercisesContent(
                 contentPadding = PaddingValues(bottom = 96.dp),
             ) {
                 items(filtered, key = { it.id }) { exercise ->
+                    val name = names[exercise.id] ?: exercise.name
                     ListItem(
-                        headlineContent = { Text(exercise.name) },
+                        headlineContent = { Text(name) },
                         supportingContent = { Text(exercise.summary()) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { actions.onExerciseClick(exercise) },
+                        modifier = Modifier.clickable { actions.onExerciseClick(exercise, name) },
                     )
                 }
             }
@@ -184,12 +198,12 @@ private fun ExercisesContent(
     }
 }
 
-private fun Exercise.summary(): String = buildString {
-    append(muscleGroup.label)
-    append(" · ")
-    append(if (type == ExerciseType.CARDIO) "$defaultSets ${if (defaultSets == 1) "set" else "sets"}" else "$defaultSets × $defaultReps")
-    if (isCustom) append(" · custom")
-}
+@Composable
+private fun Exercise.summary(): String = listOfNotNull(
+    muscleGroup.label,
+    if (type == ExerciseType.CARDIO) pluralStringResource(R.plurals.workout_sets, defaultSets, defaultSets) else "$defaultSets × $defaultReps",
+    if (isCustom) stringResource(R.string.workout_custom) else null,
+).joinToString(" · ")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -212,15 +226,15 @@ private fun ExerciseEditorSheet(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(if (editor.isNew) "New exercise" else "Edit exercise", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(if (editor.isNew) R.string.workout_new_exercise else R.string.workout_edit_exercise), style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(
                 value = editor.name,
                 onValueChange = { actions.onEditorChange(editor.copy(name = it)) },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.workout_exercise_name)) },
                 singleLine = true,
                 isError = nameTaken,
                 supportingText = if (nameTaken) {
-                    { Text("You already have an exercise with this name.") }
+                    { Text(stringResource(R.string.workout_name_taken)) }
                 } else {
                     null
                 },
@@ -246,10 +260,10 @@ private fun ExerciseEditorSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (!editor.isNew) {
-                    TextButton(onClick = actions::onDeleteClick) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = actions::onDeleteClick) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
                 }
                 Button(onClick = actions::onEditorSave, enabled = canSave, modifier = Modifier.weight(1f)) {
-                    Text(if (editor.isNew) "Add exercise" else "Save")
+                    Text(stringResource(if (editor.isNew) R.string.workout_add_exercise else R.string.action_save))
                 }
             }
         }
@@ -260,23 +274,22 @@ private fun ExerciseEditorSheet(
 private fun DeleteExerciseDialog(name: String, usage: ExerciseUsage, actions: ExercisesActions) {
     AlertDialog(
         onDismissRequest = actions::onDeleteDismiss,
-        title = { Text("Delete $name?") },
+        title = { Text(stringResource(R.string.workout_delete_exercise_title, name)) },
         text = {
+            val workouts = pluralStringResource(R.plurals.workout_count_workouts, usage.workouts, usage.workouts)
+            val routines = pluralStringResource(R.plurals.workout_count_routines, usage.routines, usage.routines)
             Text(
-                if (usage.isUsed) {
-                    val parts = listOfNotNull(
-                        usage.workouts.takeIf { it > 0 }?.let { "its sets in $it ${if (it == 1) "workout" else "workouts"}" },
-                        usage.routines.takeIf { it > 0 }?.let { "it from $it ${if (it == 1) "routine" else "routines"}" },
-                    )
-                    "This also removes ${parts.joinToString(" and ")}, including its progress history. This can't be undone."
-                } else {
-                    "It isn't used in any workout or routine."
+                when {
+                    usage.workouts > 0 && usage.routines > 0 -> stringResource(R.string.workout_delete_exercise_in_both, workouts, routines)
+                    usage.workouts > 0 -> stringResource(R.string.workout_delete_exercise_in_workouts, workouts)
+                    usage.routines > 0 -> stringResource(R.string.workout_delete_exercise_in_routines, routines)
+                    else -> stringResource(R.string.workout_delete_exercise_unused)
                 },
             )
         },
         confirmButton = {
-            TextButton(onClick = actions::onDeleteConfirm) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
         },
-        dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

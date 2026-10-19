@@ -42,6 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,13 +53,18 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.macrosnap.app.R
 import com.macrosnap.app.model.ExerciseType
+import com.macrosnap.app.model.PersonalRecord
 import com.macrosnap.app.model.WorkoutExercise
 import com.macrosnap.app.model.WorkoutSet
+import com.macrosnap.app.ui.DatePatterns
+import com.macrosnap.app.ui.asString
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.components.AppCard
+import com.macrosnap.app.ui.formatted
+import com.macrosnap.app.ui.label
 import com.macrosnap.app.ui.whole
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 
 @Composable
@@ -66,6 +74,7 @@ fun WorkoutScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
@@ -73,7 +82,7 @@ fun WorkoutScreen(
             viewModel.effects.collect { effect ->
                 when (effect) {
                     WorkoutEffect.Close -> onClose()
-                    is WorkoutEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                    is WorkoutEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
             }
         }
@@ -112,21 +121,21 @@ private fun WorkoutContent(
                     Text(
                         text = when {
                             workout == null -> ""
-                            workout.isActive -> "${(now - workout.startedAt) / 60_000} min"
-                            else -> workout.date.format(DateTimeFormatter.ofPattern("EEE, d MMM"))
+                            workout.isActive -> stringResource(R.string.workout_minutes, (now - workout.startedAt) / 60_000)
+                            else -> workout.date.formatted(DatePatterns.SHORT)
                         },
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back)) }
                 },
                 actions = {
                     if (workout != null && workout.isActive) {
                         Button(onClick = actions::onFinishClick, enabled = uiState.canFinish, modifier = Modifier.padding(end = 8.dp)) {
-                            Text("Finish")
+                            Text(stringResource(R.string.workout_finish))
                         }
                     } else if (workout != null) {
-                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = "Delete workout") }
+                        IconButton(onClick = actions::onDeleteClick) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.workout_delete_cd)) }
                     }
                 },
             )
@@ -153,7 +162,7 @@ private fun WorkoutContent(
                     OutlinedTextField(
                         value = workout.name,
                         onValueChange = actions::onNameChange,
-                        label = { Text("Workout name") },
+                        label = { Text(stringResource(R.string.workout_name_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -161,7 +170,10 @@ private fun WorkoutContent(
                 if (!workout.isActive) {
                     item(key = "done-summary") {
                         Text(
-                            text = "${workout.durationMinutes} min · ${workout.doneSets} sets · ${workout.volumeKg.whole()} kg lifted · ≈${uiState.burnKcal} kcal burned. You can still correct sets.",
+                            text = stringResource(
+                                R.string.workout_finished_note,
+                                workoutStats(workout.durationMinutes, workout.doneSets, workout.volumeKg, uiState.burnKcal),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -181,13 +193,13 @@ private fun WorkoutContent(
                     OutlinedButton(onClick = actions::onAddExerciseClick, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Add exercise")
+                        Text(stringResource(R.string.workout_add_exercise))
                     }
                 }
                 if (workout.isActive) {
                     item(key = "cancel") {
                         TextButton(onClick = actions::onDeleteClick, modifier = Modifier.fillMaxWidth()) {
-                            Text("Discard this workout", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.workout_discard), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -207,31 +219,31 @@ private fun WorkoutContent(
     uiState.summary?.let { summary ->
         AlertDialog(
             onDismissRequest = actions::onSummaryDismiss,
-            title = { Text("Workout done") },
+            title = { Text(stringResource(R.string.workout_done_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${summary.durationMinutes} min · ${summary.sets} sets · ${summary.volumeKg.whole()} kg lifted · ≈${summary.burnKcal} kcal burned")
+                    Text(workoutStats(summary.durationMinutes, summary.sets, summary.volumeKg, summary.burnKcal))
                     if (summary.records.isEmpty()) {
-                        Text("No new records this time. Consistency is the record.")
+                        Text(stringResource(R.string.workout_no_records))
                     } else {
-                        Text("New personal records:", style = MaterialTheme.typography.titleSmall)
-                        summary.records.forEach { Text("${it.exercise.name}: ${it.description}") }
+                        Text(stringResource(R.string.workout_new_records), style = MaterialTheme.typography.titleSmall)
+                        summary.records.forEach { Text(stringResource(R.string.workout_record_line, it.exercise.displayName, it.description())) }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = actions::onSummaryDismiss) { Text("Nice") } },
+            confirmButton = { TextButton(onClick = actions::onSummaryDismiss) { Text(stringResource(R.string.workout_summary_ok)) } },
         )
     }
 
     if (uiState.showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = actions::onDeleteDismiss,
-            title = { Text(if (uiState.isActive) "Discard this workout?" else "Delete this workout?") },
-            text = { Text("Its sets are removed and won't count toward your progress.") },
+            title = { Text(stringResource(if (uiState.isActive) R.string.workout_discard_title else R.string.workout_delete_title)) },
+            text = { Text(stringResource(R.string.workout_delete_body)) },
             confirmButton = {
-                TextButton(onClick = actions::onDeleteConfirm) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = actions::onDeleteConfirm) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = actions::onDeleteDismiss) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -246,12 +258,12 @@ private fun RestBar(remainingSeconds: Int, onExtend: () -> Unit, onSkip: () -> U
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Rest ${remainingSeconds / 60}:${(remainingSeconds % 60).toString().padStart(2, '0')}",
+                text = stringResource(R.string.workout_rest, remainingSeconds / 60, remainingSeconds % 60),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onExtend) { Text("+30 s") }
-            TextButton(onClick = onSkip) { Text("Skip") }
+            TextButton(onClick = onExtend) { Text(stringResource(R.string.workout_rest_extend)) }
+            TextButton(onClick = onSkip) { Text(stringResource(R.string.workout_rest_skip)) }
         }
     }
 }
@@ -264,32 +276,37 @@ private fun ExerciseCard(
     actions: WorkoutActions,
 ) {
     val exercise = entry.exercise
+    val name = exercise.displayName
     AppCard(Modifier, contentPadding = PaddingValues(0.dp)) {
         Column(Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(exercise.name, style = MaterialTheme.typography.titleMedium)
+                    Text(name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = if (lastSets.isEmpty()) exercise.muscleGroup.label else "Last time: " + lastSets.joinToString(", ") { it.label(exercise.type) },
+                        text = if (lastSets.isEmpty()) {
+                            exercise.muscleGroup.label
+                        } else {
+                            stringResource(R.string.workout_last_time, lastSets.map { it.label(exercise.type) }.joinToString(", "))
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 IconButton(onClick = { actions.onRemoveExercise(exercise.id) }) {
-                    Icon(Icons.Filled.Close, contentDescription = "Remove ${exercise.name}")
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.workout_remove_exercise_cd, name))
                 }
             }
             Row(Modifier.padding(end = 8.dp, top = 4.dp)) {
-                Text("Set", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(32.dp))
-                Text("Last", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
+                Text(stringResource(R.string.workout_col_set), style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(32.dp))
+                Text(stringResource(R.string.workout_col_last), style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(72.dp))
                 Text(
-                    text = if (exercise.type == ExerciseType.STRENGTH) "kg" else "min",
+                    text = stringResource(if (exercise.type == ExerciseType.STRENGTH) R.string.unit_kg else R.string.unit_min),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = if (exercise.type == ExerciseType.STRENGTH) "reps" else "km",
+                    text = stringResource(if (exercise.type == ExerciseType.STRENGTH) R.string.workout_col_reps else R.string.unit_km),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
@@ -308,8 +325,8 @@ private fun ExerciseCard(
                 )
             }
             Row {
-                TextButton(onClick = { actions.onAddSet(exercise.id) }) { Text("Add set") }
-                TextButton(onClick = { actions.onRemoveLastSet(exercise.id) }) { Text("Remove set") }
+                TextButton(onClick = { actions.onAddSet(exercise.id) }) { Text(stringResource(R.string.workout_add_set)) }
+                TextButton(onClick = { actions.onRemoveLastSet(exercise.id) }) { Text(stringResource(R.string.workout_remove_set)) }
             }
         }
     }
@@ -362,11 +379,23 @@ private fun NumberField(value: String, onValueChange: (String) -> Unit, modifier
     )
 }
 
+@Composable
+private fun workoutStats(minutes: Long, sets: Int, volumeKg: Double, burnKcal: Int): String =
+    pluralStringResource(R.plurals.workout_stats, sets, minutes, sets, volumeKg.whole(), burnKcal)
+
+@Composable
+private fun PersonalRecord.description(): String = when (this) {
+    is PersonalRecord.Estimated1Rm ->
+        stringResource(R.string.workout_record_one_rep_max, set.weightKg.compact(), set.reps, set.estimated1Rm.compact(), previous.compact())
+    is PersonalRecord.HeaviestSet -> stringResource(R.string.workout_record_heaviest, weightKg.compact(), previous.compact())
+    is PersonalRecord.LongestDistance -> stringResource(R.string.workout_record_distance, distanceKm.compact(), previousKm.compact())
+}
+
+@Composable
 private fun WorkoutSet.label(type: ExerciseType): String = when (type) {
     ExerciseType.STRENGTH -> "${weightKg.compact()}×$reps"
-    ExerciseType.CARDIO -> buildString {
-        if (durationSec > 0) append("${durationSec / 60} min")
-        if (distanceM > 0) { if (isNotEmpty()) append(" "); append("${(distanceM / 1000).compact()} km") }
-        if (isEmpty()) append("–")
-    }
+    ExerciseType.CARDIO -> listOfNotNull(
+        stringResource(R.string.workout_minutes, durationSec / 60).takeIf { durationSec > 0 },
+        stringResource(R.string.workout_amount_km, (distanceM / 1000).compact()).takeIf { distanceM > 0 },
+    ).joinToString(" ").ifEmpty { "–" }
 }

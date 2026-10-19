@@ -2,17 +2,17 @@ package com.macrosnap.app.model
 
 import java.time.LocalDate
 
-enum class MuscleGroup(val label: String) {
-    CHEST("Chest"),
-    BACK("Back"),
-    SHOULDERS("Shoulders"),
-    BICEPS("Biceps"),
-    TRICEPS("Triceps"),
-    LEGS("Legs"),
-    GLUTES("Glutes"),
-    CORE("Core"),
-    CARDIO("Cardio"),
-    OTHER("Other"),
+enum class MuscleGroup {
+    CHEST,
+    BACK,
+    SHOULDERS,
+    BICEPS,
+    TRICEPS,
+    LEGS,
+    GLUTES,
+    CORE,
+    CARDIO,
+    OTHER,
 }
 
 enum class ExerciseType { STRENGTH, CARDIO }
@@ -105,7 +105,11 @@ data class SetRecord(
         }
 }
 
-data class PersonalRecord(
-    val exercise: Exercise,
-    val description: String,
-)
+/** A record set in a finished workout, against [previous], the best before it. */
+sealed interface PersonalRecord {
+    val exercise: Exercise
+
+    data class Estimated1Rm(override val exercise: Exercise, val set: WorkoutSet, val previous: Double) : PersonalRecord
+    data class HeaviestSet(override val exercise: Exercise, val weightKg: Double, val previous: Double) : PersonalRecord
+    data class LongestDistance(override val exercise: Exercise, val distanceKm: Double, val previousKm: Double) : PersonalRecord
+}

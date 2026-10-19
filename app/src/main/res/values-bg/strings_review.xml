@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Review screen, the item editor, the entry detail sheet and barcode label warnings. -->
+<resources>
+    <!-- Review screen -->
+    <string name="review_title">Преглед на храненето</string>
+    <string name="review_photo_description">Снимка на храненето</string>
+    <!-- A remark from the AI or about the recipe, e.g. "Note: the sauce is a guess" -->
+    <string name="review_note">Бележка: %1$s</string>
+    <string name="review_describe_label">Опиши какво да добавя</string>
+    <string name="review_add_manually">Добави храна ръчно</string>
+    <string name="review_hint_label">Грешно позната? Дай подсказка на AI</string>
+    <string name="review_hint_placeholder">напр. пуешка кайма, сготвена в масло, 3 яйца</string>
+    <string name="review_analyze_again">Анализирай отново</string>
+    <string name="review_edit_item">Редактирай храната</string>
+    <string name="review_add_item">Добави храна</string>
+    <string name="review_first_title">Какво има в чинията?</string>
+    <string name="review_first_subtitle">По желание, но няколко думи много помагат на AI</string>
+    <string name="review_first_body">Ястието, как е сготвено, нещо скрито (олио, сос, захар). Остави празно и AI ще познае сам.</string>
+    <string name="review_first_hint_label">Подсказка за AI (по желание)</string>
+    <string name="review_first_hint_placeholder">напр. пилешко къри с ориз басмати, сготвено в гхи</string>
+    <string name="review_analyze_photo">Анализирай снимката</string>
+    <string name="review_analyze_with_hint">Анализирай с подсказка</string>
+    <string name="review_saved_for_later">Снимката е запазена в „Чакат анализ“ в Днес, за да я изпратиш отново по-късно.</string>
+    <string name="review_open_settings">Отвори настройките</string>
+    <string name="review_resubmit_later">Изпрати по-късно</string>
+    <string name="review_label_warnings_title">Сравни с етикета</string>
+    <string name="review_label_warnings_footer">Докосни храната, за да поправиш някоя стойност.</string>
+    <string name="review_log_it">Запиши</string>
+    <plurals name="review_log_items">
+        <item quantity="one">Запиши %1$d храна</item>
+        <item quantity="other">Запиши %1$d храни</item>
+    </plurals>
+
+    <!-- Progress labels -->
+    <string name="review_analyzing">Анализиране на храненето…</string>
+    <string name="review_looking_up_barcode">Търсене на баркод %1$s…</string>
+    <string name="review_loading_recipe">Зареждане на рецептата…</string>
+    <string name="review_loading">Зареждане…</string>
+    <string name="review_recipe_missing">Тази рецепта вече не съществува.</string>
+    <string name="review_food_missing">Тази храна вече не е в дневника ти.</string>
+    <!-- Recipe name, grams per serving, total grams and number of servings -->
+    <plurals name="review_recipe_note">
+        <item quantity="one">Една порция %1$s е %2$s г (%3$s г са %4$d порция). Коригирай грамовете спрямо изяденото.</item>
+        <item quantity="other">Една порция %1$s е %2$s г (%3$s г са %4$d порции). Коригирай грамовете спрямо изяденото.</item>
+    </plurals>
+
+    <!-- Where a scanned product's vitamins and minerals came from -->
+    <string name="review_micros_estimating">Оценявам витамините и минералите, които липсват в записа…</string>
+    <string name="review_micros_label_and_gemini">Витамини и минерали: от етикета, където са посочени, а останалите са оценени от Gemini.</string>
+    <string name="review_micros_gemini">Витамините и минералите са оценени от Gemini; записът не ги съдържа.</string>
+    <string name="review_micros_no_key">Добави Gemini ключа си в Настройки, за да се оценят витамините и минералите, които липсват в записа.</string>
+    <string name="review_micros_no_name">Записът няма име на продукта, затова липсващите витамини и минерали не могат да се оценят.</string>
+    <!-- The argument is the error message -->
+    <string name="review_micros_failed">Не успях да оценя витамините и минералите, които липсват в записа: %1$s</string>
+
+    <!-- Problems spotted in an Open Food Facts listing -->
+    <string name="review_warning_serving">Посочената порция от %1$s г изглежда грешна, затова се използват 100 г. Въведи изяденото количество.</string>
+    <string name="review_warning_serving_kcal">Записът посочва %1$s ккал на порция, но стойностите му на 100 г дават %2$s ккал. Провери етикета.</string>
+    <string name="review_warning_kj">Калориите в записа са въведени в кДж; %1$s кДж са преобразувани в %2$s ккал на 100 г.</string>
+    <!-- Listed kcal, listed kJ, kJ in kcal, the kcal used -->
+    <string name="review_warning_energy_conflict">Записът дава %1$s ккал и %2$s кДж (%3$s ккал) на 100 г, които си противоречат; използвани са %4$s ккал. Провери етикета.</string>
+    <string name="review_warning_energy_conflict_macros">Записът дава %1$s ккал и %2$s кДж (%3$s ккал) на 100 г, които си противоречат; използвани са %4$s ккал, защото пасват по-добре на макросите. Провери етикета.</string>
+    <string name="review_warning_impossible_kcal">%1$s ккал на 100 г в записа е невъзможно. Провери етикета и коригирай храната.</string>
+    <string name="review_warning_macros_mismatch">Записът посочва %1$s ккал на 100 г, но протеинът, въглехидратите и мазнините му дават около %2$s ккал. Провери етикета.</string>
+
+    <!-- Draft item card -->
+    <string name="review_low_confidence">Ниска сигурност · провери</string>
+    <string name="review_remove_item">Премахни %1$s</string>
+    <plurals name="review_servings">
+        <item quantity="one">%1$s порция</item>
+        <item quantity="other">%1$s порции</item>
+    </plurals>
+
+    <!-- Item editor -->
+    <string name="review_basis_per_100g">На 100 г</string>
+    <string name="review_basis_portion">Цялата порция</string>
+    <plurals name="review_editor_first_only">
+        <item quantity="one">Използвана е само първата от %1$d храна; тук описвай по една храна.</item>
+        <item quantity="other">Използвана е само първата от %1$d храни; тук описвай по една храна.</item>
+    </plurals>
+    <string name="review_delete_entry_title">Да изтрия ли този запис?</string>
+    <string name="review_delete_entry_body">Ще се премахне от дневника.</string>
+    <string name="review_editor_describe_label">Опиши я и AI ще попълни полетата</string>
+    <string name="review_editor_describe_placeholder">напр. 150 г пилешко филе на скара</string>
+    <string name="review_editor_describe_hint">Заменя стойностите отдолу с оценката на AI; пак можеш да ги редактираш.</string>
+    <string name="review_food_name">Име на храната</string>
+    <string name="review_amount_eaten">Изядено количество (г или мл)</string>
+    <string name="review_values_for">Хранителните стойности са за</string>
+    <string name="review_field_protein">Протеин, г</string>
+    <string name="review_field_carbs">Въглехидрати, г</string>
+    <string name="review_field_fat">Мазнини, г</string>
+    <string name="review_hide_micros">Скрий витамините и минералите</string>
+    <string name="review_show_micros">Витамини и минерали (по желание)</string>
+    <!-- kcal and the macros summary of the portion being edited -->
+    <string name="review_this_portion">Тази порция: %1$s ккал · %2$s</string>
+    <string name="review_editor_incomplete">Въведи име, количество и калории (или макроси), за да запазиш.</string>
+
+    <!-- Entry detail sheet -->
+    <!-- Food name and its kcal -->
+    <string name="review_delete_entry_named">%1$s (%2$s ккал) ще се премахне от дневника.</string>
+    <!-- kcal per 100 g and the macros summary per 100 g -->
+    <string name="review_per_100g">На 100 г: %1$s ккал · %2$s</string>
+    <string name="review_micros_title">Витамини и минерали</string>
+    <string name="review_no_micros">Няма оценка за този запис. Записите отпреди тази функция и ръчните записи без стойности нямат такава.</string>
+    <string name="review_log_today">Запиши за днес</string>
+    <string name="review_log_again">Запиши отново</string>
+    <string name="review_source_photo">от снимка</string>
+    <string name="review_source_barcode">от баркод</string>
+    <string name="review_source_manual">въведено ръчно</string>
+    <string name="review_source_text">от описание</string>
+    <string name="review_source_recipe">от рецепта</string>
+    <string name="review_source_history">от твоите храни</string>
+</resources>

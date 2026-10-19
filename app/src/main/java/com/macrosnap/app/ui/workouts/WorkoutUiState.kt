@@ -5,6 +5,7 @@ import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.PersonalRecord
 import com.macrosnap.app.model.Workout
 import com.macrosnap.app.model.WorkoutSet
+import com.macrosnap.app.ui.UiText
 
 /** What the user has typed for one set; parsed on every change and written through to the DB. */
 data class SetInputs(
@@ -43,5 +44,5 @@ data class WorkoutSummary(
 
 sealed interface WorkoutEffect {
     data object Close : WorkoutEffect
-    data class ShowMessage(val message: String) : WorkoutEffect
+    data class ShowMessage(val message: UiText) : WorkoutEffect
 }

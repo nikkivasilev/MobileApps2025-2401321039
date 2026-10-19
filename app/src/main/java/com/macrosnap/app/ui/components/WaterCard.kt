@@ -28,8 +28,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.macrosnap.app.R
 import com.macrosnap.app.ui.compact
 import com.macrosnap.app.ui.theme.AppIcons
 import com.macrosnap.app.ui.theme.AppTheme
@@ -50,7 +52,7 @@ fun WaterCard(
         val custom = customInput.trim().toIntOrNull()?.takeIf { it in 1..5000 }
         AlertDialog(
             onDismissRequest = { showCustom = false },
-            title = { Text("Add water") },
+            title = { Text(stringResource(R.string.today_add_water)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -60,14 +62,14 @@ fun WaterCard(
                                 shape = CircleShape,
                                 selected = customInput == amount.toString(),
                                 onClick = { customInput = amount.toString() },
-                                label = { Text("$amount ml") },
+                                label = { Text(stringResource(R.string.amount_ml, amount.toString())) },
                             )
                         }
                     }
                     OutlinedTextField(
                         value = customInput,
                         onValueChange = { customInput = it.filter(Char::isDigit).take(4) },
-                        label = { Text("Millilitres") },
+                        label = { Text(stringResource(R.string.today_millilitres)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     )
@@ -81,9 +83,9 @@ fun WaterCard(
                         customInput = ""
                     },
                     enabled = custom != null,
-                ) { Text("Add") }
+                ) { Text(stringResource(R.string.action_add)) }
             },
-            dismissButton = { TextButton(onClick = { showCustom = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showCustom = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -93,13 +95,13 @@ fun WaterCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconBadge(AppIcons.WaterDrop, tint, size = 32.dp)
             Spacer(Modifier.width(10.dp))
-            Text("Water", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.today_water), style = MaterialTheme.typography.titleMedium)
         }
         Spacer(Modifier.weight(1f).heightIn(min = 12.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text((totalMl / 1000.0).compact(), style = MaterialTheme.typography.headlineSmall)
             Text(
-                text = " / ${(goalMl / 1000.0).compact()} L",
+                text = stringResource(R.string.today_water_goal, (goalMl / 1000.0).compact()),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 3.dp),
@@ -123,7 +125,7 @@ fun WaterCard(
                 modifier = Modifier
                     .weight(1f)
                     .height(36.dp),
-            ) { Text("+250 ml", maxLines = 1) }
+            ) { Text(stringResource(R.string.today_water_quick_add), maxLines = 1) }
         }
     }
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Supplement editor. -->
+<resources>
+    <string name="supplements_new">New supplement</string>
+    <string name="supplements_edit_title">Edit supplement</string>
+    <string name="supplements_delete">Delete supplement</string>
+    <string name="supplements_describe_label">Describe it and let the AI fill this in</string>
+    <string name="supplements_describe_placeholder">e.g. vitamin D3 2000 IU, fish oil 1000 mg</string>
+    <string name="supplements_describe_hint">Gemini names it and fills in the content of one dose.</string>
+    <!-- A remark Gemini returned with the analysis -->
+    <string name="supplements_note">Note: %1$s</string>
+    <string name="supplements_name">Name</string>
+    <string name="supplements_dose">One dose is</string>
+    <string name="supplements_dose_placeholder">5 g, 1 capsule…</string>
+    <!-- Saved as the dose when the field is left blank -->
+    <string name="supplements_default_dose">1 dose</string>
+    <string name="supplements_times_per_day">Times a day</string>
+    <string name="supplements_active">Currently taking</string>
+    <string name="supplements_active_hint">Turn off to keep it in the list without showing it on Today.</string>
+    <string name="supplements_dose_content">Content of one dose</string>
+    <string name="supplements_dose_content_hint">Only fill what it contains. Vitamin D: 1000 IU = 25 µg. Magnesium, zinc and calcium are the elemental amount, which labels usually state.</string>
+    <string name="supplements_delete_title">Delete this supplement?</string>
+    <!-- %1$s is the "Currently taking" switch label -->
+    <string name="supplements_delete_body">Its history of taken doses is deleted too. To stop it without losing that, turn off \"%1$s\" instead.</string>
+</resources>

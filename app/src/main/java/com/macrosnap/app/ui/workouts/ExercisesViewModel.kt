@@ -12,6 +12,7 @@ import com.macrosnap.app.model.Exercise
 import com.macrosnap.app.model.ExerciseType
 import com.macrosnap.app.model.MuscleGroup
 import com.macrosnap.app.ui.SAVE_FAILED_MESSAGE
+import com.macrosnap.app.ui.UiText
 import com.macrosnap.app.ui.trySave
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,11 +33,18 @@ data class ExerciseEditorState(
     val repsInput: String,
     /** Kept for cardio, whose reps field is hidden, so switching type back doesn't lose it. */
     val originalReps: Int = Exercise.DEFAULT_REPS,
+    /**
+     * The stored name and the (possibly translated) name the editor opened with. Saving the shown
+     * name unchanged keeps the stored one, so a default exercise stays translatable.
+     */
+    val storedName: String = "",
+    val shownName: String = "",
 ) {
     val isNew: Boolean get() = id == 0L
 
     fun toExercise(): Exercise? {
-        val name = name.trim().takeIf { it.isNotEmpty() } ?: return null
+        val trimmed = name.trim().takeIf { it.isNotEmpty() } ?: return null
+        val name = if (!isNew && trimmed == shownName) storedName else trimmed
         val sets = parseDefaultSets(setsInput) ?: return null
         val reps = if (type == ExerciseType.CARDIO) parseDefaultReps(repsInput) ?: originalReps else parseDefaultReps(repsInput) ?: return null
         return Exercise(id, name, group, type, isCustom, sets, reps)
@@ -53,15 +61,17 @@ data class ExerciseEditorState(
             repsInput = Exercise.DEFAULT_REPS.toString(),
         )
 
-        fun of(exercise: Exercise) = ExerciseEditorState(
+        fun of(exercise: Exercise, displayName: String) = ExerciseEditorState(
             id = exercise.id,
             isCustom = exercise.isCustom,
-            name = exercise.name,
+            name = displayName,
             group = exercise.muscleGroup,
             type = exercise.type,
             setsInput = exercise.defaultSets.toString(),
             repsInput = exercise.defaultReps.toString(),
             originalReps = exercise.defaultReps,
+            storedName = exercise.name,
+            shownName = displayName,
         )
     }
 }
@@ -75,20 +85,19 @@ data class ExercisesUiState(
     val deleteUsage: ExerciseUsage? = null,
     val isSaving: Boolean = false,
 ) {
-    val filtered: List<Exercise>
-        get() {
-            val trimmed = query.trim()
-            return exercises.filter { exercise ->
-                (groupFilter == null || exercise.muscleGroup == groupFilter) &&
-                    (trimmed.isEmpty() || exercise.name.contains(trimmed, ignoreCase = true))
-            }
-        }
+    /** [displayNames] are the names as shown, by id; the query matches those or the stored names. */
+    fun filtered(displayNames: Map<Long, String>): List<Exercise> {
+        val trimmed = query.trim()
+        return exercises.filter { exercise ->
+            (groupFilter == null || exercise.muscleGroup == groupFilter) && exercise.matches(trimmed, displayNames[exercise.id].orEmpty())
+        }.sortedByDisplayName(displayNames)
+    }
 
     /** Another exercise already has the editor's name; two identical entries would be indistinguishable in the picker. */
     val editorNameTaken: Boolean
         get() {
             val editor = editor ?: return false
-            val name = editor.name.trim()
+            val name = editor.toExercise()?.name ?: editor.name.trim()
             return exercises.any { it.id != editor.id && it.name.equals(name, ignoreCase = true) }
         }
 
@@ -96,15 +105,16 @@ data class ExercisesUiState(
 }
 
 sealed interface ExercisesEffect {
-    data class ShowMessage(val message: String) : ExercisesEffect
+    data class ShowMessage(val message: UiText) : ExercisesEffect
 }
 
 @Stable
 interface ExercisesActions {
     fun onQueryChange(query: String)
     fun onGroupFilterChange(group: MuscleGroup?)
-    fun onNewClick()
-    fun onExerciseClick(exercise: Exercise)
+    /** [name] pre-fills the editor; the screen passes the search when it found nothing. */
+    fun onNewClick(name: String)
+    fun onExerciseClick(exercise: Exercise, displayName: String)
     fun onEditorChange(editor: ExerciseEditorState)
     fun onEditorSave()
     fun onEditorDismiss()
@@ -131,12 +141,13 @@ class ExercisesViewModel(private val workoutRepository: WorkoutRepository) : Vie
 
     override fun onGroupFilterChange(group: MuscleGroup?) = _uiState.update { it.copy(groupFilter = group) }
 
-    // A search that found nothing is usually the name of the exercise the user is about to add.
-    override fun onNewClick() = _uiState.update {
-        it.copy(editor = ExerciseEditorState.new(name = if (it.filtered.isEmpty()) it.query.trim() else "", group = it.groupFilter))
+    override fun onNewClick(name: String) = _uiState.update {
+        it.copy(editor = ExerciseEditorState.new(name = name, group = it.groupFilter))
     }
 
-    override fun onExerciseClick(exercise: Exercise) = _uiState.update { it.copy(editor = ExerciseEditorState.of(exercise)) }
+    override fun onExerciseClick(exercise: Exercise, displayName: String) = _uiState.update {
+        it.copy(editor = ExerciseEditorState.of(exercise, displayName))
+    }
 
     override fun onEditorChange(editor: ExerciseEditorState) = _uiState.update { it.copy(editor = editor) }
 
