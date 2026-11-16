@@ -167,8 +167,8 @@ Compose, Room, DataStore, Retrofit + OkHttp + kotlinx.serialization, Coil, ML Ki
 Изисквания: Android Studio (последна стабилна версия) или JDK 17 и Android SDK 37.
 
 ```bash
-git clone https://github.com/nikkivasilev/MobileApps2025-<ФН>.git
-cd MobileApps2025-<ФН>
+git clone https://github.com/nikkivasilev/MobileApps2025-2401321039.git
+cd MobileApps2025-2401321039
 ./gradlew :app:installDebug          # инсталира на свързано устройство или емулатор
 ```
 
